@@ -2,6 +2,7 @@
 using SFML.System;
 
 using NEngine.GameObjects;
+using NEngine.Window;
 
 namespace NEngine.CoreLibs.GameObjects;
 

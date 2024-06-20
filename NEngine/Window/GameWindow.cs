@@ -4,8 +4,8 @@ using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 
-using SFML_tutorial.BaseEngine.GameObjects.Composed;
-using SFML_tutorial.BaseEngine.Scheduling.Coroutines;
+using NEngine.GameObjects;
+using NEngine.Scheduling.Coroutines;
 
 namespace NEngine.Window;
 

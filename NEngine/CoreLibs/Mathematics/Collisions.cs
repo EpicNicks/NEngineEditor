@@ -1,8 +1,8 @@
 ﻿using SFML.Graphics;
 using SFML.System;
-using SFML_tutorial.BaseEngine.CoreLibs.Composed;
 using static System.Math;
 namespace NEngine.CoreLibs.Mathematics;
+using NEngine.CoreLibs.Physics;
 
 public class Collisions
 {

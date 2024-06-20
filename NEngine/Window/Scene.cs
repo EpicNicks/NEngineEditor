@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 
 using NEngine.Scheduling.Coroutines;
+using NEngine.GameObjects;
 
 namespace NEngine.Window;
 

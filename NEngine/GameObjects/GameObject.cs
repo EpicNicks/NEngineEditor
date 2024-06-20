@@ -5,9 +5,8 @@ using SFML.Graphics;
 using NEngine.CoreLibs.Physics;
 using NEngine.Scheduling.Coroutines;
 
-using SFML_tutorial.BaseEngine.CoreLibs.Composed;
-using SFML_tutorial.BaseEngine.Scheduling.Coroutines;
-using SFML_tutorial.BaseEngine.Window.Composed;
+using NEngine.CoreLibs;
+using NEngine.Window;
 
 namespace NEngine.GameObjects;
 

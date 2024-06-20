@@ -1,7 +1,7 @@
 ﻿using SFML.Graphics;
 using SFML.System;
 
-using SFML_tutorial.BaseEngine.GameObjects.Composed;
+using NEngine.GameObjects;
 
 namespace NEngine.GameObjects;
 

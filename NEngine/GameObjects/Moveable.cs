@@ -1,7 +1,8 @@
 ﻿using SFML.System;
 using SFML.Window;
-using SFML_tutorial.BaseEngine.CoreLibs.Mathematics;
-using SFML_tutorial.BaseEngine.Window.Composed;
+
+using NEngine.CoreLibs.Mathematics;
+using NEngine.Window;
 
 namespace NEngine.GameObjects;
 

@@ -1,4 +1,4 @@
-﻿using SFML_tutorial.BaseEngine.Window.Composed;
+﻿using NEngine.Window;
 
 namespace NEngine.Scheduling.Coroutines;
 /// <summary>

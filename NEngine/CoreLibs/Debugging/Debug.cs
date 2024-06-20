@@ -5,10 +5,9 @@ using SFML.System;
 
 using NEngine.GameObjects;
 using NEngine.Scheduling.Coroutines;
+using NEngine.Window;
 
-using SFML_tutorial.BaseEngine.Window.Composed;
-
-namespace SFML_tutorial.BaseEngine.CoreLibs.Debugging;
+namespace NEngine.CoreLibs.Debugging;
 public static class Debug
 {
     private class DebugLineSegment : GameObject
