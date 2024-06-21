@@ -1,0 +1,58 @@
+﻿<Window x:Class="NEngineEditor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Game Engine Editor" Height="800" Width="1200">
+    <Grid>
+        <!-- Define Rows and Columns -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Top Bar -->
+        <Menu Grid.Row="0" Grid.ColumnSpan="3">
+            <MenuItem Header="File">
+                <!-- File Menu Items -->
+            </MenuItem>
+            <MenuItem Header="Settings">
+                <!-- Settings Menu Items -->
+            </MenuItem>
+            <MenuItem Header="Preferences">
+                <!-- Preferences Menu Items -->
+            </MenuItem>
+        </Menu>
+
+        <!-- Side Panel -->
+        <DockPanel Grid.Row="1" Grid.Column="0" Width="200" Background="LightGray">
+            <!-- Load and display JSON data here -->
+        </DockPanel>
+
+        <!-- Main Panel (Scene Editor View) -->
+        <DockPanel Grid.Row="1" Grid.Column="1">
+            <WindowsFormsHost Name="sfmlHost"/>
+        </DockPanel>
+
+        <!-- Right Panel (Inspector) -->
+        <DockPanel Grid.Row="1" Grid.Column="2" Width="200" Background="LightGray">
+            <!-- Inspector properties display here -->
+        </DockPanel>
+
+        <!-- Bottom Panel (Project Explorer) -->
+        <DockPanel Grid.Row="2" Grid.ColumnSpan="3" Height="200" Background="LightGray">
+            <!-- Project files display here -->
+        </DockPanel>
+
+        <!-- Tab Control for additional panels -->
+        <TabControl Grid.Row="1" Grid.Column="1" Margin="5">
+            <TabItem Header="Main">
+                <!-- Main panel content here -->
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

@@ -1,0 +1,31 @@
+﻿<UserControl x:Class="NEngineEditor.View.SceneEditorUserControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:NEngineEditor.View"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="300"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch">
+    <Grid>
+        <ListView x:Name="LeftListView"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
+                  MouseDoubleClick="LeftListView_MouseDoubleClick">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <TextBlock Text="{Binding}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+            <ListView.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Action 1" Click="Action1_Click"/>
+                    <MenuItem Header="Action 2" Click="Action2_Click"/>
+                </ContextMenu>
+            </ListView.ContextMenu>
+        </ListView>
+    </Grid>
+</UserControl>
