@@ -38,6 +38,9 @@ public class GameWindow
         UiView = RenderWindow.DefaultView;
     }
 
+    /// <summary>
+    /// Adds all standard events the window would use to the RenderWindow such as "Resized"
+    /// </summary>
     public void InitStandardWindowEvents()
     {
         RenderWindow.Resized += (sender, sizeEvent) =>
