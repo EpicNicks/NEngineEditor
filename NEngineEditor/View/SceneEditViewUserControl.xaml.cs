@@ -1,6 +1,9 @@
 ﻿using System.Reflection;
 using System.Windows.Forms;
 
+using NEngine.GameObjects;
+using NEngine.Window;
+
 using SFML.Graphics;
 using SFML.Window;
 
@@ -10,24 +13,26 @@ namespace NEngineEditor.View;
 /// </summary>
 public partial class SceneEditViewUserControl : System.Windows.Controls.UserControl
 {
-    private readonly RenderWindow _renderWindow;
+    private readonly GameWindow _gameWindow;
 
     public SceneEditViewUserControl()
     {
         InitializeComponent();
-
         //need to use this to prevent base.OnPaint and base.OnPaintBackground from erasing contents
         var mysurf = new MyDrawingSurface();
         sfmlHost.Child = mysurf;
         SetDoubleBuffered(mysurf); //same results whether or not I do this.
 
         var context = new ContextSettings { DepthBits = 24 };
-        _renderWindow = new RenderWindow(mysurf.Handle);
-        _renderWindow.MouseButtonPressed += _renderWindow_MouseButtonPressed;
-        _renderWindow.MouseWheelScrolled += _renderWindow_MouseWheelScrolled;
+        _gameWindow = new GameWindow(new RenderWindow(mysurf.Handle));
+        _gameWindow.RenderWindow.SetFramerateLimit(60);
+        _gameWindow.RenderWindow.MouseButtonPressed += _renderWindow_MouseButtonPressed;
+        _gameWindow.RenderWindow.MouseWheelScrolled += _renderWindow_MouseWheelScrolled;
 
-        var timer = new System.Windows.Threading.DispatcherTimer();
-        timer.Interval = new TimeSpan(0, 0, 0, 0, 1000 / 60);
+        var timer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = new TimeSpan(0, 0, 0, 0, 1000 / 60)
+        };
         timer.Tick += timer_Tick;
         timer.Start();
     }
@@ -37,12 +42,12 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
     {
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e);
+            // base.OnPaint(e);
         }
 
         protected override void OnPaintBackground(PaintEventArgs pEvent)
         {
-            base.OnPaintBackground(pEvent);
+            // base.OnPaintBackground(pEvent);
         }
     }
 
@@ -62,20 +67,21 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 
     void _renderWindow_MouseButtonPressed(object? sender, MouseButtonEventArgs e)
     {
+        MessageBox.Show("Clicked Render Window");
         // handle cast to select object in scene
         // for now, selection in the scene editor should be good enough
     }
 
     void timer_Tick(object? sender, EventArgs e)
     {
-        _renderWindow.DispatchEvents();
-        _renderWindow.Clear(Color.Blue);
+        _gameWindow.RenderWindow.DispatchEvents();
+
+        // for testing
+        // _gameWindow.Render([]);
+        _gameWindow.Render([(RenderLayer.BASE, new Positionable() { Position = new(0, 0), Drawables = [new RectangleShape { Size = new(100, 100), FillColor = Color.Red }] })]);
 
         // Draw all objects in scene
         //  handle culling the invisible ones
         // Draw Debug Lines with transparency to indicate scale on top
-
-
-        _renderWindow.Display();
     }
 }

@@ -1,6 +1,5 @@
 ﻿using SFML.Graphics;
 using SFML.System;
-using SFML.Window;
 
 using NEngine.GameObjects;
 
@@ -26,63 +25,39 @@ public class GameWindow
     /// <summary>
     /// The Color that is set when the window is cleared
     /// </summary>
-    public static Color WindowBackgroundColor { get; set; } = CORNFLOWER_BLUE;
+    public Color WindowBackgroundColor { get; set; } = CORNFLOWER_BLUE;
     private static readonly Color CORNFLOWER_BLUE = new(147, 204, 234);
 
-    private static string windowTitle;
-    public static string WindowTitle
+    public GameWindow(RenderWindow renderWindow)
     {
-        get => windowTitle;
-        set => Instance.RenderWindow.SetTitle(windowTitle = value);
-    }
-    /// <summary>
-    /// A shortener for the common Instance.RenderWindow.Size get
-    /// </summary>
-    public static Vector2u Size { get => Instance.RenderWindow.Size; set => Instance.RenderWindow.Size = value; }
-    /// <summary>
-    /// The Aspect Ratio of the window (Width / Height)
-    /// </summary>
-    public static float AspectRatio => Size.X / Size.Y;
-
-    private static GameWindow? instance;
-    public static GameWindow Instance => instance ??= new GameWindow();
-
-    static GameWindow()
-    {
-        windowTitle = "My Window";
-    }
-
-    private GameWindow()
-    {
-        (uint width, uint height) = (1200, 800);
-        RenderWindow = new RenderWindow(new VideoMode(width, height), windowTitle);
-        MainView = new View(new FloatRect(0, 0, width, height))
+        RenderWindow = renderWindow;
+        MainView = new View(new FloatRect(0, 0, renderWindow.Size.X, renderWindow.Size.Y))
         {
             Viewport = new FloatRect(0, 0, 1, 1)
         };
         UiView = RenderWindow.DefaultView;
     }
 
-    public static void InitStandardWindowEvents()
+    public void InitStandardWindowEvents()
     {
-        Instance.RenderWindow.Resized += (sender, sizeEvent) =>
+        RenderWindow.Resized += (sender, sizeEvent) =>
         {
             // Update the viewport of the main view to maintain aspect ratio or full scale
-            Instance.MainView.Size = new Vector2f(sizeEvent.Width, sizeEvent.Height);  // Optional: maintain aspect ratio
-            Instance.MainView.Viewport = new FloatRect(0, 0, 1, 1);  // Always render the world view across the entire window
+            MainView.Size = new Vector2f(sizeEvent.Width, sizeEvent.Height);  // Optional: maintain aspect ratio
+            MainView.Viewport = new FloatRect(0, 0, 1, 1);  // Always render the world view across the entire window
 
             // Update the UI view to match the new window size for direct screen space mapping
-            Instance.UiView.Reset(new FloatRect(0, 0, sizeEvent.Width, sizeEvent.Height));
+            UiView.Reset(new FloatRect(0, 0, sizeEvent.Width, sizeEvent.Height));
 
             // Update the window's view to the modified main view after resizing
-            Instance.RenderWindow.SetView(Instance.MainView);
+            RenderWindow.SetView(MainView);
         };
     }
 
 
-    public static void Render(List<(RenderLayer, GameObject)> layeredGameObjects)
+    public void Render(List<(RenderLayer, GameObject)> layeredGameObjects)
     {
-        Instance.RenderWindow.Clear(WindowBackgroundColor);
+        RenderWindow.Clear(WindowBackgroundColor);
         foreach ((RenderLayer renderLayer, GameObject gameObject) in layeredGameObjects)
         {
             foreach (var drawable in gameObject.Drawables)
@@ -94,15 +69,15 @@ public class GameWindow
                 else if (renderLayer != RenderLayer.UI)
                 {
                     // convert screen space to world space on non-UI objects?
-                    Instance.RenderWindow.SetView(Instance.MainView);
+                    RenderWindow.SetView(MainView);
                 }
                 else
                 {
-                    Instance.RenderWindow.SetView(Instance.UiView);
+                    RenderWindow.SetView(UiView);
                 }
-                Instance.RenderWindow.Draw(drawable);
+                RenderWindow.Draw(drawable);
             }
         }
-        Instance.RenderWindow.Display();
+        RenderWindow.Display();
     }
 }

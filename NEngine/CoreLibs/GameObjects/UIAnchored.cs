@@ -24,15 +24,15 @@ public abstract class UIAnchored: Positionable
         float xAnchor = Anchors.x switch
         {
             UIAnchor.START => 0,
-            UIAnchor.CENTER => (GameWindow.Instance.UiView.Size.X - bounds.Width) / 2f,
-            UIAnchor.END => GameWindow.Instance.UiView.Size.X - bounds.Width,
+            UIAnchor.CENTER => (Application.Instance.GameWindow.UiView.Size.X - bounds.Width) / 2f,
+            UIAnchor.END => Application.Instance.GameWindow.UiView.Size.X - bounds.Width,
             _ => 0,
         };
         float yAnchor = Anchors.y switch
         {
             UIAnchor.START => 0,
-            UIAnchor.CENTER => (GameWindow.Instance.UiView.Size.Y - bounds.Height) / 2f,
-            UIAnchor.END => GameWindow.Instance.UiView.Size.Y - bounds.Height,
+            UIAnchor.CENTER => (Application.Instance.GameWindow.UiView.Size.Y - bounds.Height) / 2f,
+            UIAnchor.END => Application.Instance.GameWindow.UiView.Size.Y - bounds.Height,
             _ => 0,
         };
 

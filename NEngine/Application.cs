@@ -2,6 +2,7 @@
 
 using SFML.System;
 using SFML.Window;
+using SFML.Graphics;
 
 using NEngine.GameObjects;
 using NEngine.Scheduling.Coroutines;
@@ -10,7 +11,6 @@ using NEngine.Window;
 namespace NEngine;
 public class Application
 {
-
     private List<Scene> sceneList = [];
     private int curSceneIndex = 0;
     // TODO - Unhandled: Initialization when there are no scenes in the list
@@ -22,9 +22,7 @@ public class Application
     }
     public Queue<GameObject> AttachQueue { get; private set; } = [];
     private readonly CollisionSystem collisionSystem = new();
-
-    private static Application? instance;
-    public static Application Instance => instance ??= new Application();
+    public GameWindow GameWindow { get; private set; }
 
     private readonly Clock deltaClock = new();
     private readonly Clock timeClock = new();
@@ -39,6 +37,30 @@ public class Application
     /// </summary>
     public static Time Time => Instance.timeClock.ElapsedTime;
 
+    private static Application? instance;
+    public static Application Instance => instance ??= new Application();
+
+    private Application()
+    {
+        GameWindow = new GameWindow(new RenderWindow(new VideoMode(1200, 800), "Default Application Title"));
+    }
+
+    #region Window pass-along methods
+    public static string WindowTitle
+    {
+        set => Instance.GameWindow.RenderWindow.SetTitle(value);
+    }
+    /// <summary>
+    /// A shortener for the common Instance.RenderWindow.Size get
+    /// </summary>
+    public static Vector2u WindowSize { get => Instance.GameWindow.RenderWindow.Size; set => Instance.GameWindow.RenderWindow.Size = value; }
+    /// <summary>
+    /// The Aspect Ratio of the window (Width / Height)
+    /// </summary>
+    public static float AspectRatio => WindowSize.X / WindowSize.Y;
+    #endregion
+
+    #region Scene API pass-along methods
     public static bool Contains(RenderLayer renderLayer, GameObject gameObject) => Instance.LoadedScene?.Contains(renderLayer, gameObject) ?? false;
     public static bool Contains(GameObject gameObject) => Instance.LoadedScene?.Contains(gameObject) ?? false;
     public static void Add(RenderLayer renderLayer, GameObject gameObject)
@@ -66,6 +88,7 @@ public class Application
     public static GameObject? FindObject(string name) => Instance.LoadedScene?.FindObject(name);
     public static bool TryRemove(RenderLayer renderLayer, GameObject gameObject) => Instance.LoadedScene?.TryRemove(renderLayer, gameObject) ?? false;
     public static bool TryRemove(GameObject gameObject) => Instance.LoadedScene?.TryRemove(gameObject) ?? false;
+    #endregion
 
     public static string? LoadedSceneName => Instance.LoadedScene?.Name;
 
@@ -125,13 +148,13 @@ public class Application
     public static void Run()
     {
         Init();
-        while (GameWindow.Instance.RenderWindow != null && GameWindow.Instance.RenderWindow.IsOpen)
+        while (Instance.GameWindow.RenderWindow != null && Instance.GameWindow.RenderWindow.IsOpen)
         {
             DeltaTime = Instance.deltaClock.Restart();
             ProcessAttachQueue();
             Update();
             Instance.collisionSystem.HandleCollisions(ActiveGameObjects);
-            GameWindow.Render(ActiveLayeredGameObjects);
+            Instance.GameWindow.Render(ActiveLayeredGameObjects);
         }
     }
 
@@ -141,7 +164,7 @@ public class Application
     }
     private static void Init()
     {
-        GameWindow.Instance.RenderWindow.SetFramerateLimit(120);
+        Instance.GameWindow.RenderWindow.SetFramerateLimit(120);
         Instance.timeClock.Restart();
         InitStandardEvents();
         if (Instance.LoadedScene is null)
@@ -155,13 +178,13 @@ public class Application
     }
     private static void InitStandardEvents()
     {
-        GameWindow.InitStandardWindowEvents();
+        Instance.GameWindow.InitStandardWindowEvents();
         // window click close
-        GameWindow.Instance.RenderWindow.Closed += (sender, eventArgs) =>
+        Instance.GameWindow.RenderWindow.Closed += (sender, eventArgs) =>
         {
             HandleQuit();
         };
-        GameWindow.Instance.RenderWindow.KeyPressed += (sender, keyEvent) =>
+        Instance.GameWindow.RenderWindow.KeyPressed += (sender, keyEvent) =>
         {
             if (keyEvent.Code == Keyboard.Key.Escape)
             {
@@ -184,7 +207,7 @@ public class Application
 
     private static void Update()
     {
-        GameWindow.Instance.RenderWindow.DispatchEvents();
+        Instance.GameWindow.RenderWindow.DispatchEvents();
         Instance.LoadedScene?.UpdateCoroutines();
         OnEachGameObject((gameObject) => gameObject.Update());
     }
@@ -223,6 +246,6 @@ public class Application
     private static void HandleQuit()
     {
         Console.WriteLine("closed window");
-        GameWindow.Instance.RenderWindow.Close();
+        Instance.GameWindow.RenderWindow.Close();
     }
 }
