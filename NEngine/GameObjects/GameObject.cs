@@ -76,7 +76,7 @@ public class GameObject
     /// <param name="routine">The IEnumerator routine to start</param>
     public Coroutine? StartCoroutine(IEnumerator routine)
     {
-        return GameWindow.StartCoroutine(this, routine);
+        return Application.StartCoroutine(this, routine);
     }
 
     /// <summary>
@@ -86,7 +86,7 @@ public class GameObject
     /// <param name="coroutine"></param>
     public bool StopCoroutine(Coroutine coroutine)
     {
-        return GameWindow.StopCoroutine(this, coroutine);
+        return Application.StopCoroutine(this, coroutine);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public class GameObject
     /// </summary>
     public void StopAllCoroutines()
     {
-        GameWindow.StopAllCoroutines(this);
+        Application.StopAllCoroutines(this);
     }
 
     /// <summary>
@@ -104,7 +104,7 @@ public class GameObject
     /// <returns>true if the GameObject was successfully destroyed.</returns>
     public bool Destroy()
     {
-        return GameWindow.TryRemove(this);
+        return Application.TryRemove(this);
     }
 
     // TODO: should also handle "marked for destruction" once implemented

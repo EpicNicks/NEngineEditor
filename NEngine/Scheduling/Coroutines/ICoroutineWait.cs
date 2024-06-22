@@ -55,7 +55,7 @@ public class WaitForSeconds(float waitSeconds) : ICoroutineWait
 
     public bool Wait()
     {
-        elapsedSeconds += GameWindow.DeltaTime.AsSeconds();
+        elapsedSeconds += Application.DeltaTime.AsSeconds();
         if (elapsedSeconds < waitSeconds)
         {
             return true;

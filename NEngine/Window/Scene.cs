@@ -93,7 +93,7 @@ public class Scene
         {
             GameObjects[renderLayer] = [gameObject];
         }
-        GameWindow.Instance.AttachQueue.Enqueue(gameObject);
+        Application.Instance.AttachQueue.Enqueue(gameObject);
     }
     public void Add(IEnumerable<(RenderLayer renderLayer, GameObject gameObject)> layeredGameObjects)
     {

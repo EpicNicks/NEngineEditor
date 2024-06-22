@@ -27,7 +27,7 @@ public abstract class Moveable : Positionable
         if (input != new Vector2f())
         {
             Vector2f inputNormal = input.Normalize();
-            Vector2f delta = inputNormal * MoveSpeed * GameWindow.DeltaTime.AsSeconds();
+            Vector2f delta = inputNormal * MoveSpeed * Application.DeltaTime.AsSeconds();
             Position += delta;
         }
     }
