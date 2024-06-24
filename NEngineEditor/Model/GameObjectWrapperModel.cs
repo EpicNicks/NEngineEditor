@@ -22,6 +22,11 @@ public class GameObjectWrapperModel
         RenderLayer = DefaultRenderLayer(gameObject);
     }
 
+    public override string ToString()
+    {
+        return GameObject?.Name ?? "NamelessGO";
+    }
+
     private static RenderLayer DefaultRenderLayer(GameObject gameObject) 
         => gameObject switch
     {

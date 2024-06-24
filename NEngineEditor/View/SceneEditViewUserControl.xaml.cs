@@ -75,14 +75,13 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
     {
         if (e.Button == Mouse.Button.Left)
         {
+            // try check for what is on screen at that point, for multiple hits, cycle in a predictable order if Z component is 0 (Vector2f cast to 3f works here too)
             MessageBox.Show("Clicked Render Window");
         }
         else if (e.Button == Mouse.Button.Right)
         {
             initialDragPoint = new(e.X, e.Y);
         }
-        // handle cast to select object in scene
-        // for now, selection in the scene editor should be good enough
     }
 
     private void _renderWindow_MouseMoved(object? sender, MouseMoveEventArgs e)

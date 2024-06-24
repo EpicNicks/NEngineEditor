@@ -14,7 +14,7 @@
                   MouseDoubleClick="LeftListView_MouseDoubleClick">
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <Grid>
                         <TextBlock Text="{Binding}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
                     </Grid>
                 </DataTemplate>
