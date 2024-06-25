@@ -1,5 +1,4 @@
-﻿using System.Configuration;
-using System.Data;
+﻿using NEngineEditor.Windows;
 using System.Windows;
 
 namespace NEngineEditor;
@@ -12,7 +11,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
         // MainWindow needs a valid project directory to start so there needs to be a Project Selection Window
-        (new MainWindow()).Show();
+        new ProjectOpenWindow().Show();
     }
 }
 

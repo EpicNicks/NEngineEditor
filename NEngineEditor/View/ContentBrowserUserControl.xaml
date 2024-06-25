@@ -11,23 +11,26 @@
     <Grid>
         <TabControl>
             <TabItem Header="Content Browser">
-                <ScrollViewer>
-                    <ItemsControl ItemsSource="{Binding Items}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel MouseLeftButtonDown="ContentPanel_MouseLeftButtonDown"  Width="100" Margin="5">
-                                    <Image Source="{Binding Icon}" Width="50" Height="50" Margin="0,0,0,5" />
-                                    <TextBlock Text="{Binding FileName}" TextAlignment="Center" TextWrapping="Wrap" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                <StackPanel>
+                    <TextBlock FontSize="12" Text="{Binding DirectoryPath}"/>
+                    <ScrollViewer>
+                        <ItemsControl ItemsSource="{Binding Items}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Tag="{Binding FilePath}" MouseLeftButtonDown="ContentPanel_MouseLeftButtonDown"  Width="100" Margin="5">
+                                        <Image Source="{Binding Icon}" Width="50" Height="50" Margin="0,0,0,5" />
+                                        <TextBlock Text="{Binding FileName}" TextAlignment="Center" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </StackPanel>
             </TabItem>
         </TabControl>
     </Grid>

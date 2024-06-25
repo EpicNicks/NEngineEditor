@@ -1,3 +1,4 @@
 {
-  "ProjectDirectory": "Some Drive:/AbsolutePathToProjectDir"
+  "ProjectName": "SomeProjectName",
+  "EngineVersion":  "0.0.1"
 }

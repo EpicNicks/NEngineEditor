@@ -9,7 +9,7 @@ using System.Windows.Media.Imaging;
 namespace NEngineEditor.ViewModel;
 public class ContentBrowserViewModel : ViewModelBase
 {
-    private readonly SubDirectory _subDirectory;
+    public readonly SubDirectory subDirectory;
 
     public static readonly ImageSource FOLDER_ICON;
     public static readonly ImageSource CS_SCRIPT_ICON;
@@ -25,8 +25,11 @@ public class ContentBrowserViewModel : ViewModelBase
         }
     }
 
+    public string DirectoryPath => $"Folder: {subDirectory.CurrentSubDir}";
+
     static ContentBrowserViewModel()
     {
+        // uri resource to explain this shit: https://learn.microsoft.com/en-us/dotnet/desktop/wpf/app-development/pack-uris-in-wpf?view=netframeworkdesktop-4.8
         var assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
         FOLDER_ICON = new BitmapImage(new Uri($"pack://application:,,,/{assemblyName};component/Resources/folder-icon.png"));
         FOLDER_ICON.Freeze();
@@ -36,29 +39,31 @@ public class ContentBrowserViewModel : ViewModelBase
 
     public ContentBrowserViewModel()
     {
-        _subDirectory = new SubDirectory(onSubDirectoryChanged: () =>
+        subDirectory = new SubDirectory(MainViewModel.Instance.ProjectDirectory, () =>
         {
+            OnPropertyChanged(nameof(DirectoryPath));
             Items = LoadFilesInCurrentDir();
         });
         Items = LoadFilesInCurrentDir();
     }
 
-    public class FileIconName(ImageSource icon, string fileName)
+    public class FileIconName(ImageSource icon, string fileName, string filePath)
     {
         public ImageSource Icon => icon;
         public string FileName => fileName;
+        public string FilePath => filePath;
     }
 
-    private class SubDirectory(Action onSubDirectoryChanged)
+    public class SubDirectory(string initialSubDirectory, Action onSubDirectoryChanged)
     {
         private readonly Action _onSubDirectoryChanged = onSubDirectoryChanged;
-        private string currentSubDir = "/";
+        private string _currentSubDir = initialSubDirectory;
         public string CurrentSubDir
         {
-            get => currentSubDir;
+            get => _currentSubDir;
             set
             {
-                currentSubDir = value;
+                _currentSubDir = value;
                 _onSubDirectoryChanged();
             }
         }
@@ -67,10 +72,12 @@ public class ContentBrowserViewModel : ViewModelBase
     private ObservableCollection<FileIconName> LoadFilesInCurrentDir()
     {
         // spoof for now
-        return [new(FOLDER_ICON, "subdir1"), new(CS_SCRIPT_ICON, "somescript.cs")];
+        var spoofBaseUrl = "C:/Deez/Nuts/NEngineProject";
+        return [new(FOLDER_ICON, "subdir1", $"{spoofBaseUrl}/subdir1"), new(CS_SCRIPT_ICON, "somescript.cs", $"{spoofBaseUrl}/somescript.cs")];
 
+        // should generate a .. go up button for directories which are not the root directory
         List<FileIconName> filesAndDirectories = [];
-        string currentDir = Path.Combine(MainViewModel.Instance.ProjectDirectory, _subDirectory.CurrentSubDir);
+        string currentDir = Path.Combine(MainViewModel.Instance.ProjectDirectory, subDirectory.CurrentSubDir);
         string[] directoryPaths = Directory.GetDirectories(currentDir);
         string[] filePaths = Directory.GetFiles(currentDir);
         foreach (string dir in directoryPaths)
@@ -78,7 +85,7 @@ public class ContentBrowserViewModel : ViewModelBase
             string? dirName = Path.GetDirectoryName(dir);
             if (dirName is not null)
             {
-                filesAndDirectories.Add(new(FOLDER_ICON, dirName));
+                filesAndDirectories.Add(new(FOLDER_ICON, dirName, dir));
             }
             else
             {
@@ -90,7 +97,7 @@ public class ContentBrowserViewModel : ViewModelBase
             string? fileName = Path.GetFileName(filePath);
             if (fileName is not null)
             {
-                filesAndDirectories.Add(new(CS_SCRIPT_ICON, fileName));
+                filesAndDirectories.Add(new(CS_SCRIPT_ICON, fileName, filePath));
             }
             else
             {
