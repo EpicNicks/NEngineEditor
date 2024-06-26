@@ -7,31 +7,28 @@
              d:DataContext="{d:DesignInstance Type=viewmodel:ContentBrowserViewModel}"
              mc:Ignorable="d"
              d:DesignHeight="200" d:DesignWidth="800"
+             HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
              Width="auto" Height="auto">
-    <Grid>
-        <TabControl>
-            <TabItem Header="Content Browser">
-                <StackPanel>
-                    <TextBlock FontSize="12" Text="{Binding DirectoryPath}"/>
-                    <ScrollViewer>
-                        <ItemsControl ItemsSource="{Binding Items}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Tag="{Binding FilePath}" MouseLeftButtonDown="ContentPanel_MouseLeftButtonDown"  Width="100" Margin="5">
-                                        <Image Source="{Binding Icon}" Width="50" Height="50" Margin="0,0,0,5" />
-                                        <TextBlock Text="{Binding FileName}" TextAlignment="Center" TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </StackPanel>
-            </TabItem>
-        </TabControl>
+    <Grid Background="AliceBlue" MouseRightButtonDown="OuterStackPanel_MouseRightButtonDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <TextBlock FontSize="12" Text="{Binding DirectoryPath}"/>
+            <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <ItemsControl ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Tag="{Binding FilePath}" MouseLeftButtonDown="ContentPanel_MouseLeftButtonDown" MouseRightButtonDown="StackPanel_MouseRightButtonDown" Width="100" Margin="5">
+                                <Image Source="{Binding Icon}" Width="50" Height="50" Margin="0,0,0,5" />
+                                <TextBlock Text="{Binding FileName}" TextAlignment="Center" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </StackPanel>
     </Grid>
 </UserControl>

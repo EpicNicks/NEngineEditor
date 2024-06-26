@@ -84,6 +84,9 @@ public partial class ProjectOpenWindow : Window
                     using var fileStream = File.Create(Path.Combine(projectPath, "NEngineProject.json"));
                     using var writer = new StreamWriter(fileStream);
                     writer.Write(JsonSerializer.Serialize(projectData, NEW_PROJECT_JSON_OPTIONS));
+                    
+                    // TODO: create assets folder in the base dir?
+                    //  Roslyn or something to build into a build folder?
 
                     // Add the new project to the list
                     ProjectListBox.Items.Add(new ListBoxItem { Content = projectName });
@@ -101,7 +104,14 @@ public partial class ProjectOpenWindow : Window
         if (ProjectListBox.SelectedItem is ListBoxItem selectedItem)
         {
             var projectPath = selectedItem.Tag as string;
-            OpenProjectWindow(projectPath);
+            if (projectPath is not null)
+            {
+                OpenProjectWindow(projectPath);
+            }
+            else
+            {
+                System.Windows.MessageBox.Show("The Project Path was null somehow", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
     private void OpenProjectWindow(string projectPath)

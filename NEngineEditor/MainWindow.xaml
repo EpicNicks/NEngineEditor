@@ -52,7 +52,13 @@
         <!-- Bottom Panel (Project Explorer) -->
         <DockPanel Grid.Row="2" Grid.ColumnSpan="3" Height="200" Background="LightGray">
             <!-- Project files display here -->
-            <view:ContentBrowserUserControl />
+            <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TabItem Header="Content Browser" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <view:ContentBrowserUserControl />
+                </TabItem>
+                <TabItem Header="Console">
+                </TabItem>
+            </TabControl>
         </DockPanel>
     </Grid>
 </Window>

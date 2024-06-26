@@ -8,6 +8,11 @@ public class ProjectDirectoryWatcher
     private FileSystemWatcher _fileSystemWatcher;
     private Dispatcher _dispatcher;
 
+    public event FileSystemEventHandler? FileCreated;
+    public event FileSystemEventHandler? FileChanged;
+    public event FileSystemEventHandler? FileDeleted;
+    public event RenamedEventHandler? FileRenamed;
+
     public ProjectDirectoryWatcher(string projectPath, Dispatcher dispatcher)
     {
         _fileSystemWatcher = new FileSystemWatcher(projectPath);
@@ -25,22 +30,31 @@ public class ProjectDirectoryWatcher
     {
         _dispatcher?.Invoke(() =>
         {
-            MessageBox.Show("File Renamed");
+            FileRenamed?.Invoke(sender, e);
         });
     }
 
     private void OnFileDeleted(object sender, FileSystemEventArgs e)
     {
-        throw new NotImplementedException();
+        _dispatcher.Invoke(() =>
+        {
+            FileDeleted?.Invoke(sender, e);
+        });
     }
 
     private void OnFileChanged(object sender, FileSystemEventArgs e)
     {
-        throw new NotImplementedException();
+        _dispatcher.Invoke(() =>
+        {
+            FileChanged?.Invoke(sender, e);
+        });
     }
 
     private void OnFileCreated(object sender, FileSystemEventArgs e)
     {
-        throw new NotImplementedException();
+        _dispatcher.Invoke(() =>
+        {
+            FileCreated?.Invoke(sender, e);
+        });
     }
 }
