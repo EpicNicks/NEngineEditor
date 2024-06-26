@@ -1,12 +1,12 @@
-﻿using NEngineEditor.Managers;
-using NEngineEditor.Properties;
-using System.Collections.ObjectModel;
-using System.Drawing;
+﻿using System.Collections.ObjectModel;
 using System.IO;
 using System.Reflection;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+
+using NEngineEditor.Managers;
+using NEngineEditor.Properties;
 
 namespace NEngineEditor.ViewModel;
 public class ContentBrowserViewModel : ViewModelBase
@@ -17,6 +17,7 @@ public class ContentBrowserViewModel : ViewModelBase
 
     public static readonly ImageSource FOLDER_ICON;
     public static readonly ImageSource CS_SCRIPT_ICON;
+    public static readonly ImageSource UP_ONE_LEVEL_ICON;
 
     private ObservableCollection<FileIconName> _items = [];
     public ObservableCollection<FileIconName> Items
@@ -37,11 +38,14 @@ public class ContentBrowserViewModel : ViewModelBase
         FOLDER_ICON.Freeze();
         CS_SCRIPT_ICON = new BitmapImage(GetResourceFolderUri("csharp-script-icon.png"));
         CS_SCRIPT_ICON.Freeze();
+        UP_ONE_LEVEL_ICON = new BitmapImage(GetResourceFolderUri("ellipsis-horizontal.png"));
+        UP_ONE_LEVEL_ICON.Freeze();
     }
 
     // uri resource to explain this shit: https://learn.microsoft.com/en-us/dotnet/desktop/wpf/app-development/pack-uris-in-wpf?view=netframeworkdesktop-4.8
-    private static Uri GetResourceFolderUri(string fileName) 
-        => new($"pack://application:,,,/{Assembly.GetExecutingAssembly().GetName().Name};component/Resources/{fileName}");
+    private static string GetResourceFolder(string resourcePath)
+        => $"pack://application:,,,/{Assembly.GetExecutingAssembly().GetName().Name};component/Resources/{resourcePath}";
+    private static Uri GetResourceFolderUri(string resourcePath) => new(GetResourceFolder(resourcePath));
 
     public ContentBrowserViewModel(Dispatcher contentBrowserDispatcher)
     {
@@ -80,6 +84,7 @@ public class ContentBrowserViewModel : ViewModelBase
     {
         CS_SCRIPT,
         FOLDER,
+        SCENE,
     }
 
     private void LoadFilesInCurrentDir()
@@ -91,12 +96,16 @@ public class ContentBrowserViewModel : ViewModelBase
 
         // should generate a .. go up button for directories which are not the root directory
         List<FileIconName> filesAndDirectories = [];
-        string currentDir = Path.Combine(MainViewModel.Instance.ProjectDirectory, subDirectory.CurrentSubDir);
+        string currentDir = subDirectory.CurrentSubDir;
         string[] directoryPaths = Directory.GetDirectories(currentDir);
         string[] filePaths = Directory.GetFiles(currentDir);
+        if (currentDir != MainViewModel.Instance.ProjectDirectory)
+        {
+            filesAndDirectories.Add(new(UP_ONE_LEVEL_ICON, "", Directory.GetParent(currentDir)!.FullName));
+        }
         foreach (string dir in directoryPaths)
         {
-            string? dirName = Path.GetDirectoryName(dir);
+            string? dirName = new DirectoryInfo(dir).Name;
             if (dirName is not null)
             {
                 filesAndDirectories.Add(new(FOLDER_ICON, dirName, dir));
@@ -142,8 +151,34 @@ public class ContentBrowserViewModel : ViewModelBase
         File.Move(filePath, Path.Join(path, newName));
     }
 
-    public void CreateItem(string path, CreateItemType createItemType, string itemName)
+    public bool CreateItem(string path, CreateItemType createItemType, string itemName)
     {
-
+        string fullPath = Path.Join(path, itemName);
+        if (File.Exists(fullPath))
+        {
+            return false;
+        }
+        if (createItemType == CreateItemType.FOLDER)
+        {
+            Directory.CreateDirectory(fullPath);
+        }
+        else if (createItemType == CreateItemType.CS_SCRIPT)
+        {
+            if (!fullPath.EndsWith(".cs"))
+            {
+                fullPath += ".cs";
+            }
+            string gameObjectScriptTemplate = Resources.GameObjectTemplate_cs;
+            string scriptOutput = gameObjectScriptTemplate.Replace("{CLASSNAME}", itemName.Replace("-", "_"));
+            using FileStream fileStream = File.Create(fullPath);
+            using StreamWriter writer = new StreamWriter(fileStream);
+            writer.Write(scriptOutput);
+        }
+        else
+        {
+            // log warning: unexpected type once logging is implemented
+        }
+        LoadFilesInCurrentDir();
+        return true;
     }
 }

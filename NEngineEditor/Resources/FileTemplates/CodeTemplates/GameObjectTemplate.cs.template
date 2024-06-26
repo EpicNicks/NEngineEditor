@@ -1,0 +1,17 @@
+﻿using NEngine.GameObjects;
+
+// change "GameObject" to "Positionable" if you need your GameObject to have a position or "Moveable" to handle movement with its Move function in Update
+public class {CLASSNAME} : GameObject
+{
+    // Called when the object is first added to the scene (if active)
+    public override void Attach()
+    {
+
+    }
+
+    // Called every frame the object is enabled in the scene
+    public override void Update()
+    {
+
+    }
+}

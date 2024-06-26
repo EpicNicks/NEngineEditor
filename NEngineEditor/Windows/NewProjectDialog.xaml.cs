@@ -12,6 +12,7 @@ public partial class NewProjectDialog : Window
     public NewProjectDialog()
     {
         InitializeComponent();
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
     private void OK_Click(object sender, RoutedEventArgs e)
     {

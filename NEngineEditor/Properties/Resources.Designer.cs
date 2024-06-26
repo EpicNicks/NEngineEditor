@@ -73,10 +73,46 @@ namespace NEngineEditor.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap ellipsis_horizontal {
+            get {
+                object obj = ResourceManager.GetObject("ellipsis_horizontal", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap FolderIcon {
             get {
                 object obj = ResourceManager.GetObject("FolderIcon", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to using NEngine.GameObjects;
+        ///
+        ///// change &quot;GameObject&quot; to &quot;Positionable&quot; if you need your GameObject to have a position or &quot;Moveable&quot; to handle movement with its Move function in Update
+        ///public class {CLASSNAME} : GameObject
+        ///{
+        ///    // Called when the object is first added to the scene (if active)
+        ///    public override void Attach()
+        ///    {
+        ///
+        ///    }
+        ///
+        ///    // Called every frame the object is enabled in the scene
+        ///    public override void Update()
+        ///    {
+        ///
+        ///    }
+        ///}
+        ///.
+        /// </summary>
+        internal static string GameObjectTemplate_cs {
+            get {
+                return ResourceManager.GetString("GameObjectTemplate_cs", resourceCulture);
             }
         }
     }

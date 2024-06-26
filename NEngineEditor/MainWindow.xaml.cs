@@ -16,6 +16,7 @@ public partial class MainWindow : Window
         MainViewModel.Instance.ProjectDirectory = projectPath;
         InitializeComponent();
         DataContext = MainViewModel.Instance;
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
 
     private void SaveMenuItemClick(object sender, RoutedEventArgs e)

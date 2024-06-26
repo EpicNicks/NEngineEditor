@@ -19,6 +19,7 @@ public partial class ProjectOpenWindow : Window
     {
         InitializeComponent();
         BaseFilePathTextBox.TextChanged += BaseFilePathTextBox_TextChanged;
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
 
     private void BrowseButton_Click(object sender, RoutedEventArgs e)
@@ -87,6 +88,10 @@ public partial class ProjectOpenWindow : Window
                     
                     // TODO: create assets folder in the base dir?
                     //  Roslyn or something to build into a build folder?
+
+                    // TODO: csproj file for it to be opened in visual studio or rider or vscode or whatever
+                    //  check out the template I would need to generate and create the basic structure
+                    //  probably "Assets" folder in the root dir
 
                     // Add the new project to the list
                     ProjectListBox.Items.Add(new ListBoxItem { Content = projectName });

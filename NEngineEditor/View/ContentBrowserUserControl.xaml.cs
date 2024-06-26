@@ -1,8 +1,9 @@
-﻿using System.Diagnostics;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 
+using NEngineEditor.Managers;
 using NEngineEditor.ViewModel;
+using NEngineEditor.Windows;
 
 namespace NEngineEditor.View;
 /// <summary>
@@ -30,12 +31,14 @@ public partial class ContentBrowserUserControl : UserControl
                 if (img.Source == ContentBrowserViewModel.FOLDER_ICON)
                 {
                     OpenFolder(filePath);
-                    // tell ContentBrowserViewModel to set current folder to current path
+                }
+                else if (img.Source == ContentBrowserViewModel.UP_ONE_LEVEL_ICON)
+                {
+                    OpenFolder(filePath);
                 }
                 else if (img.Source == ContentBrowserViewModel.CS_SCRIPT_ICON)
                 {
-                    MessageBox.Show($"script {txtBlock.Text} double-clicked. Opening script at {filePath}");
-                    // open file in default editor/editor selected in editor settings
+                    OpenScript(filePath);
                 }
             }
             // handle file click
@@ -138,10 +141,32 @@ public partial class ContentBrowserUserControl : UserControl
     private void CreateItem(ContentBrowserViewModel.CreateItemType createItemType)
     {
         // dialog creation
+        NewItemDialog newItemDialog = new NewItemDialog(createItemType);
+        if (newItemDialog.ShowDialog() == true)
+        {
+            if (newItemDialog.EnteredName is null)
+            {
+                MessageBox.Show("The Project Name was null somehow", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            if (DataContext is not ContentBrowserViewModel cbvm)
+            {
+                return;
+            }
+            cbvm.CreateItem(cbvm.subDirectory.CurrentSubDir, createItemType, newItemDialog.EnteredName);
+        }
     }
 
     private void OpenScript(string filePath)
     {
-        using Process? p = Process.Start(filePath);
+        try
+        {
+            FileDialogHelper.ShowOpenWithDialog(filePath);
+            // TODO: just open it normally after getting a csproj set up for the project
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"An error occurred: {ex.Message}");
+        }
     }
 }
