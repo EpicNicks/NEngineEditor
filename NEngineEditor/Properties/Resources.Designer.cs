@@ -71,6 +71,33 @@ namespace NEngineEditor.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &lt;Project Sdk=&quot;Microsoft.NET.Sdk&quot;&gt;
+        ///
+        ///  &lt;PropertyGroup&gt;
+        ///    &lt;OutputType&gt;Exe&lt;/OutputType&gt;
+        ///    &lt;TargetFramework&gt;net6.0&lt;/TargetFramework&gt;
+        ///  &lt;/PropertyGroup&gt;
+        ///
+        ///  &lt;ItemGroup&gt;
+        ///    &lt;Reference Include=&quot;EngineAssembly&quot;&gt;
+        ///      &lt;HintPath&gt;.Engine\EngineAssembly.dll&lt;/HintPath&gt;
+        ///    &lt;/Reference&gt;
+        ///  &lt;/ItemGroup&gt;
+        ///
+        ///  &lt;ItemGroup&gt;
+        ///    &lt;Compile Include=&quot;**\*.cs&quot; /&gt;
+        ///  &lt;/ItemGroup&gt;
+        ///
+        ///&lt;/Project&gt;
+        ///.
+        /// </summary>
+        internal static string CsProjTemplate_csproj {
+            get {
+                return ResourceManager.GetString("CsProjTemplate_csproj", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap ellipsis_horizontal {

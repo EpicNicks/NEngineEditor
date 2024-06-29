@@ -173,6 +173,7 @@ public class ContentBrowserViewModel : ViewModelBase
             using FileStream fileStream = File.Create(fullPath);
             using StreamWriter writer = new StreamWriter(fileStream);
             writer.Write(scriptOutput);
+            // TODO: generate Guid in metadata file for the script for scene reference
         }
         else
         {

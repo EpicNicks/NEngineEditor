@@ -1,11 +1,10 @@
-﻿using Microsoft.Win32;
-
-using NEngineEditor.Model.JsonSerialized;
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
+
+using NEngineEditor.Model.JsonSerialized;
 
 namespace NEngineEditor.Windows;
 /// <summary>
@@ -33,6 +32,22 @@ public partial class ProjectOpenWindow : Window
 
     private void BaseFilePathTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
+        Refresh();
+    }
+
+    private void RefreshButton_Click(object sender, RoutedEventArgs e)
+    {
+        Refresh();
+    }
+
+    private void CreateNewProject_Click(object sender, RoutedEventArgs e)
+    {
+        //System.Windows.MessageBox.Show("Create new project functionality to be implemented.");
+        SetupNewProject();
+    }
+
+    private void Refresh()
+    {
         var basePath = BaseFilePathTextBox.Text;
         ProjectListBox.Items.Clear();
 
@@ -46,12 +61,6 @@ public partial class ProjectOpenWindow : Window
                 ProjectListBox.Items.Add(new ListBoxItem { Content = Path.GetFileName(dir), Tag = dir });
             }
         }
-    }
-
-    private void CreateNewProject_Click(object sender, RoutedEventArgs e)
-    {
-        //System.Windows.MessageBox.Show("Create new project functionality to be implemented.");
-        SetupNewProject();
     }
 
     private void SetupNewProject()
@@ -69,32 +78,36 @@ public partial class ProjectOpenWindow : Window
                     return;
                 }
                 string projectName = newProjectDialog.ProjectName;
+                string sanitizedProjectName = projectName.Replace(" ", "_");
                 // Create the new project directory and NEngineProject.json file
                 var projectPath = Path.Combine(BaseFilePathTextBox.Text, projectName);
+                var assetsPath = Path.Combine(projectPath, "Assets");
                 if (!Directory.Exists(projectPath))
                 {
                     Directory.CreateDirectory(projectPath);
-                    
+                    Directory.CreateDirectory(assetsPath);
+
                     NEngineProject projectData = new()
                     {
                         ProjectName = projectName,
-                        EngineVersion = "0.0.1" 
+                        EngineVersion = "0.0.1"
                         // placeholder since we aren't doing versioning yet anyway, not even sure how to version between the engine core and editor right now anyway
                         //  engine version selection would be selected or populated once it matters and the editor has a reference to it
                     };
-                    using var fileStream = File.Create(Path.Combine(projectPath, "NEngineProject.json"));
-                    using var writer = new StreamWriter(fileStream);
-                    writer.Write(JsonSerializer.Serialize(projectData, NEW_PROJECT_JSON_OPTIONS));
-                    
-                    // TODO: create assets folder in the base dir?
-                    //  Roslyn or something to build into a build folder?
 
-                    // TODO: csproj file for it to be opened in visual studio or rider or vscode or whatever
-                    //  check out the template I would need to generate and create the basic structure
-                    //  probably "Assets" folder in the root dir
-
+                    // TODO: generate Main class with Main method which the editor needs to provide with the Scenes something like
+                    //  Application.WindowName = <project property window name>
+                    //  List<SceneData> = TraverseAndDeserializeScenesInProjectFolders()
+                    //  foreach SceneData s => Application.AddScene(s.ToScene())
+                    //  Application.Run()
+                    Task[] fileTasks =
+                    [
+                        File.WriteAllTextAsync(Path.Combine(projectPath, $"{sanitizedProjectName}.csproj"), Properties.Resources.CsProjTemplate_csproj),
+                        File.WriteAllTextAsync(Path.Combine(projectPath, "NEngineProject.json"), JsonSerializer.Serialize(projectData, NEW_PROJECT_JSON_OPTIONS)),
+                    ];
+                    Task.WaitAll(fileTasks);
                     // Add the new project to the list
-                    ProjectListBox.Items.Add(new ListBoxItem { Content = projectName });
+                    ProjectListBox.Items.Add(new ListBoxItem { Content = projectName, Tag = projectPath });
                 }
                 else
                 {

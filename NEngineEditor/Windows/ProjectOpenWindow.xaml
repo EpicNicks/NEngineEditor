@@ -16,9 +16,10 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" Margin="10">
-            <TextBlock Text="All Projects Parent Folder:" Margin="0,0,10,0"/>
-            <TextBox x:Name="BaseFilePathTextBox" Width="300" VerticalAlignment="Center" Margin="0,0,10,0"/>
-            <Button Content="Browse..." Click="BrowseButton_Click" VerticalAlignment="Center"/>
+            <TextBlock Text="All Projects Parent Folder:" Margin="0,0,10,0" />
+            <TextBox x:Name="BaseFilePathTextBox" Width="300" VerticalAlignment="Center" Margin="0,0,10,0" />
+            <Button Content="Browse..." Click="BrowseButton_Click" VerticalAlignment="Center" Margin="0,0,10,0" />
+            <Button Content="Refresh Projects" Click="RefreshButton_Click" VerticalAlignment="Center" />
         </StackPanel>
 
         <StackPanel Grid.Row="1" Margin="10">

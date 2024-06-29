@@ -162,7 +162,8 @@ public partial class ContentBrowserUserControl : UserControl
         try
         {
             FileDialogHelper.ShowOpenWithDialog(filePath);
-            // TODO: just open it normally after getting a csproj set up for the project
+            // TODO: just open the csproj normally after getting a csproj set up for the project
+            //  
         }
         catch (Exception ex)
         {
