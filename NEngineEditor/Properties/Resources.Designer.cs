@@ -75,7 +75,7 @@ namespace NEngineEditor.Properties {
         ///
         ///  &lt;PropertyGroup&gt;
         ///    &lt;OutputType&gt;Exe&lt;/OutputType&gt;
-        ///    &lt;TargetFramework&gt;net6.0&lt;/TargetFramework&gt;
+        ///    &lt;TargetFramework&gt;net8.0&lt;/TargetFramework&gt;
         ///  &lt;/PropertyGroup&gt;
         ///
         ///  &lt;ItemGroup&gt;
@@ -85,15 +85,15 @@ namespace NEngineEditor.Properties {
         ///  &lt;/ItemGroup&gt;
         ///
         ///  &lt;ItemGroup&gt;
+        ///    &lt;PackageReference Include=&quot;SFML.Net&quot; Version=&quot;2.6.0&quot; /&gt;
+        ///  &lt;/ItemGroup&gt;
+        ///
+        ///  &lt;ItemGroup&gt;
         ///    &lt;!-- Add any other dependencies you might need here --&gt;
         ///  &lt;/ItemGroup&gt;
         ///
         ///  &lt;ItemGroup&gt;
-        ///    &lt;Compile Include=&quot;**\*.cs&quot; /&gt;
-        ///  &lt;/ItemGroup&gt;
-        ///
-        ///&lt;/Project&gt;
-        ///.
+        ///    &lt;Compile Inc [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string CsProjTemplate_csproj {
             get {
@@ -144,6 +144,16 @@ namespace NEngineEditor.Properties {
         internal static string GameObjectTemplate_cs {
             get {
                 return ResourceManager.GetString("GameObjectTemplate_cs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap SceneIcon {
+            get {
+                object obj = ResourceManager.GetObject("SceneIcon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
     }

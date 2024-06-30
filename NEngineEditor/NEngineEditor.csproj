@@ -17,6 +17,7 @@
     <None Remove="Resources\FileTemplates\JsonTemplates\NEngineProject.json" />
     <None Remove="Resources\FileTemplates\JsonTemplates\ProjectConfig.json" />
     <None Remove="Resources\folder-icon.png" />
+    <None Remove="Resources\scene-icon.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -56,6 +57,7 @@
   <ItemGroup>
     <Resource Include="Resources\csharp-script-icon.png" />
     <Resource Include="Resources\folder-icon.png" />
+    <Resource Include="Resources\scene-icon.png" />
   </ItemGroup>
 
   <ItemGroup>

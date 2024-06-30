@@ -18,6 +18,7 @@ public class ContentBrowserViewModel : ViewModelBase
     public static readonly ImageSource FOLDER_ICON;
     public static readonly ImageSource CS_SCRIPT_ICON;
     public static readonly ImageSource UP_ONE_LEVEL_ICON;
+    public static readonly ImageSource SCENE_ICON;
 
     private ObservableCollection<FileIconName> _items = [];
     public ObservableCollection<FileIconName> Items
@@ -40,6 +41,8 @@ public class ContentBrowserViewModel : ViewModelBase
         CS_SCRIPT_ICON.Freeze();
         UP_ONE_LEVEL_ICON = new BitmapImage(GetResourceFolderUri("ellipsis-horizontal.png"));
         UP_ONE_LEVEL_ICON.Freeze();
+        SCENE_ICON = new BitmapImage(GetResourceFolderUri("scene-icon.png"));
+        SCENE_ICON.Freeze();
     }
 
     // uri resource to explain this shit: https://learn.microsoft.com/en-us/dotnet/desktop/wpf/app-development/pack-uris-in-wpf?view=netframeworkdesktop-4.8
@@ -102,27 +105,28 @@ public class ContentBrowserViewModel : ViewModelBase
         }
         foreach (string dir in directoryPaths)
         {
-            string? dirName = new DirectoryInfo(dir).Name;
-            if (dirName is not null)
+            DirectoryInfo dirInfo = new DirectoryInfo(dir);
+            string? dirName = dirInfo.Name;
+            List<string> specialFolders = ["bin", "obj"];
+            if (dirName is not null && !dirInfo.Attributes.HasFlag(FileAttributes.Hidden) && !specialFolders.Contains(dirName))
             {
                 filesAndDirectories.Add(new(FOLDER_ICON, dirName, dir));
-            }
-            else
-            {
-                // log an error to the console when a console is actually defined
             }
         }
         foreach (string filePath in filePaths)
         {
             string? fileName = Path.GetFileName(filePath);
             string? extension = Path.GetExtension(filePath);
-            if (fileName is not null && extension is not null && extension.Equals(".cs", StringComparison.OrdinalIgnoreCase))
+            if (fileName is not null && extension is not null)
             {
-                filesAndDirectories.Add(new(CS_SCRIPT_ICON, fileName, filePath));
-            }
-            else
-            {
-                // log an error to the console when a console is actually defined
+                if (extension.Equals(".cs", StringComparison.OrdinalIgnoreCase))
+                {
+                    filesAndDirectories.Add(new(CS_SCRIPT_ICON, fileName, filePath));
+                }
+                else if (extension.Equals(".scene", StringComparison.OrdinalIgnoreCase))
+                {
+                    filesAndDirectories.Add(new(SCENE_ICON, fileName, filePath));
+                }
             }
         }
         Items = new ObservableCollection<FileIconName>(filesAndDirectories);

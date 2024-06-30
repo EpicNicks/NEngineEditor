@@ -191,12 +191,13 @@ public partial class ContentBrowserUserControl : UserControl
         {
             // assume visual studio for now
             string csProjFilePath = Directory.GetFiles(MainViewModel.Instance.ProjectDirectory).Where(path => Path.GetExtension(path) == ".csproj").First();
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "devenv.exe",
-                Arguments = $"{csProjFilePath} /Edit {filePath}",
-                UseShellExecute = true
-            });
+            FileDialogHelper.ShowOpenWithDialog(csProjFilePath);
+            //Process.Start(new ProcessStartInfo
+            //{
+            //    FileName = "devenv.exe",
+            //    Arguments = $"{csProjFilePath} /Edit {filePath}",
+            //    UseShellExecute = true
+            //});
         }
         catch (Exception ex)
         {

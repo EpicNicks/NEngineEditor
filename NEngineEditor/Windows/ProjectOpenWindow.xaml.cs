@@ -19,6 +19,7 @@ public partial class ProjectOpenWindow : Window
     public ProjectOpenWindow()
     {
         InitializeComponent();
+        DataContext = this;
         BaseFilePathTextBox.TextChanged += BaseFilePathTextBox_TextChanged;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
@@ -115,6 +116,7 @@ public partial class ProjectOpenWindow : Window
 
                     foreach (AssemblyName assemblyName in referencedAssemblies)
                     {
+                        // SFML.NET reference is added in the generated csproj file
                         if (assemblyName.Name == "NEngine")
                         {
                             Assembly referencedAssembly = Assembly.Load(assemblyName);

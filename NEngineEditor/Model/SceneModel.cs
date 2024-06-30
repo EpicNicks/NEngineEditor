@@ -1,7 +1,8 @@
 ﻿namespace NEngineEditor.Model;
 public class SceneModel
 {
-    public List<GameObjectWrapperModel> GameObjectWrappers = [];
+    public string? Name { get; set; }
+    public List<GameObjectWrapperModel> SceneGameObjects = [];
 
     public static SceneModel CreateFromFile(string path)
     {

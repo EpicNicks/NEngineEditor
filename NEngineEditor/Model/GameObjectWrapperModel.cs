@@ -3,6 +3,7 @@
 using NEngine.CoreLibs.GameObjects;
 using NEngine.GameObjects;
 using NEngine.Window;
+using System.Diagnostics;
 
 namespace NEngineEditor.Model;
 /// <summary>
@@ -16,15 +17,29 @@ public class GameObjectWrapperModel
     public Guid Guid { get; set; }
     public string? Name { get; set; }
     public string? GameObjectClass { get; set; }
-    public Dictionary<string, (string, object)>? GameObjectPropertyNameTypeValue { get; set; }
+    public Dictionary<string, TypeValuePair>? GameObjectPropertyNameTypeValue { get; set; }
     public RenderLayer RenderLayer { get; set; }
+
+    public class TypeValuePair
+    {
+        public string? Type { get; set; }
+        public string? Value { get; set; }
+    }
 
     public GameObjectWrapperModel(string gameObjectClass)
     {
-        GameObjectClass = gameObjectClass;
         Type? gameObjectType = Type.GetType(gameObjectClass);
+
+        GameObjectClass = gameObjectClass;
         GameObjectPropertyNameTypeValue = PropertiesAndValuesFromPublicFields(gameObjectType);
         RenderLayer = DefaultRenderLayer(gameObjectType);
+    }
+
+    public GameObjectWrapperModel FromJson(string jsonString)
+    {
+        // TODO: load and parse into properties as well as property dictionary following the SceneData.example.json file
+
+        throw new NotImplementedException();
     }
 
     public override string ToString()
@@ -32,9 +47,14 @@ public class GameObjectWrapperModel
         return Name ?? "NamelessGO";
     }
 
-    private static Dictionary<string, (string, object)> PropertiesAndValuesFromPublicFields(Type? gameObjectType)
+    /// <summary>
+    /// Creates the dictionary of default values for use in creating a fresh GameObjectWrapper in the Inspector
+    /// </summary>
+    /// <param name="gameObjectType"></param>
+    /// <returns></returns>
+    private static Dictionary<string, TypeValuePair> PropertiesAndValuesFromPublicFields(Type? gameObjectType)
     {
-        Dictionary<string, (string, object)> ret = [];
+        Dictionary<string, TypeValuePair> ret = [];
         if (gameObjectType is null || !gameObjectType.IsAssignableTo(typeof(GameObject)))
         {
             return [];
@@ -63,6 +83,19 @@ public class GameObjectWrapperModel
             }.Contains(type);
         }
 
+        static string ValueTypeToString(object? value)
+        {
+            return value switch
+            {
+                sbyte or byte or int or uint or short or ushort or long or ulong or float or double or decimal or bool => value.ToString()!,
+                Vector2i v => $"{{ {v.X}, {v.Y} }}",
+                Vector2f v => $"{{ {v.X}, {v.Y} }}",
+                Vector2u v => $"{{ {v.X}, {v.Y} }}",
+                Vector3f v => $"{{ {v.X}, {v.Y}, {v.Z} }}",
+                _ => ""
+            };
+        }
+
         foreach (var publicMember in gameObjectType.GetMembers())
         {
             if (publicMember.DeclaringType is null)
@@ -71,12 +104,11 @@ public class GameObjectWrapperModel
             }
             if (IsAllowedValueType(publicMember.DeclaringType))
             {
-                ret.Add(publicMember.Name, (publicMember.DeclaringType.ToString(), Activator.CreateInstance(publicMember.DeclaringType)!));
+                ret.Add(publicMember.Name, new() { Type = publicMember.DeclaringType.ToString(), Value = ValueTypeToString(Activator.CreateInstance(publicMember.DeclaringType)) });
             }
             else if (publicMember.DeclaringType.IsAssignableTo(typeof(GameObject)))
             {
-                // need to populate with Guid of something in the scene or some other way to reference another object in the scene
-                ret.Add(publicMember.Name, (typeof(GameObject).ToString(), default(Guid)));
+                ret.Add(publicMember.Name, new() { Type = typeof(GameObject).ToString(), Value = default(Guid).ToString() });
             }
         }
 
