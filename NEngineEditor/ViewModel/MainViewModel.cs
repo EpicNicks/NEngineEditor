@@ -1,4 +1,5 @@
-﻿using NEngineEditor.Model;
+﻿using NEngine.GameObjects;
+using NEngineEditor.Model;
 using System.Collections.ObjectModel;
 
 namespace NEngineEditor.ViewModel;
@@ -14,16 +15,6 @@ public class MainViewModel : ViewModelBase
             OnPropertyChanged(nameof(ProjectDirectory));
         }
     }
-    private Guid _loadedSceneGuid;
-    public Guid LoadedSceneGuid
-    {
-        get => _loadedSceneGuid;
-        set 
-        {
-            _loadedSceneGuid = value;
-            OnPropertyChanged(nameof(LoadedSceneGuid));
-        }
-    }
     private ObservableCollection<GameObjectWrapperModel> _gameObjectWrapperModels = [];
     public ObservableCollection<GameObjectWrapperModel> GameObjectWrapperModels
     {
@@ -35,6 +26,17 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    public ObservableCollection<LogEntry> _logs = [];
+    public ObservableCollection<LogEntry> Logs
+    {
+        get => _logs;
+        set
+        {
+            _logs = value;
+            OnPropertyChanged(nameof(Logs));
+        }
+    }
+
     private static MainViewModel? instance;
     public static MainViewModel Instance => instance ??= new MainViewModel();
 
@@ -42,7 +44,7 @@ public class MainViewModel : ViewModelBase
     {
         // for testing
         GameObjectWrapperModels = [
-            new GameObjectWrapperModel(Guid.NewGuid(), new NEngine.GameObjects.GameObject{ Name = "Sid"})
+            new GameObjectWrapperModel(nameof(GameObject)){ Name = "Sid" }
         ];
     }
 }

@@ -11,7 +11,7 @@ using NEngineEditor.Properties;
 namespace NEngineEditor.ViewModel;
 public class ContentBrowserViewModel : ViewModelBase
 {
-    private ProjectDirectoryWatcher _projectDirectoryWatcher;
+    private readonly ProjectDirectoryWatcher _projectDirectoryWatcher;
 
     public readonly SubDirectory subDirectory;
 
@@ -50,6 +50,9 @@ public class ContentBrowserViewModel : ViewModelBase
     public ContentBrowserViewModel(Dispatcher contentBrowserDispatcher)
     {
         _projectDirectoryWatcher = new ProjectDirectoryWatcher(MainViewModel.Instance.ProjectDirectory, contentBrowserDispatcher);
+        _projectDirectoryWatcher.FileDeleted += (o, e) => LoadFilesInCurrentDir();
+        _projectDirectoryWatcher.FileCreated += (o, e) => LoadFilesInCurrentDir();
+        _projectDirectoryWatcher.FileRenamed += (o, e) => LoadFilesInCurrentDir();
         subDirectory = new SubDirectory(MainViewModel.Instance.ProjectDirectory, () =>
         {
             OnPropertyChanged(nameof(DirectoryPath));
@@ -89,12 +92,6 @@ public class ContentBrowserViewModel : ViewModelBase
 
     private void LoadFilesInCurrentDir()
     {
-        // spoof for now
-        //var spoofBaseUrl = "C:/Deez/Nuts/NEngineProject";
-        //Items = [new(FOLDER_ICON, "subdir1", $"{spoofBaseUrl}/subdir1"), new(CS_SCRIPT_ICON, "somescript.cs", $"{spoofBaseUrl}/somescript.cs")];
-        //return;
-
-        // should generate a .. go up button for directories which are not the root directory
         List<FileIconName> filesAndDirectories = [];
         string currentDir = subDirectory.CurrentSubDir;
         string[] directoryPaths = Directory.GetDirectories(currentDir);
@@ -133,7 +130,10 @@ public class ContentBrowserViewModel : ViewModelBase
 
     public void DeleteItem(string filePath)
     {
-        // delete logic
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
         LoadFilesInCurrentDir();
     }
 
@@ -148,7 +148,12 @@ public class ContentBrowserViewModel : ViewModelBase
         {
             return;
         }
-        File.Move(filePath, Path.Join(path, newName));
+        // prevent multiple calls/race condition
+        if (!File.Exists(Path.Join(Path.GetDirectoryName(filePath), newName)))
+        {
+            File.Move(filePath, Path.Join(path, newName));
+            LoadFilesInCurrentDir();
+        }
     }
 
     public bool CreateItem(string path, CreateItemType createItemType, string itemName)

@@ -38,6 +38,10 @@ public partial class Program
     {
         public string? ProjectName { get; set; }
         public string? DefaultBackgroundColor { get; set; }
+        /// <summary>
+        /// An ordered list of scenes to be added
+        /// </summary>
+        public List<string>? ScenePaths { get; set; }
 
         public Color BackgroundColor()
         {
@@ -70,26 +74,29 @@ public partial class Program
         return JsonSerializer.Deserialize<ProjectSettings>(jsonContentString);
     }
 
-    private static List<string> FindScenesInPath(string path)
-    {
-        static List<string> GetScenePathsInDirectory(string directoryPath)
-        {
-            return Directory.GetFiles(directoryPath).Where(filePath => Path.GetExtension(filePath).Equals(".scene")).ToList();
-        }
-        if (Directory.GetDirectories(path).Length == 0)
-        {
-            return GetScenePathsInDirectory(path);
-        }
-        else
-        {
-            return [.. GetScenePathsInDirectory(path), .. Directory.GetDirectories(path).SelectMany(FindScenesInPath).ToList()];
-        }
-    }
+    //private static List<string> FindScenesInPath(string path)
+    //{
+    //    static List<string> GetScenePathsInDirectory(string directoryPath)
+    //    {
+    //        return Directory.GetFiles(directoryPath).Where(filePath => Path.GetExtension(filePath).Equals(".scene")).ToList();
+    //    }
+    //    if (Directory.GetDirectories(path).Length == 0)
+    //    {
+    //        return GetScenePathsInDirectory(path);
+    //    }
+    //    else
+    //    {
+    //        return [.. GetScenePathsInDirectory(path), .. Directory.GetDirectories(path).SelectMany(FindScenesInPath).ToList()];
+    //    }
+    //}
 
+    // TODO: Change "void" to "SceneData" define the SceneData class and how it is serialized/deserialized.
+    //  probably json - class name (System.Activator<T>(deserializedType)), properties + values key-value pair of class property name, value (string, number, scene id for a linked GameObject)
     private static void LoadSceneDataFiles()
     {
-        List<string> scenePaths = FindScenesInPath("Assets");
-        // TODO: define the SceneData class and how it is serialized/deserialized.
-        
+        // Scenes need to be specified in order in Project Settings
+
+        //List<string> scenePaths = FindScenesInPath("Assets");
+        // foreach string path in scenePaths => File.ReadAllText(path) |> JsonSerializer.Deserialize<SceneData>
     }
 }

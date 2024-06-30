@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -74,18 +76,21 @@ public partial class ProjectOpenWindow : Window
             {
                 if (newProjectDialog.ProjectName is null)
                 {
-                    System.Windows.MessageBox.Show("The Project Name was null somehow", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show("The Project Name was null somehow in ProjectOpenWindow::SetupNewProject", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
                 string projectName = newProjectDialog.ProjectName;
                 string sanitizedProjectName = projectName.Replace(" ", "_");
                 // Create the new project directory and NEngineProject.json file
-                var projectPath = Path.Combine(BaseFilePathTextBox.Text, projectName);
-                var assetsPath = Path.Combine(projectPath, "Assets");
+                string projectPath = Path.Combine(BaseFilePathTextBox.Text, projectName);
+                string assetsPath = Path.Combine(projectPath, "Assets");
+                string engineFolderPath = Path.Combine(projectPath, ".Engine");
                 if (!Directory.Exists(projectPath))
                 {
                     Directory.CreateDirectory(projectPath);
                     Directory.CreateDirectory(assetsPath);
+                    DirectoryInfo engineDirectoryInfo = Directory.CreateDirectory(engineFolderPath);
+                    engineDirectoryInfo.Attributes |= FileAttributes.Hidden;
 
                     NEngineProject projectData = new()
                     {
@@ -94,6 +99,34 @@ public partial class ProjectOpenWindow : Window
                         // placeholder since we aren't doing versioning yet anyway, not even sure how to version between the engine core and editor right now anyway
                         //  engine version selection would be selected or populated once it matters and the editor has a reference to it
                     };
+
+                    ProjectConfig projectConfig = new()
+                    {
+                        DefaultBackgroundColor = "#000",
+                        Scenes = [],
+                    };
+
+                    // compile the engine and copy it to the new project
+
+                    // Get the executing assembly
+                    Assembly executingAssembly = Assembly.GetExecutingAssembly();
+                    AssemblyName[] referencedAssemblies = executingAssembly.GetReferencedAssemblies();
+                    string destinationFolder = engineFolderPath;
+
+                    foreach (AssemblyName assemblyName in referencedAssemblies)
+                    {
+                        if (assemblyName.Name == "NEngine")
+                        {
+                            Assembly referencedAssembly = Assembly.Load(assemblyName);
+                            string sourcePath = referencedAssembly.Location;
+                            string destinationPath = Path.Combine(destinationFolder, Path.GetFileName(sourcePath));
+                            if (File.Exists(sourcePath))
+                            {
+                                File.Copy(sourcePath, destinationPath, true);
+                                Console.WriteLine($"Copied {sourcePath} to {destinationPath}");
+                            }
+                        }
+                    }
 
                     // TODO: generate Main class with Main method which the editor needs to provide with the Scenes something like
                     //  Application.WindowName = <project property window name>
@@ -104,6 +137,9 @@ public partial class ProjectOpenWindow : Window
                     [
                         File.WriteAllTextAsync(Path.Combine(projectPath, $"{sanitizedProjectName}.csproj"), Properties.Resources.CsProjTemplate_csproj),
                         File.WriteAllTextAsync(Path.Combine(projectPath, "NEngineProject.json"), JsonSerializer.Serialize(projectData, NEW_PROJECT_JSON_OPTIONS)),
+                        File.WriteAllTextAsync(Path.Combine(assetsPath, "ProjectConfig.json"), JsonSerializer.Serialize(projectConfig, NEW_PROJECT_JSON_OPTIONS)),
+                        // copy NEngine.dll
+                        
                     ];
                     Task.WaitAll(fileTasks);
                     // Add the new project to the list

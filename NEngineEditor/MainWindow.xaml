@@ -57,6 +57,7 @@
                     <view:ContentBrowserUserControl />
                 </TabItem>
                 <TabItem Header="Console">
+                    <view:ConsoleUserControl />
                 </TabItem>
             </TabControl>
         </DockPanel>

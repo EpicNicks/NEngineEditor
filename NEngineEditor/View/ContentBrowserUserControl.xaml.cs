@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.IO;
+using System.Windows;
 using System.Windows.Controls;
 
 using NEngineEditor.Managers;
@@ -75,6 +77,8 @@ public partial class ContentBrowserUserControl : UserControl
         }
         stackPanel.ContextMenu = contextMenu;
         contextMenu.IsOpen = true;
+        // prevents bubbling to the outer grid
+        e.Handled = true;
     }
 
     private void OuterStackPanel_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -89,8 +93,22 @@ public partial class ContentBrowserUserControl : UserControl
         createCsScriptMenuItem.Click += (s, args) => CreateItem(ContentBrowserViewModel.CreateItemType.CS_SCRIPT);
         var createFolderMenuItem = new MenuItem { Header = "Create Folder" };
         createFolderMenuItem.Click += (s, args) => CreateItem(ContentBrowserViewModel.CreateItemType.FOLDER);
+        var openCurrentDirInFileExplorer = new MenuItem { Header = "Open Current Directory in File Explorer" };
+        openCurrentDirInFileExplorer.Click += (s, args) =>
+        {
+            string currentDirectory = cbvm.subDirectory.CurrentSubDir;
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = currentDirectory,
+                UseShellExecute = true,
+                Verb = "open"
+            });
+        };
+
         contextMenu.Items.Add(createCsScriptMenuItem);
         contextMenu.Items.Add(createFolderMenuItem);
+        contextMenu.Items.Add(new Separator());
+        contextMenu.Items.Add(openCurrentDirInFileExplorer);
 
         grid.ContextMenu = contextMenu;
         contextMenu.IsOpen = true;
@@ -108,6 +126,7 @@ public partial class ContentBrowserUserControl : UserControl
     {
         if (DataContext is ContentBrowserViewModel cbvm)
         {
+            // are you sure dialog goes here if I decide to add one
             cbvm.DeleteItem(filePath);
         }
     }
@@ -125,16 +144,24 @@ public partial class ContentBrowserUserControl : UserControl
             {
                 cbvm.RenameItem(filePath, newName);
             }
-            stackPanel.Children[1] = textBlock;
+            stackPanel.Children.RemoveAt(1);
+            stackPanel.Children.Insert(1, textBlock);
         }
         TextBox renameBox = new()
         {
             Text = textBlock.Text,
             Focusable = true,
         };
-        renameBox.KeyDown += (_, _) => TryRename(renameBox.Text);
+        renameBox.KeyDown += (_, e) =>
+        {
+            if (e.Key == System.Windows.Input.Key.Enter || e.Key == System.Windows.Input.Key.Escape)
+            {
+                TryRename(renameBox.Text);
+            }
+        };
         renameBox.LostFocus += (_, _) => TryRename(renameBox.Text);
-        stackPanel.Children[1] = renameBox;
+        stackPanel.Children.RemoveAt(1);
+        stackPanel.Children.Insert(1, renameBox);
         renameBox.Focus();
     }
 
@@ -144,9 +171,10 @@ public partial class ContentBrowserUserControl : UserControl
         NewItemDialog newItemDialog = new NewItemDialog(createItemType);
         if (newItemDialog.ShowDialog() == true)
         {
-            if (newItemDialog.EnteredName is null)
+            if (string.IsNullOrEmpty(newItemDialog.EnteredName))
             {
-                MessageBox.Show("The Project Name was null somehow", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("The Entered Name was empty", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Logger.LogError($"The name you entered for the {createItemType} you tried to create was empty somehow.");
                 return;
             }
             if (DataContext is not ContentBrowserViewModel cbvm)
@@ -161,13 +189,18 @@ public partial class ContentBrowserUserControl : UserControl
     {
         try
         {
-            FileDialogHelper.ShowOpenWithDialog(filePath);
-            // TODO: just open the csproj normally after getting a csproj set up for the project
-            //  
+            // assume visual studio for now
+            string csProjFilePath = Directory.GetFiles(MainViewModel.Instance.ProjectDirectory).Where(path => Path.GetExtension(path) == ".csproj").First();
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "devenv.exe",
+                Arguments = $"{csProjFilePath} /Edit {filePath}",
+                UseShellExecute = true
+            });
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"An error occurred: {ex.Message}");
+            Logger.LogError($"An error occurred: {ex.Message}");
         }
     }
 }

@@ -79,9 +79,13 @@ namespace NEngineEditor.Properties {
         ///  &lt;/PropertyGroup&gt;
         ///
         ///  &lt;ItemGroup&gt;
-        ///    &lt;Reference Include=&quot;EngineAssembly&quot;&gt;
-        ///      &lt;HintPath&gt;.Engine\EngineAssembly.dll&lt;/HintPath&gt;
+        ///    &lt;Reference Include=&quot;NEngine&quot;&gt;
+        ///      &lt;HintPath&gt;.Engine\NEngine.dll&lt;/HintPath&gt;
         ///    &lt;/Reference&gt;
+        ///  &lt;/ItemGroup&gt;
+        ///
+        ///  &lt;ItemGroup&gt;
+        ///    &lt;!-- Add any other dependencies you might need here --&gt;
         ///  &lt;/ItemGroup&gt;
         ///
         ///  &lt;ItemGroup&gt;

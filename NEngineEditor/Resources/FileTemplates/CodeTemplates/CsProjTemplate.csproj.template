@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="EngineAssembly">
-      <HintPath>.Engine\EngineAssembly.dll</HintPath>
+    <Reference Include="NEngine">
+      <HintPath>.Engine\NEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
 

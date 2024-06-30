@@ -1,0 +1,21 @@
+[
+  {
+    "Class": "GameObjectDerivedClassName",
+    "Name": "The Object's Name",
+    "Guid": "<Generated Guid of this GameObject>",
+    "Properties": {
+      "<referenceToSomeOtherGO>": {
+        "Type": "SomeOtherGameObjectDerivedClass",
+        "Value": "<SomeOtherGameObject's Guid> | null"
+      },
+      "<speed>": {
+        "Type": "float",
+        "Value": 3.2
+      },
+      "<position>": {
+        "Type": "Vector2f",
+        "Value": [1.2, 2.0]
+      }
+    }
+  }
+]

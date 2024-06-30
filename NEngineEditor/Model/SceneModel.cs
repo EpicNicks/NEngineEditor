@@ -1,7 +1,6 @@
 ﻿namespace NEngineEditor.Model;
 public class SceneModel
 {
-    public Guid Guid { get; private set; }
     public List<GameObjectWrapperModel> GameObjectWrappers = [];
 
     public static SceneModel CreateFromFile(string path)
