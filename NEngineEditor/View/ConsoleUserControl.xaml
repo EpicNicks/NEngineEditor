@@ -6,12 +6,17 @@
              xmlns:local="clr-namespace:NEngineEditor.View"
              mc:Ignorable="d" 
              d:DesignHeight="250" d:DesignWidth="800">
+    <UserControl.Resources>
+        <Style x:Key="LeftAlignedHeaderStyle" TargetType="GridViewColumnHeader">
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        </Style>
+    </UserControl.Resources>
     <Grid>
         <ListView Name="logListView" Margin="10">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="Log Level" Width="100" DisplayMemberBinding="{Binding LogLevel}" />
-                    <GridViewColumn Header="Log Message" Width="400" DisplayMemberBinding="{Binding Message}" />
+                    <GridViewColumn Header="Log Level" Width="100" DisplayMemberBinding="{Binding Level}" HeaderContainerStyle="{StaticResource LeftAlignedHeaderStyle}" />
+                    <GridViewColumn Header="Log Message" Width="400" DisplayMemberBinding="{Binding Message}" HeaderContainerStyle="{StaticResource LeftAlignedHeaderStyle}" />
                 </GridView>
             </ListView.View>
         </ListView>

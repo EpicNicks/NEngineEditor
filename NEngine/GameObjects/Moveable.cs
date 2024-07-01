@@ -11,8 +11,10 @@ namespace NEngine.GameObjects;
 /// </summary>
 public abstract class Moveable : Positionable
 {
-    // add callbacks to GameWindow.RenderWindow for controlling an instance of a derived class
-    public required float MoveSpeed { get; set; }
+    /// <summary>
+    /// The speed at which this Moveable moves over frames
+    /// </summary>
+    public float moveSpeed;
 
     /// <summary>
     /// For the common initialization of a dictionary for keys which are being pressed or released.
@@ -27,7 +29,7 @@ public abstract class Moveable : Positionable
         if (input != new Vector2f())
         {
             Vector2f inputNormal = input.Normalize();
-            Vector2f delta = inputNormal * MoveSpeed * Application.DeltaTime.AsSeconds();
+            Vector2f delta = inputNormal * moveSpeed * Application.DeltaTime.AsSeconds();
             Position += delta;
         }
     }

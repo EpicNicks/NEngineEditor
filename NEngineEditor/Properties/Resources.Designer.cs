@@ -148,6 +148,35 @@ namespace NEngineEditor.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to using System.Reflection;
+        ///using System.Globalization;
+        ///using System.IO;
+        ///using System.Text.Json;
+        ///using System.Text.RegularExpressions;
+        ///
+        ///using SFML.System;
+        ///using SFML.Graphics;
+        ///
+        ///using NEngine;
+        ///using NEngine.Window;
+        ///using NEngine.GameObjects;
+        ///
+        ////// &lt;summary&gt;
+        ////// Based in the root directory of your project.
+        ////// Runs the scenes created here along with your config files in the Engine&apos;s Application class.
+        ////// Modify at your own risk.
+        ////// &lt;/summary&gt;
+        ///public partial class Program
+        ///{
+        ///    //  Applicatio [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string ProjectProgram {
+            get {
+                return ResourceManager.GetString("ProjectProgram", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap SceneIcon {

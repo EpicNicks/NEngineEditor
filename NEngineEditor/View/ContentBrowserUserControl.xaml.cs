@@ -65,6 +65,12 @@ public partial class ContentBrowserUserControl : UserControl
         }
         else if (img.Source == ContentBrowserViewModel.CS_SCRIPT_ICON)
         {
+            var addToSceneMenuItem = new MenuItem { Header = "Add To Scene" };
+            addToSceneMenuItem.Click += (s, args) =>
+            {
+                MessageBox.Show("Not yet implemented");
+                //MainViewModel.Instance.SceneGameObjects.Add();
+            };
             var openMenuItem = new MenuItem { Header = "Open" };
             openMenuItem.Click += (s, args) => OpenScript(filePath);
             var renameMenuItem = new MenuItem { Header = "Rename" };

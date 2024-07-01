@@ -3,7 +3,6 @@
 using NEngine.CoreLibs.GameObjects;
 using NEngine.GameObjects;
 using NEngine.Window;
-using System.Diagnostics;
 
 namespace NEngineEditor.Model;
 /// <summary>

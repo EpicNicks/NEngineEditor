@@ -12,7 +12,7 @@ public partial class SceneHierarchyUserControl : UserControl
     public SceneHierarchyUserControl()
     {
         InitializeComponent();
-        LeftListView.ItemsSource = MainViewModel.Instance.GameObjectWrapperModels;
+        LeftListView.ItemsSource = MainViewModel.Instance.SceneGameObjects;
     }
 
     private void LeftListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)

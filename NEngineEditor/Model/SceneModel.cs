@@ -1,8 +1,41 @@
-﻿namespace NEngineEditor.Model;
+﻿using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+
+using NEngine.GameObjects;
+
+namespace NEngineEditor.Model;
 public class SceneModel
 {
     public string? Name { get; set; }
-    public List<GameObjectWrapperModel> SceneGameObjects = [];
+    public ObservableCollection<GameObjectWrapperModel> SceneGameObjects = [];
+
+    public SceneModel()
+    {
+        SceneGameObjects.CollectionChanged += SceneGameObjects_CollectionChanged;
+    }
+
+    private void SceneGameObjects_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems is null)
+        {
+            return;
+        }
+        foreach (var item in e.NewItems)
+        {
+            if
+            (
+                item is GameObjectWrapperModel gameObjectWrapperModel
+                && 
+                (
+                    gameObjectWrapperModel.GameObjectClass is null 
+                    || (!Type.GetType(gameObjectWrapperModel.GameObjectClass)?.IsAssignableTo(typeof(GameObject)) ?? false)
+                )
+            )
+            {
+                SceneGameObjects.Remove(gameObjectWrapperModel);
+            }
+        }
+    }
 
     public static SceneModel CreateFromFile(string path)
     {

@@ -32,4 +32,24 @@ public class Positionable: GameObject
             position = value;
         }
     }
+
+    private float rotation;
+    public virtual float Rotation
+    {
+        get => rotation;
+        set
+        {
+            float delta = value - rotation;
+
+            foreach (Drawable d in Drawables)
+            {
+                if (d is Transformable t)
+                {
+                    t.Rotation += delta;
+                }
+            }
+            // FloatRect, and therefore Collider.Bounds, can't be rotated. May want to consider changing how collision works.
+            rotation = value;
+        }
+    }
 }

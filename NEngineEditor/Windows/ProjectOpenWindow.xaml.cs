@@ -86,12 +86,15 @@ public partial class ProjectOpenWindow : Window
                 string projectPath = Path.Combine(BaseFilePathTextBox.Text, projectName);
                 string assetsPath = Path.Combine(projectPath, "Assets");
                 string engineFolderPath = Path.Combine(projectPath, ".Engine");
+                string mainFolderPath = Path.Combine(projectPath, ".Main");
                 if (!Directory.Exists(projectPath))
                 {
                     Directory.CreateDirectory(projectPath);
                     Directory.CreateDirectory(assetsPath);
                     DirectoryInfo engineDirectoryInfo = Directory.CreateDirectory(engineFolderPath);
                     engineDirectoryInfo.Attributes |= FileAttributes.Hidden;
+                    DirectoryInfo mainDirectoryInfo = Directory.CreateDirectory(mainFolderPath);
+                    mainDirectoryInfo.Attributes |= FileAttributes.Hidden;
 
                     NEngineProject projectData = new()
                     {
@@ -130,18 +133,14 @@ public partial class ProjectOpenWindow : Window
                         }
                     }
 
-                    // TODO: generate Main class with Main method which the editor needs to provide with the Scenes something like
-                    //  Application.WindowName = <project property window name>
-                    //  List<SceneData> = TraverseAndDeserializeScenesInProjectFolders()
-                    //  foreach SceneData s => Application.AddScene(s.ToScene())
-                    //  Application.Run()
                     Task[] fileTasks =
                     [
                         File.WriteAllTextAsync(Path.Combine(projectPath, $"{sanitizedProjectName}.csproj"), Properties.Resources.CsProjTemplate_csproj),
                         File.WriteAllTextAsync(Path.Combine(projectPath, "NEngineProject.json"), JsonSerializer.Serialize(projectData, NEW_PROJECT_JSON_OPTIONS)),
                         File.WriteAllTextAsync(Path.Combine(assetsPath, "ProjectConfig.json"), JsonSerializer.Serialize(projectConfig, NEW_PROJECT_JSON_OPTIONS)),
-                        // copy NEngine.dll
-                        
+                        File.WriteAllTextAsync(Path.Combine(mainFolderPath, "Project.cs"), Properties.Resources.ProjectProgram),
+                        // TODO: consider writing the shared json data definitions to the mainFolderPath to avoid defining it twice
+                        //  drawback to this: the namespace the file will be pulling from won't exist while editing it in this project
                     ];
                     Task.WaitAll(fileTasks);
                     // Add the new project to the list

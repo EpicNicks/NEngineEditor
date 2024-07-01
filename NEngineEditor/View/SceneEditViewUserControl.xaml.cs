@@ -1,9 +1,12 @@
 ﻿using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 using NEngine.GameObjects;
 using NEngine.Window;
-
+using NEngineEditor.Managers;
+using NEngineEditor.Model;
+using NEngineEditor.ViewModel;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
@@ -105,22 +108,27 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         }
     }
 
+    private static readonly string[] _specialProperties = ["Position", "Rotation"];
     void timer_Tick(object? sender, EventArgs e)
     {
         _gameWindow.RenderWindow.DispatchEvents();
 
         // Draw all objects in scene
-
-        // for testing
-        Positionable p = new Positionable
+        List<(RenderLayer, GameObject)> gameObjectsToRender = [];
+        foreach ((RenderLayer renderLayer, GameObject gameObject) in MainViewModel.Instance.SceneGameObjects)
         {
-            Drawables = [new RectangleShape { Size = new(100, 100), FillColor = Color.Red }],
-            Position = new(100, 100),
-            Name = "Sid"
-        };
-        _gameWindow.Render([
-            (RenderLayer.BASE, p)
-        ]);
+            if (gameObject is not null)
+            {
+                gameObjectsToRender.Add((renderLayer, gameObject));
+                // TODO: modify this to use a strong representation which doesn't use a string dictionary as properties,
+                //  but a managed instance with an interface to edit the properties of that instance
+                //  Collect the public fields and special properties and make them editable in the INSPECTOR (NOT HERE)
+
+                // assign each GameObject in scene a Guid and replace each GameObject script reference with the matching Guid at SERIALIZATION TIME
+            }
+        }
+        Logger.LogInfo($"Rendering {gameObjectsToRender.Count} objects in scene");
+        _gameWindow.Render(gameObjectsToRender);
 
         //  handle culling the invisible ones
         // Draw Debug Lines with transparency to indicate scale on top

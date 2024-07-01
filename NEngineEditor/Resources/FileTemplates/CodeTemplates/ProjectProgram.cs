@@ -1,15 +1,15 @@
-﻿using System.Globalization;
+﻿using System.Reflection;
+using System.Globalization;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
+using SFML.System;
 using SFML.Graphics;
 
 using NEngine;
 using NEngine.Window;
 using NEngine.GameObjects;
-using SFML.System;
-using System.Reflection;
 
 /// <summary>
 /// Based in the root directory of your project.
@@ -199,6 +199,7 @@ public partial class Program
             try
             {
                 SceneData? sceneData = JsonSerializer.Deserialize<SceneData>(sceneJsonString);
+                // TODO: ensure the SceneData deserialization accounts for nested objects such as GameObjectData.TypeValuePair
                 if (sceneData is not null)
                 {
                     scenes.Add(sceneData);
@@ -213,6 +214,8 @@ public partial class Program
 
         return scenes;
     }
+
+    private static readonly string[] _specialProperties = ["Position", "Rotation"];
 
     private static List<Scene> BuildScenesFromSceneData(List<SceneData> sceneDataList)
     {
@@ -248,32 +251,41 @@ public partial class Program
                     {
                         continue;
                     }
-                    (RenderLayer _, GameObject gameObject) = toAddGameObjects[i];
+                    GameObject gameObject = toAddGameObjects[i].gameObject;
                     if (gameObjectData.GameObjectPropertyNameTypeValue is null)
                     {
                         continue;
                     }
-                    foreach (string propertyName in gameObjectData.GameObjectPropertyNameTypeValue.Keys)
+                    foreach (string memberName in gameObjectData.GameObjectPropertyNameTypeValue.Keys)
                     {
-                        PropertyInfo? propertyInfo = gameObjectType.GetProperty(propertyName);
-                        GameObjectData.TypeValuePair typeValue = gameObjectData.GameObjectPropertyNameTypeValue[propertyName];
-                        if (propertyInfo is null || typeValue.Type is null || typeValue.Value is null)
+                        if (_specialProperties.Contains(memberName) && gameObject is Positionable)
                         {
-                            continue;
-                        }
-                        object? propertyValue = ConvertProperty(typeValue.Type, typeValue.Value);
-                        if (propertyValue is null)
-                        {
-                            continue;
-                        }
-                        if (propertyValue is Guid guidProperty)
-                        {
-                            int foundIndex = sceneGameObjectData.IndexOf(sceneGameObjectData.Where(gObjData => gObjData.Guid == guidProperty).First());
-                            propertyInfo.SetValue(gameObject, toAddGameObjects[foundIndex].gameObject);
+                            PropertyInfo? propertyInfo = gameObjectType.GetProperty(memberName);
+                            GameObjectData.TypeValuePair typeValue = gameObjectData.GameObjectPropertyNameTypeValue[memberName];
+                            if (propertyInfo is null || typeValue.Type is null || typeValue.Value is null || ConvertProperty(typeValue.Type, typeValue.Value) is not object propertyValue)
+                            {
+                                continue;
+                            }
+                            propertyInfo.SetValue(gameObject, propertyValue);
                         }
                         else
                         {
-                            propertyInfo.SetValue(gameObject, propertyValue);
+                            FieldInfo? fieldInfo = gameObjectType.GetField(memberName);
+                            GameObjectData.TypeValuePair typeValue = gameObjectData.GameObjectPropertyNameTypeValue[memberName];
+                            if (fieldInfo is null || typeValue.Type is null || typeValue.Value is null || ConvertProperty(typeValue.Type, typeValue.Value) is not object fieldValue)
+                            {
+                                continue;
+                            }
+                            
+                            if (fieldValue is Guid guidProperty)
+                            {
+                                int foundIndex = sceneGameObjectData.IndexOf(sceneGameObjectData.Where(gObjData => gObjData.Guid == guidProperty).First());
+                                fieldInfo.SetValue(gameObject, toAddGameObjects[foundIndex].gameObject);
+                            }
+                            else
+                            {
+                                fieldInfo.SetValue(gameObject, fieldValue);
+                            }
                         }
                     }
                 }
