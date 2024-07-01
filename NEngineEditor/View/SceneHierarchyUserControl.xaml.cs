@@ -15,6 +15,12 @@ public partial class SceneHierarchyUserControl : UserControl
         LeftListView.ItemsSource = MainViewModel.Instance.SceneGameObjects;
     }
 
+    private void LeftListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // as cast returns null on failure (intended behavior)
+        MainViewModel.Instance.SelectedGameObject = LeftListView.SelectedItem as MainViewModel.LayeredGameObject;
+    }
+
     private void LeftListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
         if (LeftListView.SelectedItem != null)

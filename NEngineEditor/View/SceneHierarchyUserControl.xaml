@@ -11,6 +11,7 @@
         <ListView x:Name="LeftListView"
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch"
+                  SelectionChanged="LeftListView_SelectionChanged"
                   MouseDoubleClick="LeftListView_MouseDoubleClick">
             <ListView.ItemTemplate>
                 <DataTemplate>

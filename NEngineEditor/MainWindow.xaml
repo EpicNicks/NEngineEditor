@@ -46,7 +46,11 @@
 
         <!-- Right Panel (Inspector) -->
         <DockPanel Grid.Row="1" Grid.Column="2" Width="200" Background="LightGray">
-            <!-- Inspector properties display here -->
+            <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TabItem Header="Inspector" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <view:InspectorUserControl />
+                </TabItem>
+            </TabControl>
         </DockPanel>
 
         <!-- Bottom Panel (Project Explorer) -->
