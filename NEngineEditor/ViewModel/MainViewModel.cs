@@ -86,10 +86,15 @@ public class MainViewModel : ViewModelBase
     // for testing
     class Sid : Positionable
     {
-        // test if this is settable in the inspector when selected
-        //  obviously after the inspector is set up with reflection on the selected GameObject
         public string? greetingText;
-        public override List<Drawable> Drawables => [new RectangleShape { Size = new(100, 100), Rotation = 45f, FillColor = Color.Red }];
+        private RectangleShape rectangle;
+
+        public Sid()
+        {
+            rectangle = new RectangleShape { Size = new Vector2f(100, 100), Rotation = 45f, FillColor = Color.Red };
+        }
+
+        public override List<Drawable> Drawables => [rectangle];
     }
 
     private MainViewModel()

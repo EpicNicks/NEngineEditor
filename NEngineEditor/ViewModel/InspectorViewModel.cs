@@ -61,26 +61,35 @@ public class InspectorViewModel : ViewModelBase
 
         if (SelectedGameObject == null) return;
 
+        var type = SelectedGameObject.GetType();
+        var processedMembers = new HashSet<string>();
+
         if (SelectedGameObject is Positionable positionable)
         {
             AddMemberWrapper(typeof(Positionable).GetProperty("Position")!, positionable, PositionableProperties);
             AddMemberWrapper(typeof(Positionable).GetProperty("Rotation")!, positionable, PositionableProperties);
+            processedMembers.Add("Position");
+            processedMembers.Add("Rotation");
         }
 
-        var type = SelectedGameObject.GetType();
         while (type != null && type != typeof(object))
         {
             foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
-                if (property.CanRead && property.CanWrite)
+                if (property.CanRead && property.CanWrite && !processedMembers.Contains(property.Name))
                 {
                     AddMemberWrapper(property, SelectedGameObject, PublicMembers);
+                    processedMembers.Add(property.Name);
                 }
             }
 
             foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
-                AddMemberWrapper(field, SelectedGameObject, PublicMembers);
+                if (!processedMembers.Contains(field.Name))
+                {
+                    AddMemberWrapper(field, SelectedGameObject, PublicMembers);
+                    processedMembers.Add(field.Name);
+                }
             }
 
             type = type.BaseType;
