@@ -1,13 +1,18 @@
-﻿using System.Windows.Controls;
+﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Globalization;
+using SFML.System;
+using NEngineEditor.ViewModel;
 
-namespace NEngineEditor.View;
-/// <summary>
-/// Interaction logic for InspectorUserControl.xaml
-/// </summary>
-public partial class InspectorUserControl : UserControl
+namespace NEngineEditor.View
 {
-    public InspectorUserControl()
+    public partial class InspectorUserControl : UserControl
     {
-        InitializeComponent();
+        public InspectorUserControl()
+        {
+            InitializeComponent();
+            DataContext = new InspectorViewModel();
+        }
     }
 }

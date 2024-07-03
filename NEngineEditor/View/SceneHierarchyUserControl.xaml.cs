@@ -1,4 +1,5 @@
-﻿using NEngineEditor.ViewModel;
+﻿using NEngine.GameObjects;
+using NEngineEditor.ViewModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -25,7 +26,10 @@ public partial class SceneHierarchyUserControl : UserControl
     {
         if (LeftListView.SelectedItem != null)
         {
-            MessageBox.Show($"Item double-clicked: {LeftListView.SelectedItem}");
+            if (SceneEditViewUserControl.LazyInstance is not null && LeftListView.SelectedItem is MainViewModel.LayeredGameObject layeredGameObject && layeredGameObject.GameObject is Positionable positionable)
+            {
+                SceneEditViewUserControl.LazyInstance.MoveCameraToPositionable(positionable);
+            }
         }
     }
 

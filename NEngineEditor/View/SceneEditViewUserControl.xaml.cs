@@ -19,9 +19,16 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 {
     private readonly GameWindow _gameWindow;
 
+    public static SceneEditViewUserControl? LazyInstance
+    {
+        get;
+        private set;
+    }
+
     public SceneEditViewUserControl()
     {
         InitializeComponent();
+        LazyInstance = this;
         //need to use this to prevent base.OnPaint and base.OnPaintBackground from erasing contents
         var mysurf = new MyDrawingSurface();
         sfmlHost.Child = mysurf;
@@ -47,6 +54,15 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
     {
         PropertyInfo? aProp = typeof(Control).GetProperty("DoubleBuffered", BindingFlags.NonPublic | BindingFlags.Instance);
         aProp?.SetValue(c, true, null);
+    }
+
+    public void MoveCameraToPoint(float x, float y)
+    {
+        _gameWindow.MainView.Center = new(x, y);
+    }
+    public void MoveCameraToPositionable(Positionable positionable)
+    {
+        _gameWindow.MainView.Center = positionable.Position;
     }
 
     public class MyDrawingSurface : Control

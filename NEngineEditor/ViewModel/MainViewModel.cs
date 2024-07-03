@@ -94,6 +94,7 @@ public class MainViewModel : ViewModelBase
 
     private MainViewModel()
     {
+        Logs.CollectionChanged += Logs_CollectionChanged;
         _loadedScene = ("Unnamed Scene", "");
         _sceneGameObjects =
         [
@@ -106,6 +107,19 @@ public class MainViewModel : ViewModelBase
 
             // RenderLayer can be set in a Generated Pseudo-Property in the inspector
             new() { RenderLayer = RenderLayer.BASE, GameObject = new Sid { Name = "Diamond Sid", Position = new(100, 100) } },
+            new() { RenderLayer = RenderLayer.BASE, GameObject = new Sid { Name = "Squared Sid", Position = new(10, 10) } },
         ];
+    }
+
+    private void Logs_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        int MAX_LOGS = 10_000;
+        if (e.NewItems is not null)
+        {
+            while (Logs.Count > MAX_LOGS)
+            {
+                Logs.RemoveAt(Logs.Count - 1);
+            }
+        }
     }
 }
