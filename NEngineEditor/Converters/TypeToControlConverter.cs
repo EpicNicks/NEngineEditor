@@ -195,7 +195,7 @@ namespace NEngineEditor.Converters
             if (string.IsNullOrEmpty(currentText) && newInput == ".")
                 return true;
 
-            if (newInput == "-" && !currentText.Contains("-"))
+            if (newInput == "-" && !currentText.Contains('-'))
                 return true;
 
             string potentialNewValue = currentText + newInput;

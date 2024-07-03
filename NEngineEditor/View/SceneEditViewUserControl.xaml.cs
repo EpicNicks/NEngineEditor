@@ -144,7 +144,7 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
             }
         }
         Logger.LogInfo($"Rendering {gameObjectsToRender.Count} objects in scene");
-        MainViewModel.Instance.SceneGameObjects = new(MainViewModel.Instance.SceneGameObjects);
+        // MainViewModel.Instance.SceneGameObjects = new(MainViewModel.Instance.SceneGameObjects);
         _gameWindow.Render(gameObjectsToRender);
 
         //  handle culling the invisible ones

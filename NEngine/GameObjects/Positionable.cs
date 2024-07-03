@@ -1,8 +1,6 @@
 ﻿using SFML.Graphics;
 using SFML.System;
 
-using NEngine.GameObjects;
-
 namespace NEngine.GameObjects;
 
 /// <summary>
@@ -18,12 +16,9 @@ public class Positionable: GameObject
         set
         {
             Vector2f delta = value - Position;
-            foreach (Drawable d in Drawables)
+            foreach (Transformable t in Drawables.OfType<Transformable>())
             {
-                if (d is Transformable t)
-                {
-                    t.Position += delta;
-                }
+                t.Position += delta;
             }
             if (Collider != null)
             {
@@ -40,16 +35,27 @@ public class Positionable: GameObject
         set
         {
             float delta = value - rotation;
-
-            foreach (Drawable d in Drawables)
+            foreach (Transformable t in Drawables.OfType<Transformable>())
             {
-                if (d is Transformable t)
-                {
-                    t.Rotation += delta;
-                }
+                t.Rotation += delta;
             }
             // FloatRect, and therefore Collider.Bounds, can't be rotated. May want to consider changing how collision works.
             rotation = value;
+        }
+    }
+
+    private Vector2f scale = new(1f, 1f);
+    public virtual Vector2f Scale
+    {
+        get => scale;
+        set
+        {
+            Vector2f delta = value - Scale;
+            foreach (Transformable t in Drawables.OfType<Transformable>())
+            {
+                t.Scale += delta;
+            }
+            scale = value;
         }
     }
 }

@@ -1,8 +1,5 @@
-﻿using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Globalization;
-using SFML.System;
+﻿using System.Windows.Controls;
+
 using NEngineEditor.ViewModel;
 
 namespace NEngineEditor.View

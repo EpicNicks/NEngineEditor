@@ -45,7 +45,7 @@
         </DockPanel>
 
         <!-- Right Panel (Inspector) -->
-        <DockPanel Grid.Row="1" Grid.Column="2" Width="200" Background="LightGray">
+        <DockPanel Grid.Row="1" Grid.Column="2" Width="250" Background="LightGray">
             <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <TabItem Header="Inspector" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <view:InspectorUserControl />

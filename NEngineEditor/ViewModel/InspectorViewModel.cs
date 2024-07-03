@@ -1,11 +1,12 @@
-﻿using System;
-using System.Reflection;
-using NEngine.GameObjects;
+﻿using System.Reflection;
 using System.Collections.ObjectModel;
-using SFML.System;
-using NEngine.Window;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+
+using SFML.System;
+
+using NEngine.GameObjects;
+using NEngine.Window;
 
 namespace NEngineEditor.ViewModel;
 
@@ -61,25 +62,30 @@ public class InspectorViewModel : ViewModelBase
 
         if (SelectedGameObject == null) return;
 
-        var type = SelectedGameObject.GetType();
-        var processedMembers = new HashSet<string>();
+        Type? type = SelectedGameObject.GetType();
+        HashSet<string> processedMembers = ["Name"];
+
+        // simple helper for repetitive calls with repeat args
+        void AddMemberWrapperToProcess(MemberInfo memberInfo, object target, ObservableCollection<MemberWrapper> collection)
+        {
+            AddMemberWrapper(memberInfo, target, collection);
+            processedMembers.Add(memberInfo.Name);
+        }
 
         if (SelectedGameObject is Positionable positionable)
         {
-            AddMemberWrapper(typeof(Positionable).GetProperty("Position")!, positionable, PositionableProperties);
-            AddMemberWrapper(typeof(Positionable).GetProperty("Rotation")!, positionable, PositionableProperties);
-            processedMembers.Add("Position");
-            processedMembers.Add("Rotation");
+            AddMemberWrapperToProcess(typeof(Positionable).GetProperty("Position")!, positionable, PositionableProperties);
+            AddMemberWrapperToProcess(typeof(Positionable).GetProperty("Rotation")!, positionable, PositionableProperties);
+            AddMemberWrapperToProcess(typeof(Positionable).GetProperty("Scale")!, positionable, PositionableProperties);
         }
 
         while (type != null && type != typeof(object))
         {
-            foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            foreach (PropertyInfo property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 if (property.CanRead && property.CanWrite && !processedMembers.Contains(property.Name))
                 {
-                    AddMemberWrapper(property, SelectedGameObject, PublicMembers);
-                    processedMembers.Add(property.Name);
+                    AddMemberWrapperToProcess(property, SelectedGameObject, PublicMembers);
                 }
             }
 
@@ -87,8 +93,7 @@ public class InspectorViewModel : ViewModelBase
             {
                 if (!processedMembers.Contains(field.Name))
                 {
-                    AddMemberWrapper(field, SelectedGameObject, PublicMembers);
-                    processedMembers.Add(field.Name);
+                    AddMemberWrapperToProcess(field, SelectedGameObject, PublicMembers);
                 }
             }
 

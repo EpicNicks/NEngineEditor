@@ -91,7 +91,7 @@ public class MainViewModel : ViewModelBase
 
         public Sid()
         {
-            rectangle = new RectangleShape { Size = new Vector2f(100, 100), Rotation = 45f, FillColor = Color.Red };
+            rectangle = new RectangleShape { Size = new Vector2f(100, 100), FillColor = Color.Red };
         }
 
         public override List<Drawable> Drawables => [rectangle];
@@ -111,8 +111,8 @@ public class MainViewModel : ViewModelBase
             // for testing, should be empty normally
 
             // RenderLayer can be set in a Generated Pseudo-Property in the inspector
-            new() { RenderLayer = RenderLayer.BASE, GameObject = new Sid { Name = "Diamond Sid", Position = new(100, 100) } },
-            new() { RenderLayer = RenderLayer.BASE, GameObject = new Sid { Name = "Squared Sid", Position = new(10, 10) } },
+            new() { RenderLayer = RenderLayer.BASE, GameObject = new Sid { Name = "Diamond Sid", Position = new(100, 100), Rotation = 45f } },
+            new() { RenderLayer = RenderLayer.BASE, GameObject = new Sid { Name = "Squared Sid", Position = new(10, 10), Rotation = 0f } },
         ];
     }
 
