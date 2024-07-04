@@ -8,7 +8,6 @@ using Microsoft.CodeAnalysis.Emit;
 using NEngineEditor.Managers;
 
 namespace NEngineEditor.Helpers;
-
 public static class ScriptCompiler
 {
     public static object? CompileAndInstantiateFromFile(string filePath)
@@ -100,7 +99,7 @@ public static class ScriptCompiler
 
             foreach (Diagnostic error in errors)
             {
-                Logger.LogError($"{error.Id}: {error.GetMessage()}");
+                Logger.LogError($"Script Instantiation Error: {error.Id}: {error.GetMessage()}");
             }
             return null;
         }

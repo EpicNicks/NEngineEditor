@@ -8,7 +8,6 @@ using NEngine.GameObjects;
 using NEngine.Window;
 
 using NEngineEditor.Model;
-using System.Windows.Threading;
 using System.Windows;
 using NEngineEditor.Managers;
 
@@ -70,8 +69,8 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    private static MainViewModel? instance;
-    public static MainViewModel Instance => instance ??= new MainViewModel();
+    private static readonly Lazy<MainViewModel> instance = new(() => new MainViewModel());
+    public static MainViewModel Instance => instance.Value;
 
     public class LayeredGameObject
     {
@@ -106,40 +105,22 @@ public class MainViewModel : ViewModelBase
     {
         Logs.CollectionChanged += Logs_CollectionChanged;
         _loadedScene = ("Unnamed Scene", "");
-        _sceneGameObjects =
-        [
-            // TODO: (DONE) modify this to use raw game objects which the inspector will have an interface
-            // to modify by creating a GUI representation of public fields to use reflection
-            // to modify on the instance itself. This avoids regenerating the same GameObjects
-            // from metadata each render frame in the Editor
-            
-            // for testing, should be empty normally
-
-            // RenderLayer can be set in a Generated Pseudo-Property in the inspector
-            new() { RenderLayer = RenderLayer.BASE, GameObject = new Sid { Name = "Diamond Sid", Position = new(100, 100), Rotation = 45f } },
-            new() { RenderLayer = RenderLayer.BASE, GameObject = new Sid { Name = "Squared Sid", Position = new(10, 10), Rotation = 0f } },
-        ];
+        _sceneGameObjects = [];
     }
 
     private readonly object _lockObject = new();
-    private bool _isRemoving = false;
-
     private void Logs_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         const int MAX_LOGS = 10_000;
-        if (e.NewItems is not null && !_isRemoving)
+        if (e.NewItems is not null)
         {
             Task.Run(() => TrimLogs(MAX_LOGS));
         }
     }
-
     private void TrimLogs(int maxLogs)
     {
         lock (_lockObject)
         {
-            if (_isRemoving) return;
-            _isRemoving = true;
-
             try
             {
                 while (Logs.Count > maxLogs)
@@ -156,10 +137,6 @@ public class MainViewModel : ViewModelBase
             catch (Exception e)
             {
                 Logger.LogError($"An Error Occurred while Trimming Logs from the Logger {e}");
-            }
-            finally
-            {
-                _isRemoving = false;
             }
         }
     }
