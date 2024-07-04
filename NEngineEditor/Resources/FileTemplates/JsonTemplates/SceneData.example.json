@@ -3,6 +3,7 @@
   "SceneGameObjects": [
     {
       "Class": "GameObjectDerivedClassName",
+      "RenderLayer":  "<BASE | UI | NONE>",
       "Name": "The Object's Name",
       "Guid": "<Generated Guid of this GameObject>",
       "Properties": {

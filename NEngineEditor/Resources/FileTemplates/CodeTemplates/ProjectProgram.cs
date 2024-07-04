@@ -86,11 +86,11 @@ public partial class Program
 
     private class GameObjectData
     {
-        public Guid Guid { get; set; }
-        public string? Name { get; set; }
         public string? GameObjectClass { get; set; }
-        public Dictionary<string, TypeValuePair>? GameObjectPropertyNameTypeValue { get; set; }
         public RenderLayer RenderLayer { get; set; }
+        public string? Name { get; set; }
+        public Guid Guid { get; set; }
+        public Dictionary<string, TypeValuePair>? GameObjectPropertyNameTypeValue { get; set; }
 
         public class TypeValuePair
         {

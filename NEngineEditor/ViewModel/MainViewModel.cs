@@ -6,7 +6,11 @@ using SFML.System;
 
 using NEngine.GameObjects;
 using NEngine.Window;
+
 using NEngineEditor.Model;
+using System.Windows.Threading;
+using System.Windows;
+using NEngineEditor.Managers;
 
 namespace NEngineEditor.ViewModel;
 public class MainViewModel : ViewModelBase
@@ -117,14 +121,45 @@ public class MainViewModel : ViewModelBase
         ];
     }
 
+    private readonly object _lockObject = new();
+    private bool _isRemoving = false;
+
     private void Logs_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        int MAX_LOGS = 10_000;
-        if (e.NewItems is not null)
+        const int MAX_LOGS = 10_000;
+        if (e.NewItems is not null && !_isRemoving)
         {
-            while (Logs.Count > MAX_LOGS)
+            Task.Run(() => TrimLogs(MAX_LOGS));
+        }
+    }
+
+    private void TrimLogs(int maxLogs)
+    {
+        lock (_lockObject)
+        {
+            if (_isRemoving) return;
+            _isRemoving = true;
+
+            try
             {
-                Logs.RemoveAt(Logs.Count - 1);
+                while (Logs.Count > maxLogs)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (Logs.Count > maxLogs)
+                        {
+                            Logs.RemoveAt(0);
+                        }
+                    });
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"An Error Occurred while Trimming Logs from the Logger {e}");
+            }
+            finally
+            {
+                _isRemoving = false;
             }
         }
     }
