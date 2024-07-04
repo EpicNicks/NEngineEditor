@@ -71,12 +71,17 @@ public partial class ContentBrowserUserControl : UserControl
                 MessageBox.Show("Not yet implemented");
                 //MainViewModel.Instance.SceneGameObjects.Add();
             };
+            var addScriptToSceneMenuItem = new MenuItem { Header = "Add Script to Scene" };
+            addScriptToSceneMenuItem.Click += (_, _) => AddScriptToScene(filePath);
             var openMenuItem = new MenuItem { Header = "Open" };
-            openMenuItem.Click += (s, args) => OpenScript(filePath);
+            openMenuItem.Click += (_, _) => OpenScript(filePath);
             var renameMenuItem = new MenuItem { Header = "Rename" };
-            renameMenuItem.Click += (s, args) => RenameItem(stackPanel);
+            renameMenuItem.Click += (_, _) => RenameItem(stackPanel);
             var deleteMenuItem = new MenuItem { Header = "Delete" };
-            deleteMenuItem.Click += (s, args) => DeleteItem(filePath);
+            deleteMenuItem.Click += (_, _) => DeleteItem(filePath);
+
+            contextMenu.Items.Add(addScriptToSceneMenuItem);
+            contextMenu.Items.Add(new Separator());
             contextMenu.Items.Add(openMenuItem);
             contextMenu.Items.Add(renameMenuItem);
             contextMenu.Items.Add(deleteMenuItem);
@@ -189,6 +194,15 @@ public partial class ContentBrowserUserControl : UserControl
             }
             cbvm.CreateItem(cbvm.subDirectory.CurrentSubDir, createItemType, newItemDialog.EnteredName);
         }
+    }
+
+    private void AddScriptToScene(string filePath)
+    {
+        if (DataContext is not ContentBrowserViewModel cbvm)
+        {
+            return;
+        }
+        cbvm.AddScriptToScene(filePath);
     }
 
     private void OpenScript(string filePath)

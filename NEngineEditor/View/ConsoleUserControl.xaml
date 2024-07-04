@@ -16,9 +16,14 @@
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Log Level" Width="100" DisplayMemberBinding="{Binding Level}" HeaderContainerStyle="{StaticResource LeftAlignedHeaderStyle}" />
-                    <GridViewColumn Header="Log Message" Width="400" DisplayMemberBinding="{Binding Message}" HeaderContainerStyle="{StaticResource LeftAlignedHeaderStyle}" />
+                    <GridViewColumn Header="Log Message" Width="2000" DisplayMemberBinding="{Binding Message}" HeaderContainerStyle="{StaticResource LeftAlignedHeaderStyle}" />
                 </GridView>
             </ListView.View>
+            <ListView.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Copy to Clipboard" Click="CopyToClipboard_Click"/>
+                </ContextMenu>
+            </ListView.ContextMenu>
         </ListView>
     </Grid>
 </UserControl>

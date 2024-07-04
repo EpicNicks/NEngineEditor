@@ -28,7 +28,7 @@ public class Positionable: GameObject
         }
     }
 
-    private float rotation;
+    private float rotation = 0f;
     public virtual float Rotation
     {
         get => rotation;
@@ -44,7 +44,7 @@ public class Positionable: GameObject
         }
     }
 
-    private Vector2f scale = new(1f, 1f);
+    private Vector2f scale = new Vector2f(1f, 1f);
     public virtual Vector2f Scale
     {
         get => scale;

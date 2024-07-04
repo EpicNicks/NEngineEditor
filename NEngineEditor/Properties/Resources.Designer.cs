@@ -76,6 +76,7 @@ namespace NEngineEditor.Properties {
         ///  &lt;PropertyGroup&gt;
         ///    &lt;OutputType&gt;Exe&lt;/OutputType&gt;
         ///    &lt;TargetFramework&gt;net8.0&lt;/TargetFramework&gt;
+        ///    &lt;Nullable&gt;enable&lt;/Nullable&gt;
         ///  &lt;/PropertyGroup&gt;
         ///
         ///  &lt;ItemGroup&gt;
@@ -91,9 +92,7 @@ namespace NEngineEditor.Properties {
         ///  &lt;ItemGroup&gt;
         ///    &lt;!-- Add any other dependencies you might need here --&gt;
         ///  &lt;/ItemGroup&gt;
-        ///
-        ///  &lt;ItemGroup&gt;
-        ///    &lt;Compile Inc [rest of string was truncated]&quot;;.
+        /// [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string CsProjTemplate_csproj {
             get {
@@ -124,22 +123,18 @@ namespace NEngineEditor.Properties {
         /// <summary>
         ///   Looks up a localized string similar to using NEngine.GameObjects;
         ///
+        ///using SFML.Graphics;
+        ///
+        ///using NEngine.GameObjects;
+        ///
         ///// change &quot;GameObject&quot; to &quot;Positionable&quot; if you need your GameObject to have a position or &quot;Moveable&quot; to handle movement with its Move function in Update
         ///public class {CLASSNAME} : GameObject
         ///{
-        ///    // Called when the object is first added to the scene (if active)
-        ///    public override void Attach()
-        ///    {
+        ///    // The general setup for your SFML Drawables. Store references in this list.
+        ///    public override List&lt;Drawable&gt; Drawables { get; set; } = [];
         ///
-        ///    }
-        ///
-        ///    // Called every frame the object is enabled in the scene
-        ///    public override void Update()
-        ///    {
-        ///
-        ///    }
-        ///}
-        ///.
+        ///    // where you should add your Drawables to the Drawables list
+        ///    public {CLA [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string GameObjectTemplate_cs {
             get {

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Specialized;
+using System.Windows;
 using System.Windows.Controls;
 
 using NEngineEditor.ViewModel;
@@ -20,6 +21,17 @@ public partial class ConsoleUserControl : UserControl
         if (logListView.Items.Count > 0)
         {
             logListView.ScrollIntoView(logListView.Items[^1]);
+        }
+    }
+
+    private void CopyToClipboard_Click(object sender, RoutedEventArgs e)
+    {
+        if (logListView.SelectedItem != null)
+        {
+            // Assuming your log items have Level and Message properties
+            var logItem = (dynamic)logListView.SelectedItem;
+            string clipboardText = $"{logItem.Level}: {logItem.Message}";
+            Clipboard.SetText(clipboardText);
         }
     }
 }

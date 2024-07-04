@@ -5,8 +5,13 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
+using NEngineEditor.Helpers;
 using NEngineEditor.Managers;
 using NEngineEditor.Properties;
+
+using NEngine.Window;
+using NEngine.CoreLibs.GameObjects;
+using NEngine.GameObjects;
 
 namespace NEngineEditor.ViewModel;
 public class ContentBrowserViewModel : ViewModelBase
@@ -130,6 +135,32 @@ public class ContentBrowserViewModel : ViewModelBase
             }
         }
         Items = new ObservableCollection<FileIconName>(filesAndDirectories);
+    }
+
+    public void AddScriptToScene(string filePath)
+    {
+        try
+        {
+            object? compiledObject = ScriptCompiler.CompileAndInstantiateFromFile(filePath);
+            if (compiledObject is GameObject compiledGameObject)
+            {
+                string originalName = compiledGameObject.Name ?? $"New {compiledGameObject.GetType().Name}";
+                compiledGameObject.Name = originalName;
+                for (int i = 1; MainViewModel.Instance.SceneGameObjects.Any(sgo => sgo.GameObject.Name == compiledGameObject.Name); i++)
+                {
+                    compiledGameObject.Name = originalName + $"({i})";
+                }
+                MainViewModel.Instance.SceneGameObjects.Add(new() { GameObject = compiledGameObject, RenderLayer = compiledGameObject is UIAnchored ? RenderLayer.UI : RenderLayer.BASE});
+            }
+            else
+            {
+                Logger.LogError("The script you have tried to add was not derived from GameObject or a derived type of GameObject and could not be added to the scene.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Error: {ex.Message}");
+        }
     }
 
     public void DeleteItem(string filePath)

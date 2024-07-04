@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 
 using SFML.Graphics;
 using SFML.System;
@@ -116,7 +117,7 @@ public class MainViewModel : ViewModelBase
         ];
     }
 
-    private void Logs_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    private void Logs_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         int MAX_LOGS = 10_000;
         if (e.NewItems is not null)

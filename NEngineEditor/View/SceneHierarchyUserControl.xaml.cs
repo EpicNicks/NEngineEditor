@@ -5,6 +5,7 @@ using System.Windows.Input;
 using NEngineEditor.ViewModel;
 
 using NEngine.GameObjects;
+using NEngineEditor.Managers;
 
 namespace NEngineEditor.View;
 /// <summary>
@@ -35,11 +36,15 @@ public partial class SceneHierarchyUserControl : UserControl
         }
     }
 
-    private void Action1_Click(object sender, RoutedEventArgs e)
+    private void DeleteInstance_Click(object sender, RoutedEventArgs e)
     {
-        if (LeftListView.SelectedItem != null)
+        if (LeftListView.SelectedItem is MainViewModel.LayeredGameObject layeredGameObject)
         {
-            MessageBox.Show($"Action 1 on: {LeftListView.SelectedItem}");
+            MainViewModel.Instance.SceneGameObjects.Remove(layeredGameObject);
+        }
+        else
+        {
+            Logger.LogError("Selected GameObject instance to delete was not a LayeredGameObject somehow. Your scene may be corrupted.");
         }
     }
 

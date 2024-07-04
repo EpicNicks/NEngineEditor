@@ -1,11 +1,9 @@
 ﻿using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 using NEngine.GameObjects;
 using NEngine.Window;
 using NEngineEditor.Managers;
-using NEngineEditor.Model;
 using NEngineEditor.ViewModel;
 using SFML.Graphics;
 using SFML.System;
@@ -124,7 +122,6 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         }
     }
 
-    private static readonly string[] _specialProperties = ["Position", "Rotation"];
     void timer_Tick(object? sender, EventArgs e)
     {
         _gameWindow.RenderWindow.DispatchEvents();
@@ -136,14 +133,10 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
             if (gameObject is not null)
             {
                 gameObjectsToRender.Add((renderLayer, gameObject));
-                // TODO: modify this to use a strong representation which doesn't use a string dictionary as properties,
-                //  but a managed instance with an interface to edit the properties of that instance
-                //  Collect the public fields and special properties and make them editable in the INSPECTOR (NOT HERE)
-
-                // assign each GameObject in scene a Guid and replace each GameObject script reference with the matching Guid at SERIALIZATION TIME
+                // SERIALIZATION TIME ONLY: assign each GameObject in scene a Guid and replace each GameObject script reference with the matching Guid
             }
         }
-        Logger.LogInfo($"Rendering {gameObjectsToRender.Count} objects in scene");
+        // Logger.LogInfo($"Rendering {gameObjectsToRender.Count} objects in scene");
         // MainViewModel.Instance.SceneGameObjects = new(MainViewModel.Instance.SceneGameObjects);
         _gameWindow.Render(gameObjectsToRender);
 
