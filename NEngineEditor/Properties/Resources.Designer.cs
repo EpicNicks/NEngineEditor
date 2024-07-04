@@ -121,7 +121,7 @@ namespace NEngineEditor.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to using NEngine.GameObjects;
+        ///   Looks up a localized string similar to using System.Collections.Generic;
         ///
         ///using SFML.Graphics;
         ///
@@ -134,7 +134,7 @@ namespace NEngineEditor.Properties {
         ///    public override List&lt;Drawable&gt; Drawables { get; set; } = [];
         ///
         ///    // where you should add your Drawables to the Drawables list
-        ///    public {CLA [rest of string was truncated]&quot;;.
+        ///    publ [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string GameObjectTemplate_cs {
             get {
