@@ -111,7 +111,7 @@ public class MainViewModel : ViewModelBase
     }
 
 
-    private static readonly string[] _specialProperties = ["Position", "Rotation"];
+    private static readonly string[] _specialProperties = ["Position", "Rotation", "Scale"];
     public void LoadScene(string filePath)
     {
         static object? ConvertProperty(string typeOfValue, string value) => typeOfValue switch
