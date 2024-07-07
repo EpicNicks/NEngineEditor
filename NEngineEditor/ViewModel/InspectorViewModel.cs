@@ -89,7 +89,7 @@ public class InspectorViewModel : ViewModelBase
                 }
             }
 
-            foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 if (!processedMembers.Contains(field.Name))
                 {

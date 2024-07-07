@@ -1,4 +1,9 @@
-﻿using System.Reflection;
+﻿// Implicit Usings not enabled in generated projects
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+using System.Reflection;
 using System.Globalization;
 using System.IO;
 using System.Text.Json;
@@ -162,10 +167,10 @@ public partial class Program
         => typeOfValue switch
         {
             "string" or "String" => value,
-            "bool" => bool.Parse(value),
-            "int" => int.Parse(value),
-            "float" => float.Parse(value),
-            "double" => double.Parse(value),
+            "bool" or "Boolean" => bool.Parse(value),
+            "int" or "Int32" => int.Parse(value),
+            "float" or "Single" => float.Parse(value),
+            "double" or "Double" => double.Parse(value),
             "Vector2u" => Vector2uParser.ParseOrZero(value),
             "Vector2f" => Vector2fParser.ParseOrZero(value),
             "Vector2i" => Vector2iParser.ParseOrZero(value),
@@ -225,33 +230,29 @@ public partial class Program
         {
             List<GameObjectData> sceneGameObjectData = sceneData.SceneGameObjects ?? [];
             List<(RenderLayer renderLayer, GameObject gameObject)> toAddGameObjects = [];
+            List<GameObjectData> invalidGameObjects = [];
             foreach (GameObjectData gameObjectData in sceneGameObjectData)
             {
-                if 
+                if
                 (
-                    gameObjectData.GameObjectClass is null 
-                    || Type.GetType(gameObjectData.GameObjectClass) is not Type gameObjectType 
+                    gameObjectData.GameObjectClass is null
+                    || Type.GetType(gameObjectData.GameObjectClass) is not Type gameObjectType
                     || Activator.CreateInstance(gameObjectType) is not GameObject gameObject
                 )
                 {
+                    invalidGameObjects.Add(gameObjectData);
                     continue;
                 }
                 toAddGameObjects.Add((gameObjectData.RenderLayer, gameObject));
             }
+            sceneGameObjectData.RemoveAll(invalidGameObjects.Contains);
             // resolve properties (second loop to resolve Guid references to objects which need to be instantiated)
             foreach ((int i, GameObjectData gameObjectData) in sceneGameObjectData.Select((value, i) => (i, value)))
             {
                 try
                 {
-                    if (gameObjectData.GameObjectClass is null)
-                    {
-                        continue;
-                    }
-                    if (Type.GetType(gameObjectData.GameObjectClass) is not Type gameObjectType)
-                    {
-                        continue;
-                    }
                     GameObject gameObject = toAddGameObjects[i].gameObject;
+                    Type gameObjectType = gameObject.GetType();
                     if (gameObjectData.GameObjectPropertyNameTypeValue is null)
                     {
                         continue;
@@ -276,11 +277,18 @@ public partial class Program
                             {
                                 continue;
                             }
-                            
+
                             if (fieldValue is Guid guidProperty)
                             {
                                 int foundIndex = sceneGameObjectData.IndexOf(sceneGameObjectData.Where(gObjData => gObjData.Guid == guidProperty).First());
-                                fieldInfo.SetValue(gameObject, toAddGameObjects[foundIndex].gameObject);
+                                if (foundIndex != -1) // Guid was either not found or Guid.Empty (and therefore not found)
+                                {
+                                    fieldInfo.SetValue(gameObject, toAddGameObjects[foundIndex].gameObject);
+                                }
+                                else
+                                {
+                                    fieldInfo.SetValue(gameObject, null);
+                                }
                             }
                             else
                             {

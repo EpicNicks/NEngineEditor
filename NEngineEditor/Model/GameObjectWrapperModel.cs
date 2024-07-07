@@ -13,12 +13,11 @@ public class GameObjectWrapperModel
     /// <summary>
     /// Used in the scene to resolve references to other GameObjects
     /// </summary>
-    public Guid Guid { get; set; }
-    public string? Name { get; set; }
     public string? GameObjectClass { get; set; }
-    public Dictionary<string, TypeValuePair>? GameObjectPropertyNameTypeValue { get; set; }
     public RenderLayer RenderLayer { get; set; }
-
+    public string? Name { get; set; }
+    public Guid Guid { get; set; }
+    public Dictionary<string, TypeValuePair>? GameObjectPropertyNameTypeValue { get; set; }
     public class TypeValuePair
     {
         public string? Type { get; set; }
@@ -86,7 +85,7 @@ public class GameObjectWrapperModel
         {
             return value switch
             {
-                sbyte or byte or int or uint or short or ushort or long or ulong or float or double or decimal or bool => value.ToString()!,
+                sbyte or byte or int or uint or short or ushort or long or ulong or float or double or decimal or bool or string => value.ToString()!,
                 Vector2i v => $"{{ {v.X}, {v.Y} }}",
                 Vector2f v => $"{{ {v.X}, {v.Y} }}",
                 Vector2u v => $"{{ {v.X}, {v.Y} }}",

@@ -72,11 +72,11 @@ namespace NEngineEditor.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;Project Sdk=&quot;Microsoft.NET.Sdk&quot;&gt;
-        ///
         ///  &lt;PropertyGroup&gt;
         ///    &lt;OutputType&gt;Exe&lt;/OutputType&gt;
         ///    &lt;TargetFramework&gt;net8.0&lt;/TargetFramework&gt;
         ///    &lt;Nullable&gt;enable&lt;/Nullable&gt;
+        ///    &lt;StartupObject&gt;Program&lt;/StartupObject&gt;
         ///  &lt;/PropertyGroup&gt;
         ///
         ///  &lt;ItemGroup&gt;
@@ -90,9 +90,7 @@ namespace NEngineEditor.Properties {
         ///  &lt;/ItemGroup&gt;
         ///
         ///  &lt;ItemGroup&gt;
-        ///    &lt;!-- Add any other dependencies you might need here --&gt;
-        ///  &lt;/ItemGroup&gt;
-        /// [rest of string was truncated]&quot;;.
+        ///    &lt;!-- Add any other dependencies [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string CsProjTemplate_csproj {
             get {
@@ -143,7 +141,12 @@ namespace NEngineEditor.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to using System.Reflection;
+        ///   Looks up a localized string similar to // Implicit Usings not enabled in generated projects
+        ///using System;
+        ///using System.Collections.Generic;
+        ///using System.Linq;
+        ///
+        ///using System.Reflection;
         ///using System.Globalization;
         ///using System.IO;
         ///using System.Text.Json;
@@ -158,12 +161,7 @@ namespace NEngineEditor.Properties {
         ///
         ////// &lt;summary&gt;
         ////// Based in the root directory of your project.
-        ////// Runs the scenes created here along with your config files in the Engine&apos;s Application class.
-        ////// Modify at your own risk.
-        ////// &lt;/summary&gt;
-        ///public partial class Program
-        ///{
-        ///    //  Applicatio [rest of string was truncated]&quot;;.
+        ////// Runs the scenes created here along with your config files in the  [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string ProjectProgram {
             get {

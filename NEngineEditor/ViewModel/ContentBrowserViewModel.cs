@@ -98,7 +98,7 @@ public class ContentBrowserViewModel : ViewModelBase
         SCENE,
     }
 
-    private void LoadFilesInCurrentDir()
+    public void LoadFilesInCurrentDir()
     {
         List<FileIconName> filesAndDirectories = [];
         string currentDir = subDirectory.CurrentSubDir;
@@ -137,7 +137,7 @@ public class ContentBrowserViewModel : ViewModelBase
         Items = new ObservableCollection<FileIconName>(filesAndDirectories);
     }
 
-    public void AddScriptToScene(string filePath)
+    public static void AddScriptToScene(string filePath)
     {
         try
         {
@@ -214,6 +214,10 @@ public class ContentBrowserViewModel : ViewModelBase
             using StreamWriter writer = new StreamWriter(fileStream);
             writer.Write(scriptOutput);
             // TODO: generate Guid in metadata file for the script for scene reference
+        }
+        else if (createItemType == CreateItemType.SCENE)
+        {
+
         }
         else
         {

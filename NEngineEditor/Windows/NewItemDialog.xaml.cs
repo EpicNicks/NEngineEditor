@@ -12,6 +12,7 @@ public partial class NewItemDialog : Window
     {
         ContentBrowserViewModel.CreateItemType.CS_SCRIPT => "New C# Script",
         ContentBrowserViewModel.CreateItemType.FOLDER => "New folder",
+        ContentBrowserViewModel.CreateItemType.SCENE => "New Scene",
         _ => "Something completely different"
     };
     public ContentBrowserViewModel.CreateItemType CreateItemType { get; private set; }

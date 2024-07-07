@@ -15,7 +15,12 @@ public class ProjectDirectoryWatcher
 
     public ProjectDirectoryWatcher(string projectPath, Dispatcher dispatcher)
     {
-        _fileSystemWatcher = new FileSystemWatcher(projectPath);
+        _fileSystemWatcher = new FileSystemWatcher(projectPath)
+        {
+            Filter = "*.*",
+            NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName,
+            EnableRaisingEvents = true,
+        };
         _dispatcher = dispatcher;
 
         _fileSystemWatcher.Created += OnFileCreated;

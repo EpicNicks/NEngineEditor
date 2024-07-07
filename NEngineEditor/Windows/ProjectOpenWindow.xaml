@@ -15,14 +15,12 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
         <StackPanel Orientation="Horizontal" Margin="10">
             <TextBlock Text="All Projects Parent Folder:" Margin="0,0,10,0" />
             <TextBox x:Name="BaseFilePathTextBox" Width="300" VerticalAlignment="Center" Margin="0,0,10,0" />
             <Button Content="Browse..." Click="BrowseButton_Click" VerticalAlignment="Center" Margin="0,0,10,0" />
             <Button Content="Refresh Projects" Click="RefreshButton_Click" VerticalAlignment="Center" />
         </StackPanel>
-
         <StackPanel Grid.Row="1" Margin="10">
             <StackPanel Orientation="Horizontal">
                 <Button Content="+" Click="CreateNewProject_Click" VerticalAlignment="Center" FontSize="16"/>
@@ -39,6 +37,13 @@
                         </Style.Triggers>
                     </Style>
                 </ListBox.Style>
+                <ListBox.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Open Project" Click="OpenProject_Click"/>
+                        <MenuItem Header="Delete Project" Click="DeleteProject_Click"/>
+                        <MenuItem Header="Update Engine For Project" Click="UpdateEngineOnProject_Click"/>
+                    </ContextMenu>
+                </ListBox.ContextMenu>
             </ListBox>
         </StackPanel>
     </Grid>

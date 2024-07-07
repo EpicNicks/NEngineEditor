@@ -15,18 +15,24 @@ public partial class MainWindow : Window
         //  yes I hate this singleton design right now but I just need it working for the time being
         MainViewModel.Instance.ProjectDirectory = projectPath;
         InitializeComponent();
+        MainViewModel.Instance.ContentBrowserViewModel = ContentBrowserControl.DataContext as ContentBrowserViewModel;
         DataContext = MainViewModel.Instance;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
 
     private void SaveMenuItemClick(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show("Save Clicked");
+        SaveScene();
     }
 
     private void EditMenuItemClick(object sender, RoutedEventArgs e)
     {
         // check for unsaved changes and ask before close
         Close();
+    }
+
+    private void SaveScene()
+    {
+        MainViewModel.Instance.SaveScene();
     }
 }

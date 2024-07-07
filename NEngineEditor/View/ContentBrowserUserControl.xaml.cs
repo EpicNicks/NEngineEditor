@@ -42,6 +42,10 @@ public partial class ContentBrowserUserControl : UserControl
                 {
                     OpenScript(filePath);
                 }
+                else if (img.Source == ContentBrowserViewModel.SCENE_ICON)
+                {
+                    OpenScene(filePath);
+                }
             }
             // handle file click
         }
@@ -65,12 +69,6 @@ public partial class ContentBrowserUserControl : UserControl
         }
         else if (img.Source == ContentBrowserViewModel.CS_SCRIPT_ICON)
         {
-            var addToSceneMenuItem = new MenuItem { Header = "Add To Scene" };
-            addToSceneMenuItem.Click += (s, args) =>
-            {
-                MessageBox.Show("Not yet implemented");
-                //MainViewModel.Instance.SceneGameObjects.Add();
-            };
             var addScriptToSceneMenuItem = new MenuItem { Header = "Add Script to Scene" };
             addScriptToSceneMenuItem.Click += (_, _) => AddScriptToScene(filePath);
             var openMenuItem = new MenuItem { Header = "Open" };
@@ -83,6 +81,19 @@ public partial class ContentBrowserUserControl : UserControl
             contextMenu.Items.Add(addScriptToSceneMenuItem);
             contextMenu.Items.Add(new Separator());
             contextMenu.Items.Add(openMenuItem);
+            contextMenu.Items.Add(renameMenuItem);
+            contextMenu.Items.Add(deleteMenuItem);
+        }
+        else if (img.Source == ContentBrowserViewModel.SCENE_ICON)
+        {
+            var openSceneMenuItem = new MenuItem { Header = "Open Scene" };
+            openSceneMenuItem.Click += (_, _) => OpenScene(filePath);
+            var renameMenuItem = new MenuItem { Header = "Rename" };
+            renameMenuItem.Click += (_, _) => RenameItem(stackPanel);
+            var deleteMenuItem = new MenuItem { Header = "Delete" };
+            deleteMenuItem.Click += (_, _) => DeleteItem(filePath);
+
+            contextMenu.Items.Add(openSceneMenuItem);
             contextMenu.Items.Add(renameMenuItem);
             contextMenu.Items.Add(deleteMenuItem);
         }
@@ -131,6 +142,11 @@ public partial class ContentBrowserUserControl : UserControl
         {
             cbvm.subDirectory.CurrentSubDir = filePath;
         }
+    }
+
+    private void OpenScene(string filePath)
+    {
+        MainViewModel.Instance.LoadScene(filePath);
     }
 
     private void DeleteItem(string filePath)
@@ -198,11 +214,7 @@ public partial class ContentBrowserUserControl : UserControl
 
     private void AddScriptToScene(string filePath)
     {
-        if (DataContext is not ContentBrowserViewModel cbvm)
-        {
-            return;
-        }
-        cbvm.AddScriptToScene(filePath);
+        ContentBrowserViewModel.AddScriptToScene(filePath);
     }
 
     private void OpenScript(string filePath)
