@@ -20,19 +20,24 @@ public partial class MainWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
 
+    private void SaveScene()
+    {
+        MainViewModel.Instance.SaveScene();
+    }
+
     private void SaveMenuItemClick(object sender, RoutedEventArgs e)
     {
         SaveScene();
     }
 
-    private void EditMenuItemClick(object sender, RoutedEventArgs e)
+    private void ExitMenuItemClick(object sender, RoutedEventArgs e)
     {
         // check for unsaved changes and ask before close
         Close();
     }
 
-    private void SaveScene()
+    private void OpenAddScenesToBuildWindow_Click(object sender, RoutedEventArgs e)
     {
-        MainViewModel.Instance.SaveScene();
+
     }
 }

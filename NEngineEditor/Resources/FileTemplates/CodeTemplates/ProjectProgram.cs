@@ -163,8 +163,13 @@ public partial class Program
         public static partial Regex ValidVector3fRegex();
     }
 
-    private static object? ConvertProperty(string typeOfValue, string value) 
-        => typeOfValue switch
+    private static object? ConvertProperty(string typeOfValue, string value)
+    {
+        if (Type.GetType(typeOfValue) is Type type && type.IsEnum)
+        {
+            return Enum.Parse(type, value);
+        }
+        return typeOfValue switch
         {
             "string" or "String" => value,
             "bool" or "Boolean" => bool.Parse(value),
@@ -178,6 +183,7 @@ public partial class Program
             "Reference" or "reference" or "Guid" or "guid" => Guid.Parse(value),
             _ => null
         };
+    }
 
     private static ProjectSettings? LoadProjectSettings()
     {

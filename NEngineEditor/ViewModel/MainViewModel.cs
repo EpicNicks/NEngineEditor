@@ -2,26 +2,24 @@
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Input;
+using System.Text.Json;
+using System.Reflection;
+using System.Text.Json.Serialization;
+using System.IO;
 
-using SFML.Graphics;
 using SFML.System;
 
 using NEngine.GameObjects;
 using NEngine.Window;
 
-using NEngineEditor.Model;
-using NEngineEditor.Managers;
 using NEngineEditor.Commands;
-using System.Text.Json;
 using NEngineEditor.Converters.Json;
-using System.Text.Json.Serialization;
-using System.IO;
-using NEngineEditor.Windows;
-using static NEngineEditor.ViewModel.ContentBrowserViewModel;
-using System.Reflection;
 using NEngineEditor.Converters.Parsing;
 using NEngineEditor.Helpers;
-using NEngineEditor.Extensions;
+using NEngineEditor.Model;
+using NEngineEditor.Managers;
+using NEngineEditor.Windows;
+using static NEngineEditor.ViewModel.ContentBrowserViewModel;
 
 namespace NEngineEditor.ViewModel;
 public class MainViewModel : ViewModelBase
@@ -111,39 +109,69 @@ public class MainViewModel : ViewModelBase
     }
 
 
-    private static readonly string[] _specialProperties = ["Position", "Rotation", "Scale"];
+    // private static readonly string[] _specialProperties = ["Position", "Rotation", "Scale"];
     public void LoadScene(string filePath)
     {
-        static object? ConvertProperty(string typeOfValue, string value) => typeOfValue switch
+        static object? ConvertProperty(string typeOfValue, string value)
         {
-            "string" or "String" => value,
-            "bool" or "Boolean" => bool.Parse(value),
-            "int" or "Int32" => int.Parse(value),
-            "float" or "Single" => float.Parse(value),
-            "double" or "Double" => double.Parse(value),
-            "Vector2u" => Vector2uParser.ParseOrZero(value),
-            "Vector2f" => Vector2fParser.ParseOrZero(value),
-            "Vector2i" => Vector2iParser.ParseOrZero(value),
-            "Vector3f" => Vector3fParser.ParseOrZero(value),
-            "Reference" or "reference" or "Guid" or "guid" => Guid.Parse(value),
-            _ => null
-        };
-
-        string? FindFilePathMatchingTypeInProject(string subdirectory, string className)
-        {
-            if (Directory.GetFiles(subdirectory).First(sd => Path.GetFileNameWithoutExtension(sd) == className) is string filepath)
+            return typeOfValue switch
             {
-                return filepath;
+                "string" or "String" => value,
+                "bool" or "Boolean" => bool.Parse(value),
+                "int" or "Int32" => int.Parse(value),
+                "float" or "Single" => float.Parse(value),
+                "double" or "Double" => double.Parse(value),
+                "Vector2u" => Vector2uParser.ParseOrZero(value),
+                "Vector2f" => Vector2fParser.ParseOrZero(value),
+                "Vector2i" => Vector2iParser.ParseOrZero(value),
+                "Vector3f" => Vector3fParser.ParseOrZero(value),
+                "Reference" or "reference" or "Guid" or "guid" => Guid.Parse(value),
+                _ => ""
+            };
+        }
+
+        static string? FindFilePathMatchingTypeInProject(string subdirectory, string className)
+        {
+            try
+            {
+                foreach (string file in Directory.GetFiles(subdirectory))
+                {
+                    string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file);
+                    if (fileNameWithoutExtension.Equals(className, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return file;
+                    }
+                }
+
+                // Recursively check subdirectories
+                foreach (string directory in Directory.GetDirectories(subdirectory))
+                {
+                    string? result = FindFilePathMatchingTypeInProject(directory, className);
+                    if (result != null)
+                    {
+                        return result;
+                    }
+                }
             }
-            return Directory.GetDirectories(subdirectory).FirstOrDefault(sd => FindFilePathMatchingTypeInProject(sd, className) is not null);
+            catch (UnauthorizedAccessException)
+            {
+                Logger.LogError($"Access denied to {subdirectory}");
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"Error accessing {subdirectory}: {e.Message}");
+            }
+
+            // File not found
+            return null;
         }
 
         JsonSerializerOptions jsonSerializerOptions = new();
         JsonConverter[] jsonConverters = [
             new Vector2fConverter(),
-                new Vector2iConverter(),
-                new Vector2uConverter(),
-                new Vector3fConverter()
+            new Vector2iConverter(),
+            new Vector2uConverter(),
+            new Vector3fConverter()
         ];
         foreach (JsonConverter jsonConverter in jsonConverters)
         {
@@ -197,11 +225,10 @@ public class MainViewModel : ViewModelBase
                     }
                     foreach (string memberName in gameObjectData.GameObjectPropertyNameTypeValue.Keys)
                     {
-                        if (_specialProperties.Contains(memberName) && gameObject is Positionable)
+                        if (gameObjectType.GetProperty(memberName) is PropertyInfo propertyInfo)
                         {
-                            PropertyInfo? propertyInfo = gameObjectType.GetProperty(memberName);
                             GameObjectWrapperModel.TypeValuePair typeValue = gameObjectData.GameObjectPropertyNameTypeValue[memberName];
-                            if (propertyInfo is null || typeValue.Type is null || typeValue.Value is null || ConvertProperty(typeValue.Type, typeValue.Value) is not object propertyValue)
+                            if (typeValue.Type is null || typeValue.Value is null || ConvertProperty(typeValue.Type, typeValue.Value) is not object propertyValue)
                             {
                                 continue;
                             }
@@ -211,11 +238,23 @@ public class MainViewModel : ViewModelBase
                         {
                             FieldInfo? fieldInfo = gameObjectType.GetField(memberName);
                             GameObjectWrapperModel.TypeValuePair typeValue = gameObjectData.GameObjectPropertyNameTypeValue[memberName];
-                            if (fieldInfo is null || typeValue.Type is null || typeValue.Value is null || ConvertProperty(typeValue.Type, typeValue.Value) is not object fieldValue)
+                            if (fieldInfo is null || typeValue.Type is null || typeValue.Value is null)
                             {
                                 continue;
                             }
-
+                            object? fieldValue = ConvertProperty(typeValue.Type, typeValue.Value);
+                            if (fieldValue is string fieldString && string.IsNullOrEmpty(fieldString))
+                            {
+                                Type? fieldType = gameObject.GetType().GetField(memberName)?.FieldType;
+                                if (fieldType is not null)
+                                {
+                                    Enum.TryParse(fieldType, typeValue.Value, out fieldValue);
+                                }
+                            }
+                            if (fieldValue == null)
+                            {
+                                continue;
+                            }
                             if (fieldValue is Guid guidProperty)
                             {
                                 int foundIndex = sceneGameObjectData.IndexOf(sceneGameObjectData.Where(gObjData => gObjData.Guid == guidProperty).First());
@@ -244,7 +283,7 @@ public class MainViewModel : ViewModelBase
             Logger.LogError($"An Exception Occurred while loading scene {Path.GetFileNameWithoutExtension(filePath)}, Exception: {ex}");
         }
     }
-    private static JsonSerializerOptions sceneSaveJsonSerializerOptions = new JsonSerializerOptions
+    private static JsonSerializerOptions sceneSaveJsonSerializerOptions = new()
     {
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.Never
@@ -286,20 +325,28 @@ public class MainViewModel : ViewModelBase
             static bool IsSupportedType(Type type)
             {
                 return type == typeof(bool) ||
-                       type == typeof(string) ||
-                       type == typeof(int) ||
-                       type == typeof(float) ||
-                       type == typeof(double) ||
-                       type.IsEnum ||
-                       type == typeof(Vector2f) ||
-                       type == typeof(Vector2i) ||
-                       type == typeof(Vector2u) ||
-                       type == typeof(Vector3f);
+                    type == typeof(byte) ||
+                    type == typeof(sbyte) ||
+                    type == typeof(short) ||
+                    type == typeof(ushort) ||
+                    type == typeof(int) ||
+                    type == typeof(uint) ||
+                    type == typeof(long) ||
+                    type == typeof(ulong) ||
+                    type == typeof(float) ||
+                    type == typeof(double) ||
+                    type == typeof(decimal) ||
+                    type == typeof(string) ||
+                    type.IsEnum ||
+                    type == typeof(Vector2f) ||
+                    type == typeof(Vector2i) ||
+                    type == typeof(Vector2u) ||
+                    type == typeof(Vector3f);
             }
 
             static string? MemberValueToString(object? value) => value switch
             {
-                sbyte or byte or int or uint or short or ushort or long or ulong or float or double or decimal or bool or string => value.ToString(),
+                sbyte or byte or int or uint or short or ushort or long or ulong or float or double or decimal or bool or string or Enum => value.ToString(),
                 Vector2i v => $"{{ {v.X}, {v.Y} }}",
                 Vector2f v => $"{{ {v.X}, {v.Y} }}",
                 Vector2u v => $"{{ {v.X}, {v.Y} }}",

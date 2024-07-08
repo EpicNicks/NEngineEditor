@@ -4,18 +4,27 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:NEngineEditor.View"
+             xmlns:converters="clr-namespace:NEngineEditor.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="250" d:DesignWidth="800">
     <UserControl.Resources>
         <Style x:Key="LeftAlignedHeaderStyle" TargetType="GridViewColumnHeader">
             <Setter Property="HorizontalContentAlignment" Value="Left" />
         </Style>
+        <converters:LogLevelToColorConverter x:Key="LogLevelToColorConverter"/>
     </UserControl.Resources>
     <Grid>
         <ListView Name="logListView" Margin="10">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="Log Level" Width="100" DisplayMemberBinding="{Binding Level}" HeaderContainerStyle="{StaticResource LeftAlignedHeaderStyle}" />
+                    <GridViewColumn Header="Log Level" Width="100" HeaderContainerStyle="{StaticResource LeftAlignedHeaderStyle}">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Level}" 
+                                           Foreground="{Binding Level, Converter={StaticResource LogLevelToColorConverter}}"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
                     <GridViewColumn Header="Log Message" Width="2000" DisplayMemberBinding="{Binding Message}" HeaderContainerStyle="{StaticResource LeftAlignedHeaderStyle}" />
                 </GridView>
             </ListView.View>

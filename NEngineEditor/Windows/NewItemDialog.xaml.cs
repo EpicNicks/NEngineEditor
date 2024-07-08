@@ -1,5 +1,7 @@
 ﻿using System.Windows;
+using System.Windows.Input;
 
+using NEngineEditor.Commands;
 using NEngineEditor.ViewModel;
 
 namespace NEngineEditor.Windows;
@@ -18,6 +20,11 @@ public partial class NewItemDialog : Window
     public ContentBrowserViewModel.CreateItemType CreateItemType { get; private set; }
     public string? EnteredName { get; private set; }
 
+    private ICommand? _okCommand;
+    public ICommand OkCommand => _okCommand ??= new ActionCommand(() => Accept());
+    private ICommand? _cancelCommand;
+    public ICommand CancelCommand => _cancelCommand ??= new ActionCommand(() => Accept());
+
     public NewItemDialog(ContentBrowserViewModel.CreateItemType createItemType)
     {
         InitializeComponent();
@@ -26,13 +33,23 @@ public partial class NewItemDialog : Window
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
 
-    private void OK_Click(object sender, RoutedEventArgs e)
+    private void OK_Click(object? _, RoutedEventArgs __)
+    {
+        Accept();
+    }
+
+    private void Cancel_Click(object? _, RoutedEventArgs __)
+    {
+        Cancel();
+    }
+
+    private void Accept()
     {
         EnteredName = ProjectNameTextBox.Text;
         DialogResult = true;
     }
 
-    private void Cancel_Click(object sender, RoutedEventArgs e)
+    private void Cancel()
     {
         DialogResult = false;
     }

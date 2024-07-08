@@ -26,10 +26,11 @@
                 <!-- File Menu Items -->
                 <MenuItem Header="Save" Click="SaveMenuItemClick"></MenuItem>
                 <Separator/>
-                <MenuItem Header="Exit" Click="EditMenuItemClick"></MenuItem>
+                <MenuItem Header="Exit" Click="ExitMenuItemClick"></MenuItem>
             </MenuItem>
             <MenuItem Header="Settings">
                 <!-- Settings Menu Items -->
+                <MenuItem Header="Add Scenes To Build" Click="OpenAddScenesToBuildWindow_Click" />
             </MenuItem>
             <MenuItem Header="Preferences">
                 <!-- Preferences Menu Items -->

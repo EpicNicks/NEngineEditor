@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
+using NEngineEditor.Model;
 using NEngineEditor.ViewModel;
 
 namespace NEngineEditor.View;
@@ -26,12 +27,9 @@ public partial class ConsoleUserControl : UserControl
 
     private void CopyToClipboard_Click(object sender, RoutedEventArgs e)
     {
-        if (logListView.SelectedItem != null)
+        if (logListView.SelectedItem is LogEntry logItem)
         {
-            // Assuming your log items have Level and Message properties
-            var logItem = (dynamic)logListView.SelectedItem;
-            string clipboardText = $"{logItem.Level}: {logItem.Message}";
-            Clipboard.SetText(clipboardText);
+            Clipboard.SetText($"{logItem.Level}: {logItem.Message}");
         }
     }
 }

@@ -26,10 +26,10 @@ public class Vector2fConverter : JsonConverter<Vector2f>
             switch (propertyName)
             {
                 case "X":
-                    result = new(reader.GetSingle(), result.Y);
+                    result.X = reader.GetSingle();
                     break;
                 case "Y":
-                    result = new(result.X, reader.GetSingle());
+                    result.Y = reader.GetSingle();
                     break;
                 default:
                     throw new JsonException($"Unexpected property: {propertyName}");
