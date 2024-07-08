@@ -17,9 +17,9 @@ using NEngineEditor.Converters.Json;
 using NEngineEditor.Converters.Parsing;
 using NEngineEditor.Helpers;
 using NEngineEditor.Model;
+using NEngineEditor.Model.JsonSerialized;
 using NEngineEditor.Managers;
 using NEngineEditor.Windows;
-using static NEngineEditor.ViewModel.ContentBrowserViewModel;
 
 namespace NEngineEditor.ViewModel;
 public class MainViewModel : ViewModelBase
@@ -27,6 +27,7 @@ public class MainViewModel : ViewModelBase
     private ICommand? _saveCommand;
     public ICommand SaveCommand => _saveCommand ??= new ActionCommand(() => SaveScene());
 
+    // set in MainWindow once the project is selected
     private string _projectDirectory = "";
     public string ProjectDirectory
     {
@@ -301,8 +302,8 @@ public class MainViewModel : ViewModelBase
         }
         if (string.IsNullOrEmpty(LoadedScene.filepath))
         {
-            CreateItemType createItemType = CreateItemType.SCENE;
-            NewItemDialog newItemDialog = new NewItemDialog(createItemType);
+            ContentBrowserViewModel.CreateItemType createItemType = ContentBrowserViewModel.CreateItemType.SCENE;
+            NewItemDialog newItemDialog = new(createItemType);
             if (newItemDialog.ShowDialog() == true)
             {
                 if (string.IsNullOrEmpty(newItemDialog.EnteredName))
@@ -417,6 +418,33 @@ public class MainViewModel : ViewModelBase
             string jsonSerializedScene = JsonSerializer.Serialize(sceneToWrite, sceneSaveJsonSerializerOptions);
             File.WriteAllText(filePath, jsonSerializedScene);
             ContentBrowserViewModel.LoadFilesInCurrentDir();
+        }
+    }
+
+    public void OpenAddScenesToBuildWindow()
+    {
+        AddScenesToBuildWindow addScenesToBuildDialog = new();
+        if (addScenesToBuildDialog.ShowDialog() == true)
+        {
+            try
+            {
+                string assetsPath = Path.Join(Instance.ProjectDirectory, "Assets");
+                string projectConfigPath = Path.Combine(assetsPath, "ProjectConfig.json");
+                string projectConfigString = File.ReadAllText(projectConfigPath);
+                ProjectConfig? projectConfig = JsonSerializer.Deserialize<ProjectConfig>(projectConfigString);
+                if (projectConfig is null)
+                {
+                    Logger.LogError("Scenes could not be processed, project config not found");
+                    // probably just regenerate it
+                    return;
+                }
+                projectConfig.Scenes = addScenesToBuildDialog.SelectedScenePaths;
+                File.WriteAllText(projectConfigPath, JsonSerializer.Serialize(projectConfig, new JsonSerializerOptions { WriteIndented = true }));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"An Exception occurred while processing the selected scenes\n\n{ex}");
+            }
         }
     }
 

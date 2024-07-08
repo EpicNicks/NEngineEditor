@@ -61,18 +61,18 @@ public partial class Program
         /// <summary>
         /// An ordered list of scenes to be added
         /// </summary>
-        public List<string>? ScenePaths { get; set; }
+        public List<string>? Scenes { get; set; }
 
         public Color BackgroundColor()
         {
             byte ParseColorStringAtRange(Range idx) => byte.Parse(DefaultBackgroundColor[idx], NumberStyles.HexNumber);
             byte ParseColorStringAtIndex(int idx) => ParseColorStringAtRange(idx..++idx);
 
-            if (DefaultBackgroundColor is null || ValidColorRegex().IsMatch(DefaultBackgroundColor))
+            if (DefaultBackgroundColor is null || !ValidColorRegex().IsMatch(DefaultBackgroundColor))
             {
                 return Color.White;
             }
-            if (DefaultBackgroundColor.Length == 3)
+            if (DefaultBackgroundColor.Length == 4)
             {
                 return new Color(ParseColorStringAtIndex(1), ParseColorStringAtIndex(2), ParseColorStringAtIndex(3));
             }
@@ -165,10 +165,6 @@ public partial class Program
 
     private static object? ConvertProperty(string typeOfValue, string value)
     {
-        if (Type.GetType(typeOfValue) is Type type && type.IsEnum)
-        {
-            return Enum.Parse(type, value);
-        }
         return typeOfValue switch
         {
             "string" or "String" => value,
@@ -181,14 +177,18 @@ public partial class Program
             "Vector2i" => Vector2iParser.ParseOrZero(value),
             "Vector3f" => Vector3fParser.ParseOrZero(value),
             "Reference" or "reference" or "Guid" or "guid" => Guid.Parse(value),
-            _ => null
+            _ => ""
         };
     }
 
     private static ProjectSettings? LoadProjectSettings()
     {
-        string configPath = "Assets/ProjectConfig.json";
-        if (!Directory.Exists(configPath))
+        string configPath = Path.Combine(
+            Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).FullName,
+            "Assets",
+            "ProjectConfig.json"
+        );
+        if (!File.Exists(configPath))
         {
             return default;
         }
@@ -198,12 +198,8 @@ public partial class Program
 
     private static List<SceneData> LoadSceneDataFiles(ProjectSettings projectSettings)
     {
-        // Scenes need to be specified in order in Project Settings
-
-        //List<string> scenePaths = FindScenesInPath("Assets");
-        // foreach string path in scenePaths => File.ReadAllText(path) |> JsonSerializer.Deserialize<SceneData>
         List<SceneData> scenes = [];
-        List<string> scenePaths = projectSettings.ScenePaths ?? [];
+        List<string> scenePaths = projectSettings.Scenes ?? [];
         foreach (string path in scenePaths)
         {
             string sceneJsonString = File.ReadAllText(path);
@@ -257,8 +253,15 @@ public partial class Program
             {
                 try
                 {
+                    if (gameObjectData.GameObjectClass is null)
+                    {
+                        continue;
+                    }
+                    if (Type.GetType(gameObjectData.GameObjectClass) is not Type gameObjectType)
+                    {
+                        continue;
+                    }
                     GameObject gameObject = toAddGameObjects[i].gameObject;
-                    Type gameObjectType = gameObject.GetType();
                     if (gameObjectData.GameObjectPropertyNameTypeValue is null)
                     {
                         continue;
@@ -279,11 +282,23 @@ public partial class Program
                         {
                             FieldInfo? fieldInfo = gameObjectType.GetField(memberName);
                             GameObjectData.TypeValuePair typeValue = gameObjectData.GameObjectPropertyNameTypeValue[memberName];
-                            if (fieldInfo is null || typeValue.Type is null || typeValue.Value is null || ConvertProperty(typeValue.Type, typeValue.Value) is not object fieldValue)
+                            if (fieldInfo is null || typeValue.Type is null || typeValue.Value is null)
                             {
                                 continue;
                             }
-
+                            object? fieldValue = ConvertProperty(typeValue.Type, typeValue.Value);
+                            if (fieldValue is string fieldString && string.IsNullOrEmpty(fieldString))
+                            {
+                                Type? fieldType = gameObject.GetType().GetField(memberName)?.FieldType;
+                                if (fieldType is not null)
+                                {
+                                    Enum.TryParse(fieldType, typeValue.Value, out fieldValue);
+                                }
+                            }
+                            if (fieldValue == null)
+                            {
+                                continue;
+                            }
                             if (fieldValue is Guid guidProperty)
                             {
                                 int foundIndex = sceneGameObjectData.IndexOf(sceneGameObjectData.Where(gObjData => gObjData.Guid == guidProperty).First());

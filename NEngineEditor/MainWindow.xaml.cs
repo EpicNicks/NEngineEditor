@@ -38,6 +38,6 @@ public partial class MainWindow : Window
 
     private void OpenAddScenesToBuildWindow_Click(object sender, RoutedEventArgs e)
     {
-
+        MainViewModel.Instance.OpenAddScenesToBuildWindow();
     }
 }
