@@ -109,6 +109,17 @@ public class MainViewModel : ViewModelBase
         _sceneGameObjects = [];
     }
 
+    public void ReloadScene()
+    {
+        if (!string.IsNullOrEmpty(_loadedScene.filepath))
+        {
+            LoadScene(_loadedScene.filepath);
+        }
+        else
+        {
+            Logger.LogWarning("No scene loaded currently");
+        }
+    }
 
     // private static readonly string[] _specialProperties = ["Position", "Rotation", "Scale"];
     public void LoadScene(string filePath)
@@ -235,11 +246,10 @@ public class MainViewModel : ViewModelBase
                             }
                             propertyInfo.SetValue(gameObject, propertyValue);
                         }
-                        else
+                        else if (gameObjectType.GetField(memberName) is FieldInfo fieldInfo)
                         {
-                            FieldInfo? fieldInfo = gameObjectType.GetField(memberName);
                             GameObjectWrapperModel.TypeValuePair typeValue = gameObjectData.GameObjectPropertyNameTypeValue[memberName];
-                            if (fieldInfo is null || typeValue.Type is null || typeValue.Value is null)
+                            if (typeValue.Type is null || typeValue.Value is null)
                             {
                                 continue;
                             }
@@ -258,8 +268,8 @@ public class MainViewModel : ViewModelBase
                             }
                             if (fieldValue is Guid guidProperty)
                             {
-                                int foundIndex = sceneGameObjectData.IndexOf(sceneGameObjectData.Where(gObjData => gObjData.Guid == guidProperty).First());
-                                if (foundIndex != -1) // Guid was either not found or Guid.Empty (and therefore not found)
+                                int foundIndex = sceneGameObjectData.FindIndex(gObjData => gObjData.Guid == guidProperty);
+                                if (foundIndex != -1)
                                 {
                                     fieldInfo.SetValue(gameObject, SceneGameObjects[foundIndex].GameObject);
                                 }
@@ -274,6 +284,7 @@ public class MainViewModel : ViewModelBase
                             }
                         }
                     }
+                    Logger.LogInfo($"Loaded scene {sceneModel.Name}");
                 }
                 catch (Exception) { }
             }

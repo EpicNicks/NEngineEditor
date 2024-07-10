@@ -15,7 +15,7 @@ namespace NEngineEditor.Converters
                 return logLevel switch
                 {
                     LogEntry.LogLevel.INFO => Brushes.Blue,
-                    LogEntry.LogLevel.WARNING => Brushes.Yellow,
+                    LogEntry.LogLevel.WARNING => Brushes.DarkOrange,
                     LogEntry.LogLevel.ERROR => Brushes.Red,
                     _ => Brushes.Black,
                 };

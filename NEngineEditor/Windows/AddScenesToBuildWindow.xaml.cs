@@ -26,6 +26,7 @@ public partial class AddScenesToBuildWindow : Window
     {
         InitializeComponent();
         DataContext = this;
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
         FindScenesInProject();
     }
 

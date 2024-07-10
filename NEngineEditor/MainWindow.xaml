@@ -25,6 +25,7 @@
             <MenuItem Header="File">
                 <!-- File Menu Items -->
                 <MenuItem Header="Save" Click="SaveMenuItemClick"></MenuItem>
+                <MenuItem Header="Reload Scene" Click="ReloadSceneMenuItemClick"/>
                 <Separator/>
                 <MenuItem Header="Exit" Click="ExitMenuItemClick"></MenuItem>
             </MenuItem>
@@ -61,11 +62,11 @@
         <!-- Bottom Panel (Project Explorer) -->
         <DockPanel Grid.Row="2" Grid.ColumnSpan="3" Height="200" Background="LightGray">
             <!-- Project files display here -->
-            <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                <TabItem Header="Content Browser" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <TabControl x:Name="BottomTabControl" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TabItem x:Name="ContentBrowserTab" Header="Content Browser" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <view:ContentBrowserUserControl x:Name="ContentBrowserControl"/>
                 </TabItem>
-                <TabItem Header="Console">
+                <TabItem x:Name="ConsoleTab" Header="Console">
                     <view:ConsoleUserControl/>
                 </TabItem>
             </TabControl>

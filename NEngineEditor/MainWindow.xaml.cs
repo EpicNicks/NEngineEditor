@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Collections.Specialized;
+using System.Windows;
 
 using NEngineEditor.ViewModel;
 
@@ -16,8 +17,14 @@ public partial class MainWindow : Window
         MainViewModel.Instance.ProjectDirectory = projectPath;
         InitializeComponent();
         MainViewModel.Instance.ContentBrowserViewModel = ContentBrowserControl.DataContext as ContentBrowserViewModel;
+        MainViewModel.Instance.Logs.CollectionChanged += LoggerLogs_CollectionChanged;
         DataContext = MainViewModel.Instance;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
+    }
+
+    private void LoggerLogs_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        BottomTabControl.SelectedItem = ConsoleTab;
     }
 
     private void SaveScene()
@@ -39,5 +46,10 @@ public partial class MainWindow : Window
     private void OpenAddScenesToBuildWindow_Click(object sender, RoutedEventArgs e)
     {
         MainViewModel.Instance.OpenAddScenesToBuildWindow();
+    }
+
+    private void ReloadSceneMenuItemClick(object sender, RoutedEventArgs e)
+    {
+        MainViewModel.Instance.ReloadScene();
     }
 }
