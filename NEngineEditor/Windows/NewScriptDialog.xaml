@@ -1,0 +1,38 @@
+﻿<Window x:Class="NEngineEditor.Windows.NewScriptDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewmodel="clr-namespace:NEngineEditor.ViewModel"
+        xmlns:local="clr-namespace:NEngineEditor.Windows"
+        d:DataContext="{d:DesignInstance Type=local:NewScriptDialog}"
+        mc:Ignorable="d"
+        Title="{Binding CreateItemTypeString}" Height="220" Width="400">
+    <Window.InputBindings>
+        <KeyBinding Key="Return" Command="{Binding OkCommand}"/>
+        <KeyBinding Key="Esc" Command="{Binding CancelCommand}"/>
+    </Window.InputBindings>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="{Binding CreateItemTypeString}" Grid.ColumnSpan="2" VerticalAlignment="Center" Margin="10"/>
+        <TextBlock Text="Name:" Grid.Row="1" VerticalAlignment="Center" Margin="10,5"/>
+        <TextBox x:Name="ProjectNameTextBox" Grid.Row="1" Grid.Column="1" Margin="0,5,10,5"/>
+        <TextBlock Text="Script Type:" Grid.Row="2" VerticalAlignment="Center" Margin="10,5"/>
+        <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,5,10,5"
+                  ItemsSource="{Binding Source={local:EnumBindingSource {x:Type local:NewScriptDialog+CsScriptType}}}"
+                  SelectedItem="{Binding ScriptType}"/>
+        <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Cancel" Margin="10" Width="75" Click="Cancel_Click"/>
+            <Button Content="OK" Margin="10" Width="75" Click="OK_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

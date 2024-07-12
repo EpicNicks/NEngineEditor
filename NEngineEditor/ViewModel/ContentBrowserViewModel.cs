@@ -12,6 +12,11 @@ using NEngineEditor.Properties;
 using NEngine.Window;
 using NEngine.CoreLibs.GameObjects;
 using NEngine.GameObjects;
+using NEngineEditor.Windows;
+using NEngineEditor.Model;
+using System.Text.Json.Nodes;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace NEngineEditor.ViewModel;
 public class ContentBrowserViewModel : ViewModelBase
@@ -191,6 +196,38 @@ public class ContentBrowserViewModel : ViewModelBase
         }
     }
 
+    public bool CreateScript(string path, string itemName, NewScriptDialog.CsScriptType csScriptType)
+    {
+        try
+        {
+            string fullPath = Path.Join(path, itemName);
+            if (!fullPath.EndsWith(".cs"))
+            {
+                fullPath += ".cs";
+            }
+            string gameObjectScriptTemplate = csScriptType switch
+            {
+                NewScriptDialog.CsScriptType.GAMEOBJECT => Resources.GameObjectTemplate_cs,
+                NewScriptDialog.CsScriptType.UIANCHORED => Resources.UIAnchoredTemplate_cs,
+                _ => throw new InvalidOperationException($"Provided CsScriptType ({csScriptType}) was out of bounds of the enum")
+            };
+            string scriptOutput = gameObjectScriptTemplate.Replace("{CLASSNAME}", itemName.Replace("-", "_"));
+            File.WriteAllText(fullPath, scriptOutput);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"An exception occurred while creating script named {itemName}: {ex}");
+            return false;
+        }
+    }
+
+    private static readonly JsonSerializerOptions newSceneJsonSerializerOptions = new JsonSerializerOptions
+    {
+        WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.Never
+    };
     public bool CreateItem(string path, CreateItemType createItemType, string itemName)
     {
         string fullPath = Path.Join(path, itemName);
@@ -210,14 +247,16 @@ public class ContentBrowserViewModel : ViewModelBase
             }
             string gameObjectScriptTemplate = Resources.GameObjectTemplate_cs;
             string scriptOutput = gameObjectScriptTemplate.Replace("{CLASSNAME}", itemName.Replace("-", "_"));
-            using FileStream fileStream = File.Create(fullPath);
-            using StreamWriter writer = new StreamWriter(fileStream);
-            writer.Write(scriptOutput);
-            // TODO: generate Guid in metadata file for the script for scene reference
+            File.WriteAllText(fullPath, scriptOutput);
         }
         else if (createItemType == CreateItemType.SCENE)
         {
-
+            if (!fullPath.EndsWith(".scene"))
+            {
+                fullPath += ".scene";
+            }
+            SceneModel emptySceneModel = new() { Name = itemName, SceneGameObjects = [] };
+            File.WriteAllText(fullPath, JsonSerializer.Serialize(emptySceneModel, newSceneJsonSerializerOptions));
         }
         else
         {

@@ -13,6 +13,7 @@
     <None Remove="Resources\ellipsis-horizontal.png" />
     <None Remove="Resources\FileTemplates\CodeTemplates\GameObjectTemplate.cs.template" />
     <None Remove="Resources\csharp-script-icon.png" />
+    <None Remove="Resources\FileTemplates\CodeTemplates\UIAnchoredTemplate.cs.template" />
     <None Remove="Resources\FileTemplates\JsonTemplates\EditorConfig.json" />
     <None Remove="Resources\FileTemplates\JsonTemplates\NEngineProject.json" />
     <None Remove="Resources\FileTemplates\JsonTemplates\ProjectConfig.json" />
@@ -22,6 +23,7 @@
 
   <ItemGroup>
     <Resource Include="Resources\ellipsis-horizontal.png" />
+    <Resource Include="Resources\FileTemplates\CodeTemplates\UIAnchoredTemplate.cs.template" />
     <Resource Include="Resources\FileTemplates\JsonTemplates\EditorConfig.json" />
     <Resource Include="Resources\FileTemplates\JsonTemplates\NEngineProject.json" />
     <Resource Include="Resources\FileTemplates\JsonTemplates\ProjectConfig.json" />

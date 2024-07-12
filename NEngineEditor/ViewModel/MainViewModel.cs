@@ -15,6 +15,7 @@ using NEngineEditor.Model;
 using NEngineEditor.Model.JsonSerialized;
 using NEngineEditor.Managers;
 using NEngineEditor.Windows;
+using NEngineEditor.Extensions;
 
 namespace NEngineEditor.ViewModel;
 public class MainViewModel : ViewModelBase
@@ -100,7 +101,30 @@ public class MainViewModel : ViewModelBase
 
     private void _projectDirectoryWatcher_FileRenamed(object sender, RenamedEventArgs e)
     {
-        // TODO: handle recompiling references, if class name differs, the failed compilation should be resolved in the FileChanged event
+        // visual studio deletes the original file and renames the temp file to the new file, so file changes from a visual studio context would occur here
+        if (File.Exists(e.FullPath))
+        {
+            foreach (LayeredGameObject layeredGameObject in SceneGameObjects)
+            {
+                if (layeredGameObject.GameObject is not null && layeredGameObject.GameObject.GetType().Name == Path.GetFileNameWithoutExtension(e.FullPath))
+                {
+                    GameObject? reloadedGameObject = ScriptCompiler.CompileAndInstantiateFromFile(e.FullPath) as GameObject;
+                    if (reloadedGameObject is not null)
+                    {
+                        ObjectCloner.CloneMembers(layeredGameObject.GameObject, reloadedGameObject, ObjectCloner.MemberTypes.Fields | ObjectCloner.MemberTypes.Properties);
+                        if (SelectedGameObject == layeredGameObject)
+                        {
+                            SelectedGameObject = null;
+                        }
+                        layeredGameObject.GameObject = reloadedGameObject;
+                    }
+                }
+            }
+            // trigger notify
+            ObservableCollection<LayeredGameObject> temp = [.. SceneGameObjects];
+            SceneGameObjects.Clear();
+            temp.ForEach(SceneGameObjects.Add);
+        }
     }
 
     private void _projectDirectoryWatcher_FileChanged(object sender, FileSystemEventArgs e)
@@ -127,7 +151,9 @@ public class MainViewModel : ViewModelBase
                 }
             }
             // trigger notify
-            SceneGameObjects = [.. SceneGameObjects];
+            ObservableCollection<LayeredGameObject> temp = [.. SceneGameObjects];
+            SceneGameObjects.Clear();
+            temp.ForEach(SceneGameObjects.Add);
         }
     }
 

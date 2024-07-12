@@ -1,0 +1,38 @@
+using System.Reflection;
+
+using SFML.Graphics;
+
+using NEngine.CoreLibs.GameObjects;
+
+// The general use-case base class for UI Elements (ensure the RenderLayer is set to UI)
+public class {CLASSNAME} : UIAnchored
+{
+    // where you should add your Drawables to the Drawables list
+    public {CLASSNAME}()
+    {
+        // your drawable references go here
+        Drawables = [];
+    }
+
+    // Called when the object is first added to the scene (if active)
+    public override void Attach()
+    {
+
+    }
+
+    // Called every frame the object is enabled in the scene (use Application.DeltaTime to get the time since last frame)
+    public override void Update()
+    {
+        foreach (Drawable drawable in Drawables)
+        {
+            if (drawable is Transformable transformableDrawable && transformableDrawable.GetType().GetMethod("GetGlobalBounds") is MethodInfo getGlobalBoundsMethod)
+            {
+                object? globalBounds = getGlobalBoundsMethod.Invoke(drawable, null);
+                if (globalBounds is FloatRect globalBoundsRect)
+                {
+                    transformableDrawable.Position = base.PositionLocally(globalBoundsRect);
+                }
+            }
+        }
+    }
+}

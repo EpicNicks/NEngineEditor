@@ -180,5 +180,32 @@ namespace NEngineEditor.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to using System.Reflection;
+        ///
+        ///using SFML.Graphics;
+        ///
+        ///using NEngine.CoreLibs.GameObjects;
+        ///
+        ///// The general use-case base class for UI Elements (ensure the RenderLayer is set to UI)
+        ///public class {CLASSNAME} : UIAnchored
+        ///{
+        ///    // where you should add your Drawables to the Drawables list
+        ///    public {CLASSNAME}()
+        ///    {
+        ///        // your drawable references go here
+        ///        Drawables = [];
+        ///    }
+        ///
+        ///    // Called when the object is first added to the scene (if active)
+        ///    public override void Attach()
+        ///    { [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string UIAnchoredTemplate_cs {
+            get {
+                return ResourceManager.GetString("UIAnchoredTemplate_cs", resourceCulture);
+            }
+        }
     }
 }

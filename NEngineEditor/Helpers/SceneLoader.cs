@@ -21,24 +21,6 @@ public static class SceneLoader
         List<MainViewModel.LayeredGameObject> loadedGameObjects = [];
         string sceneName = "Unnamed Scene";
 
-        static object? ConvertProperty(string typeOfValue, string value)
-        {
-            return typeOfValue switch
-            {
-                "string" or "String" => value,
-                "bool" or "Boolean" => bool.Parse(value),
-                "int" or "Int32" => int.Parse(value),
-                "float" or "Single" => float.Parse(value),
-                "double" or "Double" => double.Parse(value),
-                "Vector2u" => Vector2uParser.ParseOrZero(value),
-                "Vector2f" => Vector2fParser.ParseOrZero(value),
-                "Vector2i" => Vector2iParser.ParseOrZero(value),
-                "Vector3f" => Vector3fParser.ParseOrZero(value),
-                "Reference" or "reference" or "Guid" or "guid" => Guid.Parse(value),
-                _ => ""
-            };
-        }
-
         static string? FindFilePathMatchingTypeInProject(string subdirectory, string className)
         {
             try
@@ -102,60 +84,7 @@ public static class SceneLoader
                 try
                 {
                     GameObject gameObject = loadedGameObjects[i].GameObject;
-                    Type gameObjectType = gameObject.GetType();
-                    if (gameObjectData.GameObjectPropertyNameTypeValue is null)
-                    {
-                        continue;
-                    }
-                    foreach (string memberName in gameObjectData.GameObjectPropertyNameTypeValue.Keys)
-                    {
-                        if (gameObjectType.GetProperty(memberName) is PropertyInfo propertyInfo)
-                        {
-                            GameObjectWrapperModel.TypeValuePair typeValue = gameObjectData.GameObjectPropertyNameTypeValue[memberName];
-                            if (typeValue.Type is null || typeValue.Value is null || ConvertProperty(typeValue.Type, typeValue.Value) is not object propertyValue)
-                            {
-                                continue;
-                            }
-                            propertyInfo.SetValue(gameObject, propertyValue);
-                        }
-                        else if (gameObjectType.GetField(memberName) is FieldInfo fieldInfo)
-                        {
-                            GameObjectWrapperModel.TypeValuePair typeValue = gameObjectData.GameObjectPropertyNameTypeValue[memberName];
-                            if (typeValue.Type is null || typeValue.Value is null)
-                            {
-                                continue;
-                            }
-                            object? fieldValue = ConvertProperty(typeValue.Type, typeValue.Value);
-                            if (fieldValue is string fieldString && string.IsNullOrEmpty(fieldString))
-                            {
-                                Type? fieldType = gameObject.GetType().GetField(memberName)?.FieldType;
-                                if (fieldType is not null)
-                                {
-                                    Enum.TryParse(fieldType, typeValue.Value, out fieldValue);
-                                }
-                            }
-                            if (fieldValue == null)
-                            {
-                                continue;
-                            }
-                            if (fieldValue is Guid guidProperty)
-                            {
-                                int foundIndex = sceneGameObjectData.FindIndex(gObjData => gObjData.Guid == guidProperty);
-                                if (foundIndex != -1)
-                                {
-                                    fieldInfo.SetValue(gameObject, loadedGameObjects[foundIndex].GameObject);
-                                }
-                                else
-                                {
-                                    fieldInfo.SetValue(gameObject, null);
-                                }
-                            }
-                            else
-                            {
-                                fieldInfo.SetValue(gameObject, fieldValue);
-                            }
-                        }
-                    }
+                    ResolvePropertiesOfGameObject(gameObject, gameObjectData, sceneGameObjectData, loadedGameObjects);
                 }
                 catch (Exception ex)
                 {
@@ -170,6 +99,69 @@ public static class SceneLoader
         }
 
         return loadedGameObjects;
+    }
+
+    public static void ResolvePropertiesOfGameObject(GameObject gameObject, GameObjectWrapperModel gameObjectData, SceneModel sceneModel, List<MainViewModel.LayeredGameObject> loadedGameObjects)
+    {
+        ResolvePropertiesOfGameObject(gameObject, gameObjectData, sceneModel.SceneGameObjects, loadedGameObjects);
+    }
+
+    public static void ResolvePropertiesOfGameObject(GameObject gameObject, GameObjectWrapperModel gameObjectData, List<GameObjectWrapperModel> sceneGameObjectData, List<MainViewModel.LayeredGameObject> loadedGameObjects)
+    {
+        Type gameObjectType = gameObject.GetType();
+        if (gameObjectData.GameObjectPropertyNameTypeValue is null)
+        {
+            return;
+        }
+        foreach (string memberName in gameObjectData.GameObjectPropertyNameTypeValue.Keys)
+        {
+            if (gameObjectType.GetProperty(memberName) is PropertyInfo propertyInfo)
+            {
+                GameObjectWrapperModel.TypeValuePair typeValue = gameObjectData.GameObjectPropertyNameTypeValue[memberName];
+                if (typeValue.Type is null || typeValue.Value is null || ConvertProperty(typeValue.Type, typeValue.Value) is not object propertyValue)
+                {
+                    continue;
+                }
+                propertyInfo.SetValue(gameObject, propertyValue);
+            }
+            else if (gameObjectType.GetField(memberName) is FieldInfo fieldInfo)
+            {
+                GameObjectWrapperModel.TypeValuePair typeValue = gameObjectData.GameObjectPropertyNameTypeValue[memberName];
+                if (typeValue.Type is null || typeValue.Value is null)
+                {
+                    continue;
+                }
+                object? fieldValue = ConvertProperty(typeValue.Type, typeValue.Value);
+                if (fieldValue is string fieldString && string.IsNullOrEmpty(fieldString))
+                {
+                    Type? fieldType = gameObject.GetType().GetField(memberName)?.FieldType;
+                    if (fieldType is not null)
+                    {
+                        Enum.TryParse(fieldType, typeValue.Value, out fieldValue);
+                    }
+                }
+                if (fieldValue == null)
+                {
+                    continue;
+                }
+                if (fieldValue is Guid guidProperty)
+                {
+                    int foundIndex = sceneGameObjectData.FindIndex(gObjData => gObjData.Guid == guidProperty);
+                    if (foundIndex != -1)
+                    {
+                        fieldInfo.SetValue(gameObject, loadedGameObjects[foundIndex].GameObject);
+                    }
+                    else
+                    {
+                        fieldInfo.SetValue(gameObject, null);
+                    }
+                }
+                else
+                {
+                    fieldInfo.SetValue(gameObject, fieldValue);
+                }
+            }
+        }
     }
 
     public static (string sceneName, List<MainViewModel.LayeredGameObject>) LoadSceneFromJson(string jsonString)
@@ -215,15 +207,6 @@ public static class SceneLoader
                 type == typeof(Vector3f);
         }
 
-        static string? MemberValueToString(object? value) => value switch
-        {
-            sbyte or byte or int or uint or short or ushort or long or ulong or float or double or decimal or bool or string or Enum => value.ToString(),
-            Vector2i v => $"{{ {v.X}, {v.Y} }}",
-            Vector2f v => $"{{ {v.X}, {v.Y} }}",
-            Vector2u v => $"{{ {v.X}, {v.Y} }}",
-            Vector3f v => $"{{ {v.X}, {v.Y}, {v.Z} }}",
-            _ => ""
-        };
         int unnamedGOIndex = 1;
         foreach (MainViewModel.LayeredGameObject lgo in gameObjects)
         {
@@ -287,4 +270,31 @@ public static class SceneLoader
 
         return sceneToWrite;
     }
+
+    private static object? ConvertProperty(string typeOfValue, string value)
+    {
+        return typeOfValue switch
+        {
+            "string" or "String" => value,
+            "bool" or "Boolean" => bool.Parse(value),
+            "int" or "Int32" => int.Parse(value),
+            "float" or "Single" => float.Parse(value),
+            "double" or "Double" => double.Parse(value),
+            "Vector2u" => Vector2uParser.ParseOrZero(value),
+            "Vector2f" => Vector2fParser.ParseOrZero(value),
+            "Vector2i" => Vector2iParser.ParseOrZero(value),
+            "Vector3f" => Vector3fParser.ParseOrZero(value),
+            "Reference" or "reference" or "Guid" or "guid" => Guid.Parse(value),
+            _ => ""
+        };
+    }
+
+    private static string? MemberValueToString(object? value) => value switch
+        {
+            Vector2i v => $"{{ {v.X}, {v.Y} }}",
+            Vector2f v => $"{{ {v.X}, {v.Y} }}",
+            Vector2u v => $"{{ {v.X}, {v.Y} }}",
+            Vector3f v => $"{{ {v.X}, {v.Y}, {v.Z} }}",
+            _ => value?.ToString()
+        };
 }

@@ -112,11 +112,13 @@ public partial class ContentBrowserUserControl : UserControl
         var contextMenu = new ContextMenu();
 
         var createCsScriptMenuItem = new MenuItem { Header = "Create C# Script" };
-        createCsScriptMenuItem.Click += (s, args) => CreateItem(ContentBrowserViewModel.CreateItemType.CS_SCRIPT);
+        createCsScriptMenuItem.Click += (_, _) => CreateItem(ContentBrowserViewModel.CreateItemType.CS_SCRIPT);
         var createFolderMenuItem = new MenuItem { Header = "Create Folder" };
-        createFolderMenuItem.Click += (s, args) => CreateItem(ContentBrowserViewModel.CreateItemType.FOLDER);
+        createFolderMenuItem.Click += (_, _) => CreateItem(ContentBrowserViewModel.CreateItemType.FOLDER);
+        var createSceneMenuItem = new MenuItem { Header = "Create Empty Scene" };
+        createSceneMenuItem.Click += (_, _) => CreateItem(ContentBrowserViewModel.CreateItemType.SCENE);
         var openCurrentDirInFileExplorer = new MenuItem { Header = "Open Current Directory in File Explorer" };
-        openCurrentDirInFileExplorer.Click += (s, args) =>
+        openCurrentDirInFileExplorer.Click += (_, _) =>
         {
             string currentDirectory = cbvm.subDirectory.CurrentSubDir;
             Process.Start(new ProcessStartInfo
@@ -195,20 +197,41 @@ public partial class ContentBrowserUserControl : UserControl
     private void CreateItem(ContentBrowserViewModel.CreateItemType createItemType)
     {
         // dialog creation
-        NewItemDialog newItemDialog = new NewItemDialog(createItemType);
-        if (newItemDialog.ShowDialog() == true)
+        if (createItemType is ContentBrowserViewModel.CreateItemType.CS_SCRIPT)
         {
-            if (string.IsNullOrEmpty(newItemDialog.EnteredName))
+            NewScriptDialog newScriptDialog = new(createItemType);
+            if (newScriptDialog.ShowDialog() == true)
             {
-                MessageBox.Show("The Entered Name was empty", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                Logger.LogError($"The name you entered for the {createItemType} you tried to create was empty somehow.");
-                return;
+                if (string.IsNullOrEmpty(newScriptDialog.EnteredName))
+                {
+                    MessageBox.Show("The Entered Name was empty", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Logger.LogError($"The name you entered for the {createItemType} you tried to create was empty somehow.");
+                    return;
+                }
+                if (DataContext is not ContentBrowserViewModel cbvm)
+                {
+                    return;
+                }
+                cbvm.CreateItem(cbvm.subDirectory.CurrentSubDir, createItemType, newScriptDialog.EnteredName);
             }
-            if (DataContext is not ContentBrowserViewModel cbvm)
+        }
+        else
+        {
+            NewItemDialog newItemDialog = new(createItemType);
+            if (newItemDialog.ShowDialog() == true)
             {
-                return;
+                if (string.IsNullOrEmpty(newItemDialog.EnteredName))
+                {
+                    MessageBox.Show("The Entered Name was empty", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Logger.LogError($"The name you entered for the {createItemType} you tried to create was empty somehow.");
+                    return;
+                }
+                if (DataContext is not ContentBrowserViewModel cbvm)
+                {
+                    return;
+                }
+                cbvm.CreateItem(cbvm.subDirectory.CurrentSubDir, createItemType, newItemDialog.EnteredName);
             }
-            cbvm.CreateItem(cbvm.subDirectory.CurrentSubDir, createItemType, newItemDialog.EnteredName);
         }
     }
 

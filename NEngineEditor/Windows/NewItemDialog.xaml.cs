@@ -5,9 +5,7 @@ using NEngineEditor.Commands;
 using NEngineEditor.ViewModel;
 
 namespace NEngineEditor.Windows;
-/// <summary>
-/// Interaction logic for NewItemDialog.xaml
-/// </summary>
+
 public partial class NewItemDialog : Window
 {
     public string CreateItemTypeString => CreateItemType switch
@@ -17,13 +15,15 @@ public partial class NewItemDialog : Window
         ContentBrowserViewModel.CreateItemType.SCENE => "New Scene",
         _ => "Something completely different"
     };
+
     public ContentBrowserViewModel.CreateItemType CreateItemType { get; private set; }
     public string? EnteredName { get; private set; }
 
     private ICommand? _okCommand;
     public ICommand OkCommand => _okCommand ??= new ActionCommand(() => Accept());
+
     private ICommand? _cancelCommand;
-    public ICommand CancelCommand => _cancelCommand ??= new ActionCommand(() => Accept());
+    public ICommand CancelCommand => _cancelCommand ??= new ActionCommand(() => Cancel());
 
     public NewItemDialog(ContentBrowserViewModel.CreateItemType createItemType)
     {
@@ -33,12 +33,12 @@ public partial class NewItemDialog : Window
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
 
-    private void OK_Click(object? _, RoutedEventArgs __)
+    private void OK_Click(object? sender, RoutedEventArgs e)
     {
         Accept();
     }
 
-    private void Cancel_Click(object? _, RoutedEventArgs __)
+    private void Cancel_Click(object? sender, RoutedEventArgs e)
     {
         Cancel();
     }
