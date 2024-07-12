@@ -222,7 +222,7 @@ public partial class ContentBrowserUserControl : UserControl
         try
         {
             // assume visual studio for now
-            string csProjFilePath = Directory.GetFiles(MainViewModel.Instance.ProjectDirectory).Where(path => Path.GetExtension(path) == ".csproj").First();
+            string csProjFilePath = Directory.GetFiles(MainWindow.ProjectDirectory).Where(path => Path.GetExtension(path) == ".csproj").First();
             FileDialogHelper.ShowOpenWithDialog(csProjFilePath);
             //Process.Start(new ProcessStartInfo
             //{

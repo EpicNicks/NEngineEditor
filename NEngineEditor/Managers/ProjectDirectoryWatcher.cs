@@ -1,12 +1,11 @@
 ﻿using System.IO;
-using System.Windows;
 using System.Windows.Threading;
 
 namespace NEngineEditor.Managers;
 public class ProjectDirectoryWatcher
 {
-    private FileSystemWatcher _fileSystemWatcher;
-    private Dispatcher _dispatcher;
+    private readonly FileSystemWatcher _fileSystemWatcher;
+    private readonly Dispatcher _dispatcher;
 
     public event FileSystemEventHandler? FileCreated;
     public event FileSystemEventHandler? FileChanged;
@@ -18,8 +17,9 @@ public class ProjectDirectoryWatcher
         _fileSystemWatcher = new FileSystemWatcher(projectPath)
         {
             Filter = "*.*",
-            NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName,
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName,
             EnableRaisingEvents = true,
+            IncludeSubdirectories = true,
         };
         _dispatcher = dispatcher;
 
@@ -27,12 +27,15 @@ public class ProjectDirectoryWatcher
         _fileSystemWatcher.Changed += OnFileChanged;
         _fileSystemWatcher.Deleted += OnFileDeleted;
         _fileSystemWatcher.Renamed += OnFileRenamed;
-
-        _fileSystemWatcher.EnableRaisingEvents = true;
+        
     }
 
     private void OnFileRenamed(object sender, RenamedEventArgs e)
     {
+        if (Path.GetFileName(e.FullPath).EndsWith('~') || Path.GetFileName(e.FullPath).StartsWith('.'))
+        {
+            return;
+        }
         _dispatcher?.Invoke(() =>
         {
             FileRenamed?.Invoke(sender, e);
@@ -41,6 +44,10 @@ public class ProjectDirectoryWatcher
 
     private void OnFileDeleted(object sender, FileSystemEventArgs e)
     {
+        if (Path.GetFileName(e.FullPath).EndsWith('~') || Path.GetFileName(e.FullPath).StartsWith('.'))
+        {
+            return;
+        }
         _dispatcher.Invoke(() =>
         {
             FileDeleted?.Invoke(sender, e);
@@ -49,6 +56,13 @@ public class ProjectDirectoryWatcher
 
     private void OnFileChanged(object sender, FileSystemEventArgs e)
     {
+        // visual studio messes this up with writing to temp files, not sure how to work around it yet, but notepad++ doesn't do this same garbage
+        //  need to determine how to catch these change events with the correct filepath since the real file's filepath is never propagated,
+        //  just the containing folder and temp file
+        if (Path.GetFileName(e.FullPath).EndsWith('~') || Path.GetFileName(e.FullPath).StartsWith('.'))
+        {
+            return;
+        }
         _dispatcher.Invoke(() =>
         {
             FileChanged?.Invoke(sender, e);
@@ -57,6 +71,10 @@ public class ProjectDirectoryWatcher
 
     private void OnFileCreated(object sender, FileSystemEventArgs e)
     {
+        if (Path.GetFileName(e.FullPath).EndsWith('~') || Path.GetFileName(e.FullPath).StartsWith('.'))
+        {
+            return;
+        }
         _dispatcher.Invoke(() =>
         {
             FileCreated?.Invoke(sender, e);

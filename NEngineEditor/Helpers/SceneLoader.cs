@@ -84,7 +84,7 @@ public static class SceneLoader
                 if
                 (
                     gameObjectData.GameObjectClass is null
-                    || FindFilePathMatchingTypeInProject(Path.Join(MainViewModel.Instance.ProjectDirectory, "Assets"), gameObjectData.GameObjectClass) is not string pathToFile
+                    || FindFilePathMatchingTypeInProject(Path.Join(MainWindow.ProjectDirectory, "Assets"), gameObjectData.GameObjectClass) is not string pathToFile
                     || ScriptCompiler.CompileAndInstantiateFromFile(pathToFile) is not GameObject gameObject
                 )
                 {

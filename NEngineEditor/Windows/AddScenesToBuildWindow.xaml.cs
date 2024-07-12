@@ -8,7 +8,6 @@ using System.Windows.Media;
 
 using NEngineEditor.Managers;
 using NEngineEditor.Model;
-using NEngineEditor.ViewModel;
 
 namespace NEngineEditor.Windows;
 /// <summary>
@@ -54,7 +53,7 @@ public partial class AddScenesToBuildWindow : Window
             return sceneFiles;
         }
 
-        string startingDirectory = Path.Join(MainViewModel.Instance.ProjectDirectory, "Assets");
+        string startingDirectory = Path.Join(MainWindow.ProjectDirectory, "Assets");
         List<string> sceneFilePaths = FindSceneFiles(startingDirectory);
         sceneFilePaths.ForEach(sfp =>
         {

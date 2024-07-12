@@ -57,11 +57,11 @@ public class ContentBrowserViewModel : ViewModelBase
 
     public ContentBrowserViewModel(Dispatcher contentBrowserDispatcher)
     {
-        _projectDirectoryWatcher = new ProjectDirectoryWatcher(MainViewModel.Instance.ProjectDirectory, contentBrowserDispatcher);
+        _projectDirectoryWatcher = new ProjectDirectoryWatcher(Path.Combine(MainWindow.ProjectDirectory, "Assets"), contentBrowserDispatcher);
         _projectDirectoryWatcher.FileDeleted += (o, e) => LoadFilesInCurrentDir();
         _projectDirectoryWatcher.FileCreated += (o, e) => LoadFilesInCurrentDir();
         _projectDirectoryWatcher.FileRenamed += (o, e) => LoadFilesInCurrentDir();
-        subDirectory = new SubDirectory(MainViewModel.Instance.ProjectDirectory, () =>
+        subDirectory = new SubDirectory(MainWindow.ProjectDirectory, () =>
         {
             OnPropertyChanged(nameof(DirectoryPath));
             LoadFilesInCurrentDir();
@@ -104,7 +104,7 @@ public class ContentBrowserViewModel : ViewModelBase
         string currentDir = subDirectory.CurrentSubDir;
         string[] directoryPaths = Directory.GetDirectories(currentDir);
         string[] filePaths = Directory.GetFiles(currentDir);
-        if (currentDir != MainViewModel.Instance.ProjectDirectory)
+        if (currentDir != MainWindow.ProjectDirectory)
         {
             filesAndDirectories.Add(new(UP_ONE_LEVEL_ICON, "", Directory.GetParent(currentDir)!.FullName));
         }

@@ -3,18 +3,13 @@ using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Input;
 using System.Text.Json;
-using System.Reflection;
 using System.Text.Json.Serialization;
 using System.IO;
-
-using SFML.System;
 
 using NEngine.GameObjects;
 using NEngine.Window;
 
 using NEngineEditor.Commands;
-using NEngineEditor.Converters.Json;
-using NEngineEditor.Converters.Parsing;
 using NEngineEditor.Helpers;
 using NEngineEditor.Model;
 using NEngineEditor.Model.JsonSerialized;
@@ -24,20 +19,11 @@ using NEngineEditor.Windows;
 namespace NEngineEditor.ViewModel;
 public class MainViewModel : ViewModelBase
 {
+    private ProjectDirectoryWatcher _projectDirectoryWatcher;
+
     private ICommand? _saveCommand;
     public ICommand SaveCommand => _saveCommand ??= new ActionCommand(() => SaveScene());
 
-    // set in MainWindow once the project is selected
-    private string _projectDirectory = "";
-    public string ProjectDirectory
-    {
-        get => _projectDirectory;
-        set
-        {
-            _projectDirectory = value;
-            OnPropertyChanged(nameof(ProjectDirectory));
-        }
-    }
     private (string name, string filepath) _loadedScene;
     public (string name, string filepath) LoadedScene
     {
@@ -107,6 +93,42 @@ public class MainViewModel : ViewModelBase
         Logs.CollectionChanged += Logs_CollectionChanged;
         _loadedScene = ("Unnamed Scene", "");
         _sceneGameObjects = [];
+        _projectDirectoryWatcher = new ProjectDirectoryWatcher(Path.Combine(MainWindow.ProjectDirectory, "Assets"), Application.Current.Dispatcher);
+        _projectDirectoryWatcher.FileChanged += _projectDirectoryWatcher_FileChanged;
+        _projectDirectoryWatcher.FileRenamed += _projectDirectoryWatcher_FileRenamed;
+    }
+
+    private void _projectDirectoryWatcher_FileRenamed(object sender, RenamedEventArgs e)
+    {
+        // TODO: handle recompiling references, if class name differs, the failed compilation should be resolved in the FileChanged event
+    }
+
+    private void _projectDirectoryWatcher_FileChanged(object sender, FileSystemEventArgs e)
+    {
+        if (e.ChangeType != WatcherChangeTypes.Changed)
+        {
+            return;
+        }
+        if (File.Exists(e.FullPath))
+        {
+            foreach (LayeredGameObject layeredGameObject in SceneGameObjects)
+            {
+                if (layeredGameObject.GameObject is not null && layeredGameObject.GameObject.GetType().Name == e.Name)
+                {
+                    GameObject? reloadedGameObject = ScriptCompiler.CompileAndInstantiateFromFile(e.FullPath) as GameObject;
+                    if (reloadedGameObject is not null)
+                    {
+                        if (SelectedGameObject == layeredGameObject)
+                        {
+                            SelectedGameObject = null;
+                        }
+                        layeredGameObject.GameObject = reloadedGameObject;
+                    }
+                }
+            }
+            // trigger notify
+            SceneGameObjects = [.. SceneGameObjects];
+        }
     }
 
     public void ReloadScene()
@@ -117,19 +139,24 @@ public class MainViewModel : ViewModelBase
         }
         else
         {
-            try
-            {
-                SelectedGameObject = null;
-                SceneModel tempScene = SceneLoader.WriteGameObjectsToScene(_loadedScene.name, SceneGameObjects);
-                List<LayeredGameObject> loadedGameObjects = SceneLoader.LoadSceneFromSceneModel(tempScene);
-                SceneGameObjects.Clear();
-                loadedGameObjects.ForEach(SceneGameObjects.Add);
-                Logger.LogInfo("Reloaded unnamed scene, refreshing all objects within");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError($"An Exception has occurred while reloading the unnamed scene: {ex}");
-            }
+            SoftReloadScene();
+            Logger.LogInfo("Reloaded unnamed scene, refreshing all objects within");
+        }
+    }
+
+    public void SoftReloadScene()
+    {
+        try
+        {
+            SelectedGameObject = null;
+            SceneModel tempScene = SceneLoader.WriteGameObjectsToScene(_loadedScene.name, SceneGameObjects);
+            List<LayeredGameObject> loadedGameObjects = SceneLoader.LoadSceneFromSceneModel(tempScene);
+            SceneGameObjects.Clear();
+            loadedGameObjects.ForEach(SceneGameObjects.Add);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"An Exception has occurred while soft-reloading the scene: {ex}");
         }
     }
 
@@ -202,7 +229,7 @@ public class MainViewModel : ViewModelBase
         {
             try
             {
-                string assetsPath = Path.Join(Instance.ProjectDirectory, "Assets");
+                string assetsPath = Path.Join(MainWindow.ProjectDirectory, "Assets");
                 string projectConfigPath = Path.Combine(assetsPath, "ProjectConfig.json");
                 string projectConfigString = File.ReadAllText(projectConfigPath);
                 ProjectConfig? projectConfig = JsonSerializer.Deserialize<ProjectConfig>(projectConfigString);
