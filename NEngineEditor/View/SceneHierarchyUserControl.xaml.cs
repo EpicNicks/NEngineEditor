@@ -47,12 +47,4 @@ public partial class SceneHierarchyUserControl : UserControl
             Logger.LogError("Selected GameObject instance to delete was not a LayeredGameObject somehow. Your scene may be corrupted.");
         }
     }
-
-    private void Action2_Click(object sender, RoutedEventArgs e)
-    {
-        if (LeftListView.SelectedItem != null)
-        {
-            MessageBox.Show($"Action 2 on: {LeftListView.SelectedItem}");
-        }
-    }
 }

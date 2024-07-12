@@ -119,20 +119,22 @@ namespace NEngineEditor.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to using System.Collections.Generic;
-        ///
-        ///using SFML.Graphics;
+        ///   Looks up a localized string similar to using SFML.Graphics;
         ///
         ///using NEngine.GameObjects;
         ///
         ///// change &quot;GameObject&quot; to &quot;Positionable&quot; if you need your GameObject to have a position or &quot;Moveable&quot; to handle movement with its Move function in Update
         ///public class {CLASSNAME} : GameObject
         ///{
-        ///    // The general setup for your SFML Drawables. Store references in this list.
-        ///    public override List&lt;Drawable&gt; Drawables { get; set; } = [];
-        ///
         ///    // where you should add your Drawables to the Drawables list
-        ///    publ [rest of string was truncated]&quot;;.
+        ///    public {CLASSNAME}()
+        ///    {
+        ///        // your drawable references go here
+        ///        Drawables = [];
+        ///    }
+        ///
+        ///    // Called when the object is first added to the scene (if active)
+        ///    public o [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string GameObjectTemplate_cs {
             get {

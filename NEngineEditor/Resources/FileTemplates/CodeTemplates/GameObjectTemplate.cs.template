@@ -1,19 +1,15 @@
-﻿using System.Collections.Generic;
-
-using SFML.Graphics;
+﻿using SFML.Graphics;
 
 using NEngine.GameObjects;
 
 // change "GameObject" to "Positionable" if you need your GameObject to have a position or "Moveable" to handle movement with its Move function in Update
 public class {CLASSNAME} : GameObject
 {
-    // The general setup for your SFML Drawables. Store references in this list.
-    public override List<Drawable> Drawables { get; set; } = [];
-
     // where you should add your Drawables to the Drawables list
     public {CLASSNAME}()
     {
-        
+        // your drawable references go here
+        Drawables = [];
     }
 
     // Called when the object is first added to the scene (if active)

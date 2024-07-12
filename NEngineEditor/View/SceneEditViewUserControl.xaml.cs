@@ -88,16 +88,41 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
     }
 
     Vector2i? initialDragPoint = null;
+    private const float DoubleClickTimeThresholdSeconds = 0.5f;
+    private DateTime lastClickTime = DateTime.MinValue;
+    private Mouse.Button? lastClickButton = null;
+    private bool doubleClickProcessed = false;
     void _renderWindow_MouseButtonPressed(object? sender, MouseButtonEventArgs e)
     {
+        DateTime currentTime = DateTime.Now;
+        bool isDoubleClick = e.Button == lastClickButton && (currentTime - lastClickTime).TotalSeconds <= DoubleClickTimeThresholdSeconds && !doubleClickProcessed;
+
         if (e.Button == Mouse.Button.Left)
         {
             // try check for what is on screen at that point, for multiple hits, cycle in a predictable order if Z component is 0 (Vector2f cast to 3f works here too)
-            MessageBox.Show("Clicked Render Window");
+            Vector2f clickPos = _gameWindow.RenderWindow.MapPixelToCoords(new(e.X, e.Y));
+            Vector2f clickCastSize = new(0.1f, 0.1f);
+            MainViewModel.LayeredGameObject? selectedLgo = MainViewModel.Instance.SceneGameObjects
+                .FirstOrDefault(sgo => sgo.GameObject is Positionable p && p.Collider is not null && p.Collider.Bounds.Intersects(new FloatRect(clickPos, clickCastSize)));
+            if (selectedLgo is not null && selectedLgo.GameObject is Positionable selectedPositionable)
+            {
+                MainViewModel.Instance.SelectedGameObject = selectedLgo;
+                if (isDoubleClick)
+                {
+                    MoveCameraToPositionable(selectedPositionable);
+                    doubleClickProcessed = true;
+                }
+            }
         }
         else if (e.Button == Mouse.Button.Right)
         {
             initialDragPoint = new(e.X, e.Y);
+        }
+        if (!isDoubleClick)
+        {
+            lastClickTime = currentTime;
+            lastClickButton = e.Button;
+            doubleClickProcessed = false;
         }
     }
 

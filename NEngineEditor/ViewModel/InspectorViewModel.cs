@@ -277,6 +277,7 @@ public class MemberWrapper : INotifyPropertyChanged
             Type t when t == typeof(Vector2i) => new Vector2i(0, 0),
             Type t when t == typeof(Vector2u) => new Vector2u(0, 0),
             Type t when t == typeof(Vector3f) => new Vector3f(0f, 0f, 0f),
+            Type t when t == typeof(string) => "",
             _ => targetType.IsValueType ? 
                     (Activator.CreateInstance(targetType) ?? throw new InvalidOperationException($"input for field with value type {targetType} could not be instantiated with Activator")) 
                     : throw new InvalidOperationException($"target type of field {targetType} was not a valid type")
