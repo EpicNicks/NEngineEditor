@@ -278,6 +278,15 @@ public class MemberWrapper : INotifyPropertyChanged
             Type t when t == typeof(Vector2u) => new Vector2u(0, 0),
             Type t when t == typeof(Vector3f) => new Vector3f(0f, 0f, 0f),
             Type t when t == typeof(string) => "",
+            Type t when t == typeof(bool) => false,
+            Type t when t == typeof(byte) => (byte)0,
+            Type t when t == typeof(sbyte) => (sbyte)0,
+            Type t when t == typeof(short) => (short)0,
+            Type t when t == typeof(ushort) => (ushort)0,
+            Type t when t == typeof(long) => 0L,
+            Type t when t == typeof(ulong) => 0UL,
+            Type t when t == typeof(decimal) => 0m,
+            Type t when t.IsEnum => Enum.ToObject(t, 0),
             _ => targetType.IsValueType ? 
                     (Activator.CreateInstance(targetType) ?? throw new InvalidOperationException($"input for field with value type {targetType} could not be instantiated with Activator")) 
                     : throw new InvalidOperationException($"target type of field {targetType} was not a valid type")
