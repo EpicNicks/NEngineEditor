@@ -17,6 +17,7 @@ public partial class SceneHierarchyUserControl : UserControl
     {
         InitializeComponent();
         LeftListView.ItemsSource = MainViewModel.Instance.SceneGameObjects;
+        DataContext = MainViewModel.Instance;
     }
 
     private void LeftListView_SelectionChanged(object sender, SelectionChangedEventArgs e)

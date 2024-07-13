@@ -104,13 +104,60 @@ public class TypeToControlConverter : IValueConverter
     private UIElement CreateNumericControl(MemberWrapper memberWrapper)
     {
         var textBox = new TextBox { Width = 100 };
-        textBox.SetBinding(TextBox.TextProperty, new Binding("Value")
+        Type memberType = memberWrapper.MemberInfo switch
         {
-            Source = memberWrapper,
-            Mode = BindingMode.TwoWay,
-            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
-        });
+            PropertyInfo prop => prop.PropertyType,
+            FieldInfo field => field.FieldType,
+            _ => typeof(object)
+        };
+
+        if (memberType == typeof(float) || memberType == typeof(double))
+        {
+            textBox.SetBinding(TextBox.TextProperty, new Binding("ValueString")
+            {
+                Source = memberWrapper,
+                Mode = BindingMode.TwoWay,
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+            });
+
+            textBox.PreviewTextInput += (sender, e) =>
+            {
+                e.Handled = !IsValidFloatInput(((TextBox)sender).Text, e.Text, ((TextBox)sender).SelectionStart);
+            };
+
+            textBox.LostFocus += (sender, e) =>
+            {
+                if (((TextBox)sender).Text.EndsWith("."))
+                {
+                    ((TextBox)sender).Text = ((TextBox)sender).Text.TrimEnd('.');
+                }
+            };
+        }
+        else
+        {
+            textBox.SetBinding(TextBox.TextProperty, new Binding("Value")
+            {
+                Source = memberWrapper,
+                Mode = BindingMode.TwoWay,
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+            });
+        }
+
         return textBox;
+    }
+
+    private bool IsValidFloatInput(string currentText, string newInput, int selectionStart)
+    {
+        string potentialNewValue = currentText.Insert(selectionStart, newInput);
+
+        // Allow empty input, single minus sign at start, or single decimal point
+        if (string.IsNullOrEmpty(potentialNewValue) ||
+            (potentialNewValue == "-" && selectionStart == 0) ||
+            (newInput == "." && !currentText.Contains(".")))
+            return true;
+
+        // Try parsing the potential new value
+        return float.TryParse(potentialNewValue, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out _);
     }
 
     private UIElement CreateVector2Control(MemberWrapper memberWrapper)
@@ -138,7 +185,7 @@ public class TypeToControlConverter : IValueConverter
     private TextBox CreateVectorComponentTextBox(string component, MemberWrapper memberWrapper)
     {
         var textBox = new TextBox { Width = 50 };
-        textBox.SetBinding(TextBox.TextProperty, new Binding($"VectorWrapper.{component}")
+        textBox.SetBinding(TextBox.TextProperty, new Binding($"VectorWrapper.{component}String")
         {
             Source = memberWrapper,
             Mode = BindingMode.TwoWay,
@@ -147,48 +194,41 @@ public class TypeToControlConverter : IValueConverter
 
         textBox.PreviewTextInput += (sender, e) =>
         {
-            Type vectorType = memberWrapper.MemberInfo switch
-            {
-                PropertyInfo prop => prop.PropertyType,
-                FieldInfo field => field.FieldType,
-                _ => typeof(object)
-            };
-
-            if (vectorType == typeof(Vector2f) || vectorType == typeof(Vector3f))
-            {
-                e.Handled = !IsValidFloatInput(textBox.Text, e.Text);
-            }
-            else if (vectorType == typeof(Vector2i))
-            {
-                e.Handled = !int.TryParse(textBox.Text + e.Text, out _) && e.Text != "-";
-            }
-            else if (vectorType == typeof(Vector2u))
-            {
-                e.Handled = !uint.TryParse(textBox.Text + e.Text, out _);
-            }
-        };
-
-        textBox.LostFocus += (sender, e) =>
-        {
-            if (string.IsNullOrWhiteSpace(textBox.Text))
-            {
-                textBox.Text = "0";
-            }
+            e.Handled = !IsValidVectorInput(textBox, textBox.Text, e.Text, memberWrapper);
         };
 
         return textBox;
     }
 
-    private bool IsValidFloatInput(string currentText, string newInput)
+    private bool IsValidVectorInput(TextBox textBox, string currentText, string newInput, MemberWrapper memberWrapper)
     {
-        if (string.IsNullOrEmpty(currentText) && newInput == ".")
-            return true;
+        Type vectorType = memberWrapper.MemberInfo switch
+        {
+            PropertyInfo prop => prop.PropertyType,
+            FieldInfo field => field.FieldType,
+            _ => typeof(object)
+        };
 
-        if (newInput == "-" && !currentText.Contains('-'))
-            return true;
+        string potentialNewValue = currentText.Insert(textBox.SelectionStart, newInput);
 
-        string potentialNewValue = currentText + newInput;
-        return float.TryParse(potentialNewValue, out _) ||
-               (potentialNewValue.EndsWith(".") && float.TryParse(potentialNewValue + "0", out _));
+        if (vectorType == typeof(Vector2f) || vectorType == typeof(Vector3f))
+        {
+            // Allow empty input, single minus sign, or single decimal point
+            if (string.IsNullOrEmpty(potentialNewValue) || potentialNewValue == "-" || potentialNewValue == ".")
+                return true;
+
+            // Try parsing the potential new value
+            return float.TryParse(potentialNewValue, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out _);
+        }
+        else if (vectorType == typeof(Vector2i))
+        {
+            return int.TryParse(potentialNewValue, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out _) || potentialNewValue == "-";
+        }
+        else if (vectorType == typeof(Vector2u))
+        {
+            return uint.TryParse(potentialNewValue, NumberStyles.None, CultureInfo.InvariantCulture, out _);
+        }
+
+        return false;
     }
 }

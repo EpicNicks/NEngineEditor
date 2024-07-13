@@ -7,6 +7,7 @@ using SFML.System;
 
 using NEngine.GameObjects;
 using NEngine.Window;
+using System.Globalization;
 
 namespace NEngineEditor.ViewModel;
 
@@ -139,6 +140,7 @@ public class MemberWrapper : INotifyPropertyChanged
     public MemberInfo MemberInfo { get; }
     public VectorWrapper? VectorWrapper { get; }
     private object _target;
+    private string _valueString = "";
 
     public MemberWrapper(MemberInfo memberInfo, object target)
     {
@@ -162,6 +164,10 @@ public class MemberWrapper : INotifyPropertyChanged
                 SetValue(VectorWrapper.Value);
             };
         }
+        else if (memberType == typeof(float) || memberType == typeof(double))
+        {
+            _valueString = GetValue()?.ToString() ?? "0";
+        }
     }
 
     public string Name => MemberInfo.Name;
@@ -181,6 +187,46 @@ public class MemberWrapper : INotifyPropertyChanged
             }
             OnPropertyChanged(nameof(Value));
         }
+    }
+
+    public string ValueString
+    {
+        get => _valueString;
+        set
+        {
+            if (_valueString != value)
+            {
+                _valueString = value;
+                UpdateValueFromString();
+                OnPropertyChanged(nameof(ValueString));
+            }
+        }
+    }
+
+    private void UpdateValueFromString()
+    {
+        Type memberType = MemberInfo switch
+        {
+            PropertyInfo prop => prop.PropertyType,
+            FieldInfo field => field.FieldType,
+            _ => typeof(object)
+        };
+
+        if (memberType == typeof(float) || memberType == typeof(double))
+        {
+            // Allow trailing decimal point
+            string parseValue = _valueString;
+            if (_valueString.EndsWith("."))
+            {
+                parseValue += "0";
+            }
+
+            if (float.TryParse(parseValue, NumberStyles.Any, CultureInfo.InvariantCulture, out float result))
+            {
+                SetValue(result);
+            }
+        }
+        // Handle other types if necessary
     }
 
     private object? GetValue()
@@ -207,6 +253,8 @@ public class MemberWrapper : INotifyPropertyChanged
                 throw new InvalidOperationException("Unsupported MemberInfo type");
         }
         OnPropertyChanged(nameof(Value));
+
+        // Don't update _valueString here to preserve user input
     }
 
     private object? ConvertValue(object value)
@@ -250,15 +298,16 @@ public class MemberWrapper : INotifyPropertyChanged
         if (value is string stringValue)
         {
             if (targetType == typeof(float))
-                return float.TryParse(stringValue, out float floatResult) ? floatResult : 0f;
+                return float.TryParse(stringValue, NumberStyles.Any, CultureInfo.InvariantCulture, out float floatResult) ? floatResult : 0f;
             if (targetType == typeof(int))
                 return int.TryParse(stringValue, out int intResult) ? intResult : 0;
             if (targetType == typeof(double))
-                return double.TryParse(stringValue, out double doubleResult) ? doubleResult : 0d;
+                return double.TryParse(stringValue, NumberStyles.Any, CultureInfo.InvariantCulture, out double doubleResult) ? doubleResult : 0d;
         }
 
-        return Convert.ChangeType(value, targetType);
+        return Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
     }
+
     private object GetDefaultValue()
     {
         Type targetType = MemberInfo switch
@@ -287,9 +336,10 @@ public class MemberWrapper : INotifyPropertyChanged
             Type t when t == typeof(ulong) => 0UL,
             Type t when t == typeof(decimal) => 0m,
             Type t when t.IsEnum => Enum.ToObject(t, 0),
-            _ => targetType.IsValueType ? 
-                    (Activator.CreateInstance(targetType) ?? throw new InvalidOperationException($"input for field with value type {targetType} could not be instantiated with Activator")) 
-                    : throw new InvalidOperationException($"target type of field {targetType} was not a valid type")
+            Type t when t.IsValueType =>
+                Activator.CreateInstance(t) ??
+                throw new InvalidOperationException($"Cannot create an instance of {t}"),
+            _ => null
         };
     }
 
@@ -301,13 +351,18 @@ public class MemberWrapper : INotifyPropertyChanged
     }
 }
 
+
 public class VectorWrapper : INotifyPropertyChanged
 {
     private object _value;
+    private string _xString = "0";
+    private string _yString = "0";
+    private string _zString = "0";
 
     public VectorWrapper(object initialValue)
     {
         _value = initialValue;
+        UpdateStringRepresentations();
     }
 
     public object Value
@@ -318,62 +373,122 @@ public class VectorWrapper : INotifyPropertyChanged
             if (!_value.Equals(value))
             {
                 _value = value;
+                UpdateStringRepresentations();
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(X));
-                OnPropertyChanged(nameof(Y));
-                OnPropertyChanged(nameof(Z));
                 ValueChanged?.Invoke(this, EventArgs.Empty);
             }
         }
     }
 
-    public float X
+    public string XString
     {
-        get => GetComponent(0);
-        set => SetComponent(0, value);
-    }
-
-    public float Y
-    {
-        get => GetComponent(1);
-        set => SetComponent(1, value);
-    }
-
-    public float Z
-    {
-        get => GetComponent(2);
-        set => SetComponent(2, value);
-    }
-
-    private float GetComponent(int index)
-    {
-        return _value switch
+        get => _xString;
+        set
         {
-            Vector2f v2f => index == 0 ? v2f.X : v2f.Y,
-            Vector2i v2i => index == 0 ? v2i.X : v2i.Y,
-            Vector2u v2u => index == 0 ? v2u.X : v2u.Y,
-            Vector3f v3f => index == 0 ? v3f.X : (index == 1 ? v3f.Y : v3f.Z),
-            _ => 0f
-        };
+            if (_xString != value)
+            {
+                _xString = value;
+                UpdateVectorFromStrings();
+                OnPropertyChanged();
+            }
+        }
     }
 
-    private void SetComponent(int index, float value)
+    public string YString
     {
-        Value = _value switch
+        get => _yString;
+        set
         {
-            Vector2f v2f => index == 0 ? new Vector2f(value, v2f.Y) : new Vector2f(v2f.X, value),
-            Vector2i v2i => index == 0 ? new Vector2i((int)value, v2i.Y) : new Vector2i(v2i.X, (int)value),
-            Vector2u v2u => index == 0 ? new Vector2u((uint)Math.Max(0, value), v2u.Y) : new Vector2u(v2u.X, (uint)Math.Max(0, value)),
-            Vector3f v3f => index == 0 ? new Vector3f(value, v3f.Y, v3f.Z) :
-                            (index == 1 ? new Vector3f(v3f.X, value, v3f.Z) : new Vector3f(v3f.X, v3f.Y, value)),
-            _ => _value
-        };
+            if (_yString != value)
+            {
+                _yString = value;
+                UpdateVectorFromStrings();
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public string ZString
+    {
+        get => _zString;
+        set
+        {
+            if (_zString != value)
+            {
+                _zString = value;
+                UpdateVectorFromStrings();
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private void UpdateStringRepresentations()
+    {
+        switch (_value)
+        {
+            case Vector2f v2f:
+                _xString = v2f.X.ToString(CultureInfo.InvariantCulture);
+                _yString = v2f.Y.ToString(CultureInfo.InvariantCulture);
+                break;
+            case Vector2i v2i:
+                _xString = v2i.X.ToString(CultureInfo.InvariantCulture);
+                _yString = v2i.Y.ToString(CultureInfo.InvariantCulture);
+                break;
+            case Vector2u v2u:
+                _xString = v2u.X.ToString(CultureInfo.InvariantCulture);
+                _yString = v2u.Y.ToString(CultureInfo.InvariantCulture);
+                break;
+            case Vector3f v3f:
+                _xString = v3f.X.ToString(CultureInfo.InvariantCulture);
+                _yString = v3f.Y.ToString(CultureInfo.InvariantCulture);
+                _zString = v3f.Z.ToString(CultureInfo.InvariantCulture);
+                break;
+        }
+        OnPropertyChanged(nameof(XString));
+        OnPropertyChanged(nameof(YString));
+        OnPropertyChanged(nameof(ZString));
+    }
+
+    private void UpdateVectorFromStrings()
+    {
+        switch (_value)
+        {
+            case Vector2f _:
+                if (float.TryParse(_xString, NumberStyles.Any, CultureInfo.InvariantCulture, out float x) &&
+                    float.TryParse(_yString, NumberStyles.Any, CultureInfo.InvariantCulture, out float y))
+                {
+                    _value = new Vector2f(x, y);
+                }
+                break;
+            case Vector2i _:
+                if (int.TryParse(_xString, out int xi) && int.TryParse(_yString, out int yi))
+                {
+                    _value = new Vector2i(xi, yi);
+                }
+                break;
+            case Vector2u _:
+                if (uint.TryParse(_xString, out uint xu) && uint.TryParse(_yString, out uint yu))
+                {
+                    _value = new Vector2u(xu, yu);
+                }
+                break;
+            case Vector3f _:
+                if (float.TryParse(_xString, NumberStyles.Any, CultureInfo.InvariantCulture, out float x3) &&
+                    float.TryParse(_yString, NumberStyles.Any, CultureInfo.InvariantCulture, out float y3) &&
+                    float.TryParse(_zString, NumberStyles.Any, CultureInfo.InvariantCulture, out float z3))
+                {
+                    _value = new Vector3f(x3, y3, z3);
+                }
+                break;
+        }
+        OnPropertyChanged(nameof(Value));
+        ValueChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public event EventHandler? ValueChanged;
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }

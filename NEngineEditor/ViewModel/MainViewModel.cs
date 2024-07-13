@@ -33,6 +33,17 @@ public class MainViewModel : ViewModelBase
         {
             _loadedScene = value;
             OnPropertyChanged(nameof(LoadedScene));
+            OnPropertyChanged(nameof(LoadedSceneName));
+        }
+    }
+    public string LoadedSceneName
+    {
+        get => LoadedScene.name;
+        set
+        {
+            LoadedScene = (value, LoadedScene.filepath);
+            OnPropertyChanged(nameof(LoadedSceneName));
+            OnPropertyChanged(nameof(LoadedScene));
         }
     }
     public ContentBrowserViewModel? ContentBrowserViewModel { get; set; }
@@ -104,6 +115,9 @@ public class MainViewModel : ViewModelBase
         // visual studio deletes the original file and renames the temp file to the new file, so file changes from a visual studio context would occur here
         if (File.Exists(e.FullPath))
         {
+            Queue<LayeredGameObject> toRemove = [];
+            Queue<LayeredGameObject> toAdd = [];
+
             foreach (LayeredGameObject layeredGameObject in SceneGameObjects)
             {
                 if (layeredGameObject.GameObject is not null && layeredGameObject.GameObject.GetType().Name == Path.GetFileNameWithoutExtension(e.FullPath))
@@ -112,18 +126,25 @@ public class MainViewModel : ViewModelBase
                     if (reloadedGameObject is not null)
                     {
                         ObjectCloner.CloneMembers(layeredGameObject.GameObject, reloadedGameObject, ObjectCloner.MemberTypes.Fields | ObjectCloner.MemberTypes.Properties);
+                        toAdd.Enqueue(new() { GameObject = reloadedGameObject, RenderLayer = layeredGameObject.RenderLayer });
+                        toRemove.Enqueue(layeredGameObject);
                         if (SelectedGameObject == layeredGameObject)
                         {
                             SelectedGameObject = null;
                         }
-                        layeredGameObject.GameObject = reloadedGameObject;
                     }
                 }
             }
+            while (toAdd.Count > 0)
+            {
+                SceneGameObjects.Remove(toRemove.Dequeue());
+                SceneGameObjects.Add(toAdd.Dequeue());
+            }
             // trigger notify
-            ObservableCollection<LayeredGameObject> temp = [.. SceneGameObjects];
-            SceneGameObjects.Clear();
-            temp.ForEach(SceneGameObjects.Add);
+            //ObservableCollection<LayeredGameObject> temp = new(SceneGameObjects);
+            //SceneGameObjects.Clear();
+            //temp.ForEach(SceneGameObjects.Add);
+            // SoftReloadScene();
         }
     }
 
@@ -135,6 +156,9 @@ public class MainViewModel : ViewModelBase
         }
         if (File.Exists(e.FullPath))
         {
+            Queue<LayeredGameObject> toRemove = [];
+            Queue<LayeredGameObject> toAdd = [];
+
             foreach (LayeredGameObject layeredGameObject in SceneGameObjects)
             {
                 if (layeredGameObject.GameObject is not null && layeredGameObject.GameObject.GetType().Name == e.Name)
@@ -142,18 +166,26 @@ public class MainViewModel : ViewModelBase
                     GameObject? reloadedGameObject = ScriptCompiler.CompileAndInstantiateFromFile(e.FullPath) as GameObject;
                     if (reloadedGameObject is not null)
                     {
+                        ObjectCloner.CloneMembers(layeredGameObject.GameObject, reloadedGameObject, ObjectCloner.MemberTypes.Fields | ObjectCloner.MemberTypes.Properties);
+                        toAdd.Enqueue(new() { GameObject = reloadedGameObject, RenderLayer = layeredGameObject.RenderLayer });
+                        toRemove.Enqueue(layeredGameObject);
                         if (SelectedGameObject == layeredGameObject)
                         {
                             SelectedGameObject = null;
                         }
-                        layeredGameObject.GameObject = reloadedGameObject;
                     }
                 }
             }
+            while (toAdd.Count > 0)
+            {
+                SceneGameObjects.Remove(toRemove.Dequeue());
+                SceneGameObjects.Add(toAdd.Dequeue());
+            }
             // trigger notify
-            ObservableCollection<LayeredGameObject> temp = [.. SceneGameObjects];
-            SceneGameObjects.Clear();
-            temp.ForEach(SceneGameObjects.Add);
+            //ObservableCollection<LayeredGameObject> temp = new(SceneGameObjects);
+            //SceneGameObjects.Clear();
+            //temp.ForEach(SceneGameObjects.Add);
+            // SoftReloadScene();
         }
     }
 
