@@ -33,6 +33,12 @@ public partial class NewItemDialog : Window
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
 
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        ItemNameTextBox.Focus();
+    }
+
     private void OK_Click(object? sender, RoutedEventArgs e)
     {
         Accept();
@@ -45,7 +51,7 @@ public partial class NewItemDialog : Window
 
     private void Accept()
     {
-        EnteredName = ProjectNameTextBox.Text;
+        EnteredName = ItemNameTextBox.Text;
         DialogResult = true;
     }
 

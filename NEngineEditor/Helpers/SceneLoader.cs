@@ -132,12 +132,32 @@ public static class SceneLoader
                     continue;
                 }
                 object? fieldValue = ConvertProperty(typeValue.Type, typeValue.Value);
-                if (fieldValue is string fieldString && string.IsNullOrEmpty(fieldString))
+                if (fieldValue is string fieldString)
                 {
                     Type? fieldType = gameObject.GetType().GetField(memberName)?.FieldType;
-                    if (fieldType is not null)
+                    if (fieldType is not null && fieldType.IsEnum)
                     {
-                        Enum.TryParse(fieldType, typeValue.Value, out fieldValue);
+                        if (Enum.TryParse(fieldType, typeValue.Value, out object? parsedEnum))
+                        {
+                            fieldValue = parsedEnum;
+                        }
+                        else
+                        {
+                            // Handle nested enum types
+                            string[] parts = typeValue.Value.Split('.');
+                            if (parts.Length == 2)
+                            {
+                                Type? containerType = Type.GetType($"{gameObject.GetType().Namespace}.{parts[0]}");
+                                if (containerType != null)
+                                {
+                                    Type? nestedEnumType = containerType.GetNestedType(parts[1]);
+                                    if (nestedEnumType != null && nestedEnumType.IsEnum)
+                                    {
+                                        fieldValue = Enum.Parse(nestedEnumType, parts[1]);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 if (fieldValue == null)
@@ -229,7 +249,7 @@ public static class SceneLoader
                 {
                     sceneToWrite.SceneGameObjects[i].GameObjectPropertyNameTypeValue?.Add(property.Name, new()
                     {
-                        Type = property.PropertyType.Name,
+                        Type = property.PropertyType.AssemblyQualifiedName,
                         Value = MemberValueToString(property.GetValue(lgo.GameObject))
                     });
                 }
@@ -273,19 +293,24 @@ public static class SceneLoader
 
     private static object? ConvertProperty(string typeOfValue, string value)
     {
+        Type? typeOfValueType = Type.GetType(typeOfValue);
+        if (typeOfValueType is not null && typeOfValueType.IsEnum)
+        {
+            return Enum.Parse(typeOfValueType, value);
+        }
         return typeOfValue switch
         {
-            "string" or "String" => value,
-            "bool" or "Boolean" => bool.Parse(value),
-            "int" or "Int32" => int.Parse(value),
-            "float" or "Single" => float.Parse(value),
-            "double" or "Double" => double.Parse(value),
-            "Vector2u" => Vector2uParser.ParseOrZero(value),
-            "Vector2f" => Vector2fParser.ParseOrZero(value),
-            "Vector2i" => Vector2iParser.ParseOrZero(value),
-            "Vector3f" => Vector3fParser.ParseOrZero(value),
+            string s when Type.GetType(s) == typeof(string) => value,
+            string s when Type.GetType(s) == typeof(bool) => bool.Parse(value),
+            string s when Type.GetType(s) == typeof(int) => int.Parse(value),
+            string s when Type.GetType(s) == typeof(float) => float.Parse(value),
+            string s when Type.GetType(s) == typeof(double) => double.Parse(value),
+            string s when Type.GetType(s) == typeof(Vector2u) => Vector2uParser.ParseOrZero(value),
+            string s when Type.GetType(s) == typeof(Vector2f) => Vector2fParser.ParseOrZero(value),
+            string s when Type.GetType(s) == typeof(Vector2i) => Vector2iParser.ParseOrZero(value),
+            string s when Type.GetType(s) == typeof(Vector3f) => Vector3fParser.ParseOrZero(value),
             "Reference" or "reference" or "Guid" or "guid" => Guid.Parse(value),
-            _ => ""
+            _ => value  // Changed from "" to `value` to maintain consistency with the first case
         };
     }
 

@@ -15,7 +15,7 @@ using NEngineEditor.Model;
 using NEngineEditor.Model.JsonSerialized;
 using NEngineEditor.Managers;
 using NEngineEditor.Windows;
-using NEngineEditor.Extensions;
+using NEngineEditor.View;
 
 namespace NEngineEditor.ViewModel;
 public class MainViewModel : ViewModelBase
@@ -82,8 +82,12 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    private static readonly Lazy<MainViewModel> instance = new(() => new MainViewModel());
+    private static Lazy<MainViewModel> instance = new(() => new());
     public static MainViewModel Instance => instance.Value;
+    public static void ClearInstance()
+    {
+        instance = new(() => new());
+    }
 
     public class LayeredGameObject
     {
@@ -110,42 +114,58 @@ public class MainViewModel : ViewModelBase
         _projectDirectoryWatcher.FileRenamed += _projectDirectoryWatcher_FileRenamed;
     }
 
-    private void _projectDirectoryWatcher_FileRenamed(object sender, RenamedEventArgs e)
+    private async void ModifySceneObjectsListWrapper(Action modifySceneAction)
     {
-        // visual studio deletes the original file and renames the temp file to the new file, so file changes from a visual studio context would occur here
+        if (SceneEditViewUserControl.LazyInstance is null)
+        {
+            modifySceneAction?.Invoke();
+            return;
+        }
+        SceneEditViewUserControl.LazyInstance.ShouldRender = false;
+        await Task.Delay(100);
+        modifySceneAction?.Invoke();
+        SceneEditViewUserControl.LazyInstance.ShouldRender = true;
+    }
+
+    private void ReloadChangedFile(FileSystemEventArgs e)
+    {
         if (File.Exists(e.FullPath))
         {
-            Queue<LayeredGameObject> toRemove = [];
-            Queue<LayeredGameObject> toAdd = [];
-
-            foreach (LayeredGameObject layeredGameObject in SceneGameObjects)
+            ModifySceneObjectsListWrapper(() =>
             {
-                if (layeredGameObject.GameObject is not null && layeredGameObject.GameObject.GetType().Name == Path.GetFileNameWithoutExtension(e.FullPath))
+                Queue<LayeredGameObject> toRemove = [];
+                Queue<LayeredGameObject> toAdd = [];
+
+                foreach (LayeredGameObject layeredGameObject in SceneGameObjects)
                 {
-                    GameObject? reloadedGameObject = ScriptCompiler.CompileAndInstantiateFromFile(e.FullPath) as GameObject;
-                    if (reloadedGameObject is not null)
+                    if (layeredGameObject.GameObject is not null && layeredGameObject.GameObject.GetType().Name == e.Name)
                     {
-                        ObjectCloner.CloneMembers(layeredGameObject.GameObject, reloadedGameObject, ObjectCloner.MemberTypes.Fields | ObjectCloner.MemberTypes.Properties);
-                        toAdd.Enqueue(new() { GameObject = reloadedGameObject, RenderLayer = layeredGameObject.RenderLayer });
-                        toRemove.Enqueue(layeredGameObject);
-                        if (SelectedGameObject == layeredGameObject)
+                        GameObject? reloadedGameObject = ScriptCompiler.CompileAndInstantiateFromFile(e.FullPath) as GameObject;
+                        if (reloadedGameObject is not null)
                         {
-                            SelectedGameObject = null;
+                            ObjectCloner.CloneMembers(layeredGameObject.GameObject, reloadedGameObject, ObjectCloner.MemberTypes.Fields | ObjectCloner.MemberTypes.Properties);
+                            toAdd.Enqueue(new() { GameObject = reloadedGameObject, RenderLayer = layeredGameObject.RenderLayer });
+                            toRemove.Enqueue(layeredGameObject);
+                            if (SelectedGameObject == layeredGameObject)
+                            {
+                                SelectedGameObject = null;
+                            }
                         }
                     }
                 }
-            }
-            while (toAdd.Count > 0)
-            {
-                SceneGameObjects.Remove(toRemove.Dequeue());
-                SceneGameObjects.Add(toAdd.Dequeue());
-            }
-            // trigger notify
-            //ObservableCollection<LayeredGameObject> temp = new(SceneGameObjects);
-            //SceneGameObjects.Clear();
-            //temp.ForEach(SceneGameObjects.Add);
-            // SoftReloadScene();
+                while (toAdd.Count > 0)
+                {
+                    SceneGameObjects.Remove(toRemove.Dequeue());
+                    SceneGameObjects.Add(toAdd.Dequeue());
+                }
+            });
         }
+    }
+
+    private void _projectDirectoryWatcher_FileRenamed(object sender, RenamedEventArgs e)
+    {
+        // visual studio deletes the original file and renames the temp file to the new file, so file changes from a visual studio context would occur here
+        ReloadChangedFile(e);
     }
 
     private void _projectDirectoryWatcher_FileChanged(object sender, FileSystemEventArgs e)
@@ -154,39 +174,7 @@ public class MainViewModel : ViewModelBase
         {
             return;
         }
-        if (File.Exists(e.FullPath))
-        {
-            Queue<LayeredGameObject> toRemove = [];
-            Queue<LayeredGameObject> toAdd = [];
-
-            foreach (LayeredGameObject layeredGameObject in SceneGameObjects)
-            {
-                if (layeredGameObject.GameObject is not null && layeredGameObject.GameObject.GetType().Name == e.Name)
-                {
-                    GameObject? reloadedGameObject = ScriptCompiler.CompileAndInstantiateFromFile(e.FullPath) as GameObject;
-                    if (reloadedGameObject is not null)
-                    {
-                        ObjectCloner.CloneMembers(layeredGameObject.GameObject, reloadedGameObject, ObjectCloner.MemberTypes.Fields | ObjectCloner.MemberTypes.Properties);
-                        toAdd.Enqueue(new() { GameObject = reloadedGameObject, RenderLayer = layeredGameObject.RenderLayer });
-                        toRemove.Enqueue(layeredGameObject);
-                        if (SelectedGameObject == layeredGameObject)
-                        {
-                            SelectedGameObject = null;
-                        }
-                    }
-                }
-            }
-            while (toAdd.Count > 0)
-            {
-                SceneGameObjects.Remove(toRemove.Dequeue());
-                SceneGameObjects.Add(toAdd.Dequeue());
-            }
-            // trigger notify
-            //ObservableCollection<LayeredGameObject> temp = new(SceneGameObjects);
-            //SceneGameObjects.Clear();
-            //temp.ForEach(SceneGameObjects.Add);
-            // SoftReloadScene();
-        }
+        ReloadChangedFile(e);
     }
 
     public void ReloadScene()
@@ -204,35 +192,41 @@ public class MainViewModel : ViewModelBase
 
     public void SoftReloadScene()
     {
-        try
+        ModifySceneObjectsListWrapper(() =>
         {
-            SelectedGameObject = null;
-            SceneModel tempScene = SceneLoader.WriteGameObjectsToScene(_loadedScene.name, SceneGameObjects);
-            List<LayeredGameObject> loadedGameObjects = SceneLoader.LoadSceneFromSceneModel(tempScene);
-            SceneGameObjects.Clear();
-            loadedGameObjects.ForEach(SceneGameObjects.Add);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError($"An Exception has occurred while soft-reloading the scene: {ex}");
-        }
+            try
+            {
+                SelectedGameObject = null;
+                SceneModel tempScene = SceneLoader.WriteGameObjectsToScene(_loadedScene.name, SceneGameObjects);
+                List<LayeredGameObject> loadedGameObjects = SceneLoader.LoadSceneFromSceneModel(tempScene);
+                SceneGameObjects.Clear();
+                loadedGameObjects.ForEach(SceneGameObjects.Add);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"An Exception has occurred while soft-reloading the scene: {ex}");
+            }
+        });
     }
 
     // private static readonly string[] _specialProperties = ["Position", "Rotation", "Scale"];
     public void LoadScene(string filePath)
     {
-        string jsonString = File.ReadAllText(filePath);
-        try
+        ModifySceneObjectsListWrapper(() =>
         {
-            (string sceneName, List<LayeredGameObject> loadedGameObjects) = SceneLoader.LoadSceneFromJson(jsonString);
-            SceneGameObjects.Clear();
-            loadedGameObjects.ForEach(SceneGameObjects.Add);
-            LoadedScene = (sceneName, filePath);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError($"An Exception Occurred while loading scene {Path.GetFileNameWithoutExtension(filePath)}, Exception: {ex}");
-        }
+            string jsonString = File.ReadAllText(filePath);
+            try
+            {
+                (string sceneName, List<LayeredGameObject> loadedGameObjects) = SceneLoader.LoadSceneFromJson(jsonString);
+                SceneGameObjects.Clear();
+                loadedGameObjects.ForEach(SceneGameObjects.Add);
+                LoadedScene = (sceneName, filePath);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"An Exception Occurred while loading scene {Path.GetFileNameWithoutExtension(filePath)}, Exception: {ex}");
+            }
+        });
     }
     private static readonly JsonSerializerOptions sceneSaveJsonSerializerOptions = new()
     {

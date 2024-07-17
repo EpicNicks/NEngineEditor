@@ -63,13 +63,13 @@ public class GameWindow
         RenderWindow.Clear(WindowBackgroundColor);
         foreach ((RenderLayer renderLayer, GameObject gameObject) in layeredGameObjects)
         {
+            if (renderLayer == RenderLayer.NONE)
+            {
+                continue;
+            }
             foreach (var drawable in gameObject.Drawables)
             {
-                if (renderLayer == RenderLayer.NONE)
-                {
-                    return;
-                }
-                else if (renderLayer != RenderLayer.UI)
+                if (renderLayer != RenderLayer.UI)
                 {
                     // convert screen space to world space on non-UI objects?
                     RenderWindow.SetView(MainView);

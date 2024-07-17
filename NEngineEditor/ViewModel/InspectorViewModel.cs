@@ -336,10 +336,9 @@ public class MemberWrapper : INotifyPropertyChanged
             Type t when t == typeof(ulong) => 0UL,
             Type t when t == typeof(decimal) => 0m,
             Type t when t.IsEnum => Enum.ToObject(t, 0),
-            Type t when t.IsValueType =>
-                Activator.CreateInstance(t) ??
-                throw new InvalidOperationException($"Cannot create an instance of {t}"),
-            _ => null
+            _ =>
+                Activator.CreateInstance(targetType) ??
+                throw new InvalidOperationException($"Cannot create an instance of {targetType}"),
         };
     }
 

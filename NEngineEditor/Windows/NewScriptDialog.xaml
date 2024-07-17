@@ -25,7 +25,7 @@
         </Grid.ColumnDefinitions>
         <TextBlock Text="{Binding CreateItemTypeString}" Grid.ColumnSpan="2" VerticalAlignment="Center" Margin="10"/>
         <TextBlock Text="Name:" Grid.Row="1" VerticalAlignment="Center" Margin="10,5"/>
-        <TextBox x:Name="ProjectNameTextBox" Grid.Row="1" Grid.Column="1" Margin="0,5,10,5"/>
+        <TextBox x:Name="ScriptNameTextBox" Grid.Row="1" Grid.Column="1" Margin="0,5,10,5"/>
         <TextBlock Text="Script Type:" Grid.Row="2" VerticalAlignment="Center" Margin="10,5"/>
         <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,5,10,5"
                   ItemsSource="{Binding Source={local:EnumBindingSource {x:Type local:NewScriptDialog+CsScriptType}}}"

@@ -131,6 +131,7 @@ public partial class ContentBrowserUserControl : UserControl
 
         contextMenu.Items.Add(createCsScriptMenuItem);
         contextMenu.Items.Add(createFolderMenuItem);
+        contextMenu.Items.Add(createSceneMenuItem);
         contextMenu.Items.Add(new Separator());
         contextMenu.Items.Add(openCurrentDirInFileExplorer);
 
@@ -212,7 +213,7 @@ public partial class ContentBrowserUserControl : UserControl
                 {
                     return;
                 }
-                cbvm.CreateItem(cbvm.subDirectory.CurrentSubDir, createItemType, newScriptDialog.EnteredName);
+                cbvm.CreateScript(cbvm.subDirectory.CurrentSubDir, newScriptDialog.EnteredName, newScriptDialog.ScriptType);
             }
         }
         else

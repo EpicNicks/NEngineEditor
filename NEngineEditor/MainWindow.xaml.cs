@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     public MainWindow(string projectPath)
     {
         ProjectDirectory = projectPath;
+        MainViewModel.ClearInstance();
         InitializeComponent();
         MainViewModel.Instance.ContentBrowserViewModel = ContentBrowserControl.DataContext as ContentBrowserViewModel;
         MainViewModel.Instance.Logs.CollectionChanged += LoggerLogs_CollectionChanged;

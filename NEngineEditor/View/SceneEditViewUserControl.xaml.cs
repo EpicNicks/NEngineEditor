@@ -1,13 +1,14 @@
 ﻿using System.Reflection;
 using System.Windows.Forms;
 
-using NEngine.GameObjects;
-using NEngine.Window;
-using NEngineEditor.Managers;
-using NEngineEditor.ViewModel;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
+
+using NEngine.GameObjects;
+using NEngine.Window;
+using NEngineEditor.ViewModel;
+using NEngineEditor.Managers;
 
 namespace NEngineEditor.View;
 /// <summary>
@@ -15,7 +16,8 @@ namespace NEngineEditor.View;
 /// </summary>
 public partial class SceneEditViewUserControl : System.Windows.Controls.UserControl
 {
-    private readonly GameWindow _gameWindow;
+    private GameWindow? _gameWindow;
+    public bool ShouldRender { get; set; } = true;
 
     public static SceneEditViewUserControl? LazyInstance
     {
@@ -27,8 +29,8 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
     {
         InitializeComponent();
         LazyInstance = this;
-        //need to use this to prevent base.OnPaint and base.OnPaintBackground from erasing contents
-        var mysurf = new MyDrawingSurface();
+
+        var mysurf = new Control();
         sfmlHost.Child = mysurf;
         SetDoubleBuffered(mysurf); //same results whether or not I do this.
 
@@ -48,6 +50,7 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         timer.Tick += timer_Tick;
         timer.Start();
     }
+
     public static void SetDoubleBuffered(Control c)
     {
         PropertyInfo? aProp = typeof(Control).GetProperty("DoubleBuffered", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -56,24 +59,19 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 
     public void MoveCameraToPoint(float x, float y)
     {
+        if (_gameWindow is null)
+        {
+            return;
+        }
         _gameWindow.MainView.Center = new(x, y);
     }
     public void MoveCameraToPositionable(Positionable positionable)
     {
+        if (_gameWindow is null)
+        {
+            return;
+        }
         _gameWindow.MainView.Center = positionable.Position;
-    }
-
-    public class MyDrawingSurface : Control
-    {
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            // base.OnPaint(e);
-        }
-
-        protected override void OnPaintBackground(PaintEventArgs pEvent)
-        {
-            // base.OnPaintBackground(pEvent);
-        }
     }
 
     private void _renderWindow_MouseWheelScrolled(object? sender, MouseWheelScrollEventArgs e)
@@ -84,7 +82,7 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 
         // hard values for now
         // e.Delta will be 1 for a scroll up, -1 for a scroll down
-        _gameWindow.MainView.Zoom(e.Delta == 1 ? 0.5f : 2.0f);
+        _gameWindow?.MainView.Zoom(e.Delta == 1 ? 0.5f : 2.0f);
     }
 
     Vector2i? initialDragPoint = null;
@@ -94,6 +92,10 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
     private bool doubleClickProcessed = false;
     void _renderWindow_MouseButtonPressed(object? sender, MouseButtonEventArgs e)
     {
+        if (_gameWindow is null)
+        {
+            return;
+        }
         DateTime currentTime = DateTime.Now;
         bool isDoubleClick = e.Button == lastClickButton && (currentTime - lastClickTime).TotalSeconds <= DoubleClickTimeThresholdSeconds && !doubleClickProcessed;
 
@@ -128,6 +130,10 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 
     private void _renderWindow_MouseMoved(object? sender, MouseMoveEventArgs e)
     {
+        if (_gameWindow is null)
+        {
+            return;
+        }
         if (initialDragPoint is not null)
         {
             Vector2i currentMousePosition = new Vector2i(e.X, e.Y);
@@ -149,20 +155,21 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 
     void timer_Tick(object? sender, EventArgs e)
     {
+        if (_gameWindow is null)
+        {
+            return;
+        }
+        if (!ShouldRender)
+        {
+            return;
+        }
         _gameWindow.RenderWindow.DispatchEvents();
 
-        // Draw all objects in scene
-        List<(RenderLayer, GameObject)> gameObjectsToRender = [];
-        foreach ((RenderLayer renderLayer, GameObject gameObject) in MainViewModel.Instance.SceneGameObjects)
-        {
-            if (gameObject is not null)
-            {
-                gameObjectsToRender.Add((renderLayer, gameObject));
-                // SERIALIZATION TIME ONLY: assign each GameObject in scene a Guid and replace each GameObject script reference with the matching Guid
-            }
-        }
-        // Logger.LogInfo($"Rendering {gameObjectsToRender.Count} objects in scene");
-        // MainViewModel.Instance.SceneGameObjects = new(MainViewModel.Instance.SceneGameObjects);
+        List<(RenderLayer, GameObject)>? gameObjectsToRender = MainViewModel.Instance.SceneGameObjects
+                .Where(lgo => lgo.GameObject is not null)
+                .Select(lgo => (lgo.RenderLayer, lgo.GameObject))
+                .ToList();
+
         _gameWindow.Render(gameObjectsToRender);
 
         //  handle culling the invisible ones

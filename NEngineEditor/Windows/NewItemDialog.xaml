@@ -24,7 +24,7 @@
         </Grid.ColumnDefinitions>
 
         <TextBlock Text="{Binding CreateItemTypeString}" VerticalAlignment="Center" Margin="10"/>
-        <TextBox x:Name="ProjectNameTextBox" Grid.Row="1" Grid.ColumnSpan="3" Margin="10"/>
+        <TextBox x:Name="ItemNameTextBox" Grid.Row="1" Grid.ColumnSpan="3" Margin="10"/>
 
         <Button Content="Cancel" Grid.Row="2" Grid.Column="0" Margin="10" Width="75" Click="Cancel_Click"/>
         <Button Content="OK" Grid.Row="2" Grid.Column="2" Margin="10" Width="75" Click="OK_Click"/>
