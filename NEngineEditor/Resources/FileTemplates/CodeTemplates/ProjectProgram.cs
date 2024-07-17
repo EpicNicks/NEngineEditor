@@ -36,9 +36,10 @@ public partial class Program
     public static void Main()
     {
         ProjectSettings? projectSettings = LoadProjectSettings();
+        Application application = new Application();
         if (projectSettings is not null)
         {
-            Application.Instance.GameWindow.WindowBackgroundColor = projectSettings.BackgroundColor();
+            application.GameWindow.WindowBackgroundColor = projectSettings.BackgroundColor();
             Application.WindowTitle = projectSettings.ProjectName ?? "NEngine Game";
 
             // load scenes
@@ -50,8 +51,7 @@ public partial class Program
                 Application.AddScene(scene);
             }
         }
-
-        Application.Run();
+        application.Run();
     }
 
     private partial class ProjectSettings

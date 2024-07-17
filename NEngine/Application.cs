@@ -11,6 +11,9 @@ using NEngine.Window;
 namespace NEngine;
 public class Application
 {
+    private const string INVALID_APPLICATION_OPERATION = "";
+    private const string DEFAULT_APPLICATION_TITLE = "Default Application Title";
+
     private List<Scene> sceneList = [];
     private int curSceneIndex = 0;
     // TODO - Unhandled: Initialization when there are no scenes in the list
@@ -35,25 +38,46 @@ public class Application
     /// <summary>
     /// The time elapsed since GameWindow.Run() has been called
     /// </summary>
-    public static Time Time => Instance.timeClock.ElapsedTime;
+    public static Time Time => Instance?.timeClock.ElapsedTime ?? throw new InvalidOperationException(INVALID_APPLICATION_OPERATION);
 
     private static Application? instance;
-    public static Application Instance => instance ??= new Application();
+    public static Application? Instance => instance;
 
-    private Application()
+    public Application(RenderWindow renderWindow, string windowTitle)
     {
-        GameWindow = new GameWindow(new RenderWindow(new VideoMode(1200, 800), "Default Application Title"));
+        instance = this;
+        GameWindow = new GameWindow(renderWindow);
+        lastSetWindowTitle = windowTitle;
     }
+    public Application(RenderWindow renderWindow) : this(renderWindow, DEFAULT_APPLICATION_TITLE) { }
+    public Application() : this(new RenderWindow(new VideoMode(1200, 800), DEFAULT_APPLICATION_TITLE), DEFAULT_APPLICATION_TITLE) { }
 
     #region Window pass-along methods
+    private static string lastSetWindowTitle = "";
     public static string WindowTitle
     {
-        set => Instance.GameWindow.RenderWindow.SetTitle(value);
+        get => lastSetWindowTitle;
+        set
+        {
+            if (Instance is null)
+            {
+                throw new InvalidOperationException(INVALID_APPLICATION_OPERATION);
+            }
+            Instance.GameWindow.RenderWindow.SetTitle(value);
+            lastSetWindowTitle = value;
+        }
     }
     /// <summary>
     /// A shortener for the common Instance.RenderWindow.Size get
     /// </summary>
-    public static Vector2u WindowSize { get => Instance.GameWindow.RenderWindow.Size; set => Instance.GameWindow.RenderWindow.Size = value; }
+    public static Vector2u WindowSize 
+    { 
+        get => Instance?.GameWindow.RenderWindow.Size ?? throw new InvalidOperationException(INVALID_APPLICATION_OPERATION);
+        set
+        {
+            if (Instance is not null) Instance.GameWindow.RenderWindow.Size = value;
+        }
+    }
     /// <summary>
     /// The Aspect Ratio of the window (Width / Height)
     /// </summary>
@@ -61,11 +85,12 @@ public class Application
     #endregion
 
     #region Scene API pass-along methods
-    public static bool Contains(RenderLayer renderLayer, GameObject gameObject) => Instance.LoadedScene?.Contains(renderLayer, gameObject) ?? false;
-    public static bool Contains(GameObject gameObject) => Instance.LoadedScene?.Contains(gameObject) ?? false;
+    public static bool Contains(RenderLayer renderLayer, GameObject gameObject) => Instance?.LoadedScene?.Contains(renderLayer, gameObject) ?? false;
+    public static bool Contains(GameObject gameObject) => Instance?.LoadedScene?.Contains(gameObject) ?? false;
     public static void Add(RenderLayer renderLayer, GameObject gameObject)
     {
-        if (Instance.LoadedScene == null)
+        if (Instance is null) throw new InvalidOperationException(INVALID_APPLICATION_OPERATION);
+        if ( Instance.LoadedScene == null)
         {
             Console.Error.WriteLine("No scene was loaded to add the provided GameObject to");
         }
@@ -73,6 +98,7 @@ public class Application
     }
     public static void Add(List<(RenderLayer renderLayer, GameObject gameObject)> layeredGameObjects)
     {
+        if (Instance is null) throw new InvalidOperationException(INVALID_APPLICATION_OPERATION);
         if (Instance.LoadedScene == null)
         {
             Console.Error.WriteLine("No scene was loaded to add the provided GameObject to");
@@ -80,20 +106,21 @@ public class Application
         Instance.LoadedScene?.Add(layeredGameObjects);
     }
     public static List<T> FindObjectsOfType<T>() where T : GameObject
-        => Instance.LoadedScene?.FindObjectsOfType<T>() ?? [];
+        => Instance?.LoadedScene?.FindObjectsOfType<T>() ?? [];
     public static T? FindObjectOfType<T>(string? name = null) where T : GameObject
-        => Instance.LoadedScene?.FindObjectOfType<T>(name);
+        => Instance?.LoadedScene?.FindObjectOfType<T>(name);
     public static T? FindObjectOfType<T>(RenderLayer renderLayer) where T : GameObject
-        => Instance.LoadedScene?.FindObjectOfType<T>(renderLayer);
-    public static GameObject? FindObject(string name) => Instance.LoadedScene?.FindObject(name);
-    public static bool TryRemove(RenderLayer renderLayer, GameObject gameObject) => Instance.LoadedScene?.TryRemove(renderLayer, gameObject) ?? false;
-    public static bool TryRemove(GameObject gameObject) => Instance.LoadedScene?.TryRemove(gameObject) ?? false;
+        => Instance?.LoadedScene?.FindObjectOfType<T>(renderLayer);
+    public static GameObject? FindObject(string name) => Instance?.LoadedScene?.FindObject(name);
+    public static bool TryRemove(RenderLayer renderLayer, GameObject gameObject) => Instance?.LoadedScene?.TryRemove(renderLayer, gameObject) ?? false;
+    public static bool TryRemove(GameObject gameObject) => Instance?.LoadedScene?.TryRemove(gameObject) ?? false;
     #endregion
 
-    public static string? LoadedSceneName => Instance.LoadedScene?.Name;
+    public static string? LoadedSceneName => Instance?.LoadedScene?.Name;
 
     public static void AddScene(Scene scene)
     {
+        if (Instance is null) throw new InvalidOperationException(INVALID_APPLICATION_OPERATION);
         if (Instance.sceneList.Any(s => s.Name == scene.Name)) // Contains(scene) case logically covered here
         {
             throw new InvalidOperationException($"Scene with name: {scene} was already in the list");
@@ -103,6 +130,7 @@ public class Application
 
     public static void LoadNextScene()
     {
+        if (Instance is null) throw new InvalidOperationException(INVALID_APPLICATION_OPERATION);
         if (Instance.LoadedScene is null)
         {
             throw new InvalidOperationException("There is no scene loaded currently of which the next should be loaded.");
@@ -118,6 +146,7 @@ public class Application
 
     public static void LoadScene(string name)
     {
+        if (Instance is null) throw new InvalidOperationException(INVALID_APPLICATION_OPERATION);
         int namedSceneIndex = Instance.sceneList.FindIndex(scene => scene.Name == name);
         if (namedSceneIndex == -1)
         {
@@ -128,33 +157,46 @@ public class Application
         Instance.LoadedScene?.Init(persistentGameObjects);
     }
 
-    public static bool HasNextScene() => Instance.curSceneIndex + 1 < Instance.sceneList.Count;
+    public static bool HasNextScene()
+    {
+        if (Instance is null) throw new InvalidOperationException(INVALID_APPLICATION_OPERATION);
+        return Instance.curSceneIndex + 1 < Instance.sceneList.Count;
+    }
 
     public static Coroutine? StartCoroutine(GameObject gameObject, IEnumerator routine)
     {
+        if (Instance is null) throw new InvalidOperationException(INVALID_APPLICATION_OPERATION);
         return Instance.LoadedScene?.StartCoroutine(gameObject, routine);
     }
 
     public static bool StopCoroutine(GameObject gameObject, Coroutine coroutine)
     {
+        if (Instance is null) throw new InvalidOperationException(INVALID_APPLICATION_OPERATION);
         return Instance.LoadedScene?.StopCoroutine(gameObject, coroutine) ?? false;
     }
 
     public static void StopAllCoroutines(GameObject gameObject)
     {
+        if (Instance is null) throw new InvalidOperationException(INVALID_APPLICATION_OPERATION);
         Instance.LoadedScene?.StopAllCoroutines(gameObject);
     }
 
-    public static void Run()
+    /// <summary>
+    /// Call this to call standard setup methods and begin the Game Loop.
+    /// </summary>
+    public void Run()
     {
         Init();
-        while (Instance.GameWindow.RenderWindow != null && Instance.GameWindow.RenderWindow.IsOpen)
+        InitStandardEvents();
+        InitLoadedScene();
+        while (GameWindow.RenderWindow != null && GameWindow.RenderWindow.IsOpen)
         {
-            DeltaTime = Instance.deltaClock.Restart();
+            DeltaTime = deltaClock.Restart();
             ProcessAttachQueue();
+            GameWindow.RenderWindow.DispatchEvents();
             Update();
-            Instance.collisionSystem.HandleCollisions(ActiveGameObjects);
-            Instance.GameWindow.Render(ActiveLayeredGameObjects);
+            collisionSystem.HandleCollisions(ActiveGameObjects);
+            GameWindow.Render(ActiveLayeredGameObjects);
         }
     }
 
@@ -162,29 +204,33 @@ public class Application
     {
         HandleQuit();
     }
-    private static void Init()
+    private void Init()
     {
-        Instance.GameWindow.RenderWindow.SetFramerateLimit(120);
-        Instance.timeClock.Restart();
-        InitStandardEvents();
-        if (Instance.LoadedScene is null)
+        GameWindow.RenderWindow.SetFramerateLimit(120);
+        timeClock.Restart();
+    }
+
+    private void InitLoadedScene()
+    {
+        if (LoadedScene is null)
         {
             Console.Error.WriteLine("No initial scene to load provided to GameWindow. Consider calling AddScene with a Scene to load.");
         }
         else
         {
-            Instance.LoadedScene.Init([]);
+            LoadedScene.Init([]);
         }
     }
-    private static void InitStandardEvents()
+
+    private void InitStandardEvents()
     {
-        Instance.GameWindow.InitStandardWindowEvents();
+        GameWindow.InitStandardWindowEvents();
         // window click close
-        Instance.GameWindow.RenderWindow.Closed += (sender, eventArgs) =>
+        GameWindow.RenderWindow.Closed += (sender, eventArgs) =>
         {
             HandleQuit();
         };
-        Instance.GameWindow.RenderWindow.KeyPressed += (sender, keyEvent) =>
+        GameWindow.RenderWindow.KeyPressed += (sender, keyEvent) =>
         {
             if (keyEvent.Code == Keyboard.Key.Escape)
             {
@@ -193,11 +239,11 @@ public class Application
         };
     }
 
-    private static void ProcessAttachQueue()
+    private void ProcessAttachQueue()
     {
-        while (Instance.AttachQueue.Count > 0)
+        while (AttachQueue.Count > 0)
         {
-            GameObject dequeuedGameObject = Instance.AttachQueue.Dequeue();
+            GameObject dequeuedGameObject = AttachQueue.Dequeue();
             if (dequeuedGameObject.IsActive)
             {
                 dequeuedGameObject.Attach();
@@ -205,18 +251,17 @@ public class Application
         }
     }
 
-    private static void Update()
+    private void Update()
     {
-        Instance.GameWindow.RenderWindow.DispatchEvents();
-        Instance.LoadedScene?.UpdateCoroutines();
+        LoadedScene?.UpdateCoroutines();
         OnEachGameObject((gameObject) => gameObject.Update());
     }
 
-    private static List<GameObject> ActiveGameObjects => Instance.GameObjects.Keys.SelectMany(key => Instance.GameObjects[key]).Where(gameObject => gameObject.IsActive).ToList();
-    private static List<(RenderLayer renderLayer, GameObject gameObject)> ActiveLayeredGameObjects =>
-        Instance.GameObjects.Keys
+    private List<GameObject> ActiveGameObjects => GameObjects.Keys.SelectMany(key => GameObjects[key]).Where(gameObject => gameObject.IsActive).ToList();
+    private List<(RenderLayer renderLayer, GameObject gameObject)> ActiveLayeredGameObjects =>
+        GameObjects.Keys
             .SelectMany(key =>
-                Instance.GameObjects[key]
+                GameObjects[key]
                     .Where(gameObject => gameObject.IsActive)
                     .Select(gameObject => (key, gameObject))
             ).ToList();
@@ -227,25 +272,20 @@ public class Application
     /// with respect to the sorting method given to Instance.gameObjects SortedDictionary.
     /// </summary>
     /// <param name="doOnEach">The callback function taking the GameObject to perform an action on</param>
-    private static void OnEachGameObject(Action<GameObject> doOnEach)
+    private void OnEachGameObject(Action<GameObject> doOnEach)
     {
         ActiveGameObjects.ForEach(doOnEach);
     }
 
-    private static void OnEachGameObject(Action<RenderLayer, GameObject> doOnEach)
-    {
-        ActiveLayeredGameObjects.ForEach(renderLayerGoTuple => doOnEach(renderLayerGoTuple.renderLayer, renderLayerGoTuple.gameObject));
-    }
-
-    private static Action<Action<GameObject>> OnEachGameObjectWhere(Func<GameObject, bool> predicate)
-    {
-        List<GameObject> gameObjects = ActiveGameObjects.Where(predicate).ToList();
-        return gameObjects.ForEach;
-    }
-
     private static void HandleQuit()
     {
-        Console.WriteLine("closed window");
+        if (Instance is null)
+        {
+            Console.Error.WriteLine("Application Instance was null somehow and its associated RenderWindow could not be closed!");
+            return;
+        }
+        Console.WriteLine("Closing Window...");
         Instance.GameWindow.RenderWindow.Close();
+        Console.WriteLine("Closed Window");
     }
 }

@@ -8,7 +8,6 @@ using SFML.Window;
 using NEngine.GameObjects;
 using NEngine.Window;
 using NEngineEditor.ViewModel;
-using NEngineEditor.Managers;
 
 namespace NEngineEditor.View;
 /// <summary>
@@ -16,7 +15,7 @@ namespace NEngineEditor.View;
 /// </summary>
 public partial class SceneEditViewUserControl : System.Windows.Controls.UserControl
 {
-    private GameWindow? _gameWindow;
+    private NEngine.Application _nengineApplication;
     public bool ShouldRender { get; set; } = true;
 
     public static SceneEditViewUserControl? LazyInstance
@@ -34,14 +33,13 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         sfmlHost.Child = mysurf;
         SetDoubleBuffered(mysurf); //same results whether or not I do this.
 
-        var context = new ContextSettings { DepthBits = 24 };
-        _gameWindow = new GameWindow(new RenderWindow(mysurf.Handle));
-        _gameWindow.InitStandardWindowEvents();
-        _gameWindow.RenderWindow.SetFramerateLimit(120);
-        _gameWindow.RenderWindow.MouseButtonPressed += _renderWindow_MouseButtonPressed;
-        _gameWindow.RenderWindow.MouseMoved += _renderWindow_MouseMoved;
-        _gameWindow.RenderWindow.MouseButtonReleased += _renderWindow_MouseButtonReleased;
-        _gameWindow.RenderWindow.MouseWheelScrolled += _renderWindow_MouseWheelScrolled;
+        _nengineApplication = new NEngine.Application(new RenderWindow(mysurf.Handle));
+        _nengineApplication.GameWindow.InitStandardWindowEvents();
+        _nengineApplication.GameWindow.RenderWindow.SetFramerateLimit(120);
+        _nengineApplication.GameWindow.RenderWindow.MouseButtonPressed += _renderWindow_MouseButtonPressed;
+        _nengineApplication.GameWindow.RenderWindow.MouseMoved += _renderWindow_MouseMoved;
+        _nengineApplication.GameWindow.RenderWindow.MouseButtonReleased += _renderWindow_MouseButtonReleased;
+        _nengineApplication.GameWindow.RenderWindow.MouseWheelScrolled += _renderWindow_MouseWheelScrolled;
 
         var timer = new System.Windows.Threading.DispatcherTimer
         {
@@ -59,19 +57,11 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 
     public void MoveCameraToPoint(float x, float y)
     {
-        if (_gameWindow is null)
-        {
-            return;
-        }
-        _gameWindow.MainView.Center = new(x, y);
+        _nengineApplication.GameWindow.MainView.Center = new(x, y);
     }
     public void MoveCameraToPositionable(Positionable positionable)
     {
-        if (_gameWindow is null)
-        {
-            return;
-        }
-        _gameWindow.MainView.Center = positionable.Position;
+        _nengineApplication.GameWindow.MainView.Center = positionable.Position;
     }
 
     private void _renderWindow_MouseWheelScrolled(object? sender, MouseWheelScrollEventArgs e)
@@ -82,7 +72,7 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 
         // hard values for now
         // e.Delta will be 1 for a scroll up, -1 for a scroll down
-        _gameWindow?.MainView.Zoom(e.Delta == 1 ? 0.5f : 2.0f);
+        _nengineApplication.GameWindow.MainView.Zoom(e.Delta == 1 ? 0.5f : 2.0f);
     }
 
     Vector2i? initialDragPoint = null;
@@ -92,17 +82,13 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
     private bool doubleClickProcessed = false;
     void _renderWindow_MouseButtonPressed(object? sender, MouseButtonEventArgs e)
     {
-        if (_gameWindow is null)
-        {
-            return;
-        }
         DateTime currentTime = DateTime.Now;
         bool isDoubleClick = e.Button == lastClickButton && (currentTime - lastClickTime).TotalSeconds <= DoubleClickTimeThresholdSeconds && !doubleClickProcessed;
 
         if (e.Button == Mouse.Button.Left)
         {
             // try check for what is on screen at that point, for multiple hits, cycle in a predictable order if Z component is 0 (Vector2f cast to 3f works here too)
-            Vector2f clickPos = _gameWindow.RenderWindow.MapPixelToCoords(new(e.X, e.Y));
+            Vector2f clickPos = _nengineApplication.GameWindow.RenderWindow.MapPixelToCoords(new(e.X, e.Y));
             Vector2f clickCastSize = new(0.1f, 0.1f);
             MainViewModel.LayeredGameObject? selectedLgo = MainViewModel.Instance.SceneGameObjects
                 .FirstOrDefault(sgo => sgo.GameObject is Positionable p && p.Collider is not null && p.Collider.Bounds.Intersects(new FloatRect(clickPos, clickCastSize)));
@@ -130,16 +116,12 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 
     private void _renderWindow_MouseMoved(object? sender, MouseMoveEventArgs e)
     {
-        if (_gameWindow is null)
-        {
-            return;
-        }
         if (initialDragPoint is not null)
         {
             Vector2i currentMousePosition = new Vector2i(e.X, e.Y);
             Vector2f delta = (Vector2f)(initialDragPoint - currentMousePosition);
 
-            _gameWindow.MainView.Center += delta;
+            _nengineApplication.GameWindow.MainView.Center += delta;
 
             initialDragPoint = currentMousePosition;
         }
@@ -155,22 +137,18 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 
     void timer_Tick(object? sender, EventArgs e)
     {
-        if (_gameWindow is null)
-        {
-            return;
-        }
         if (!ShouldRender)
         {
             return;
         }
-        _gameWindow.RenderWindow.DispatchEvents();
+        _nengineApplication.GameWindow.RenderWindow.DispatchEvents();
 
         List<(RenderLayer, GameObject)>? gameObjectsToRender = MainViewModel.Instance.SceneGameObjects
                 .Where(lgo => lgo.GameObject is not null)
                 .Select(lgo => (lgo.RenderLayer, lgo.GameObject))
                 .ToList();
 
-        _gameWindow.Render(gameObjectsToRender);
+        _nengineApplication.GameWindow.Render(gameObjectsToRender);
 
         //  handle culling the invisible ones
         // Draw Debug Lines with transparency to indicate scale on top

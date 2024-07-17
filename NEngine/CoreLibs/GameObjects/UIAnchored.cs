@@ -2,7 +2,6 @@
 using SFML.System;
 
 using NEngine.GameObjects;
-using NEngine.Window;
 
 namespace NEngine.CoreLibs.GameObjects;
 
@@ -21,6 +20,10 @@ public abstract class UIAnchored: Positionable
 
     protected Vector2f PositionLocally(FloatRect bounds)
     {
+        if (Application.Instance is null)
+        {
+            return Position;
+        }
         float xAnchor = Anchors.x switch
         {
             UIAnchor.START => 0,
