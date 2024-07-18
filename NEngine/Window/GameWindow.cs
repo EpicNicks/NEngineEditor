@@ -57,6 +57,39 @@ public class GameWindow
         };
     }
 
+    public void Render(List<(RenderLayer, GameObject)> layeredGameObjects, Action onDrawAction, bool drawBefore)
+    {
+        RenderWindow.Clear(WindowBackgroundColor);
+        if (drawBefore)
+        {
+            onDrawAction();
+        }
+        foreach ((RenderLayer renderLayer, GameObject gameObject) in layeredGameObjects)
+        {
+            if (renderLayer == RenderLayer.NONE)
+            {
+                continue;
+            }
+            foreach (var drawable in gameObject.Drawables)
+            {
+                if (renderLayer != RenderLayer.UI)
+                {
+                    // convert screen space to world space on non-UI objects?
+                    RenderWindow.SetView(MainView);
+                }
+                else
+                {
+                    RenderWindow.SetView(UiView);
+                }
+                RenderWindow.Draw(drawable);
+            }
+        }
+        if (!drawBefore)
+        {
+            onDrawAction();
+        }
+        RenderWindow.Display();
+    }
 
     public void Render(List<(RenderLayer, GameObject)> layeredGameObjects)
     {

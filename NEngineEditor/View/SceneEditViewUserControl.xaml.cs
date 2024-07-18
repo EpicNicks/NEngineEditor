@@ -8,6 +8,8 @@ using SFML.Window;
 using NEngine.GameObjects;
 using NEngine.Window;
 using NEngineEditor.ViewModel;
+using NEngine.CoreLibs.Debugging;
+using NEngineEditor.Managers;
 
 namespace NEngineEditor.View;
 /// <summary>
@@ -15,6 +17,7 @@ namespace NEngineEditor.View;
 /// </summary>
 public partial class SceneEditViewUserControl : System.Windows.Controls.UserControl
 {
+    private float _curZoom = 1.0f;
     private NEngine.Application _nengineApplication;
     public bool ShouldRender { get; set; } = true;
 
@@ -72,7 +75,9 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 
         // hard values for now
         // e.Delta will be 1 for a scroll up, -1 for a scroll down
-        _nengineApplication.GameWindow.MainView.Zoom(e.Delta == 1 ? 0.5f : 2.0f);
+        float zoomDelta = e.Delta == 1 ? 0.5f : 2.0f;
+        _nengineApplication.GameWindow.MainView.Zoom(zoomDelta);
+        _curZoom *= zoomDelta;
     }
 
     Vector2i? initialDragPoint = null;
@@ -148,9 +153,55 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 .Select(lgo => (lgo.RenderLayer, lgo.GameObject))
                 .ToList();
 
-        _nengineApplication.GameWindow.Render(gameObjectsToRender);
+        _nengineApplication.GameWindow.Render(gameObjectsToRender, DrawGrid, true);
 
         //  handle culling the invisible ones
         // Draw Debug Lines with transparency to indicate scale on top
+    }
+
+    private void DrawGrid()
+    {
+        const float gridSpacing = 100f;
+        Color gridColor = new(128, 128, 128, 128);
+
+        RenderWindow window = _nengineApplication.GameWindow.RenderWindow;
+        SFML.Graphics.View view = _nengineApplication.GameWindow.MainView;
+        window.SetView(_nengineApplication.GameWindow.MainView);
+
+        Vector2f viewSize = view.Size;
+        Vector2f viewCenter = view.Center;
+
+        float left = viewCenter.X - viewSize.X / 2;
+        float right = viewCenter.X + viewSize.X / 2;
+        float top = viewCenter.Y - viewSize.Y / 2;
+        float bottom = viewCenter.Y + viewSize.Y / 2;
+
+        // Round to nearest gridSpacing
+        float startX = (float)Math.Floor(left / gridSpacing) * gridSpacing;
+        float startY = (float)Math.Floor(top / gridSpacing) * gridSpacing;
+
+        // Logger.LogInfo(startX, right, gridSpacing, "number of vertical lines", (right - startX) / gridSpacing);
+
+        // Vertical lines
+        for (float x = startX; x <= right; x += gridSpacing)
+        {
+            Vertex[] line =
+            [
+                new Vertex(new Vector2f(x, top), gridColor),
+                new Vertex(new Vector2f(x, bottom), gridColor)
+            ];
+            window.Draw(line, PrimitiveType.Lines);
+        }
+
+        // Horizontal lines
+        for (float y = startY; y <= bottom; y += gridSpacing)
+        {
+            Vertex[] line =
+            [
+                new Vertex(new Vector2f(left, y), gridColor),
+                new Vertex(new Vector2f(right, y), gridColor)
+            ];
+            window.Draw(line, PrimitiveType.Lines);
+        }
     }
 }

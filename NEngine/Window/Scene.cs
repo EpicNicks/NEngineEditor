@@ -37,6 +37,7 @@ public class Scene
     ///     add((RenderLayerEnumValue, new SomeGameObjectDerivedClass));
     /// });
     /// </summary>
+    /// <param name="persistentGameObjects">GameObjects to be persisted from the previous scene's Unload</param>
     public void Init(List<(RenderLayer renderLayer, GameObject gameObject)> persistentGameObjects)
     {
         AddPersistent(persistentGameObjects);

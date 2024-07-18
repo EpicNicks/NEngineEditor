@@ -11,7 +11,7 @@ using NEngine.Window;
 namespace NEngine;
 public class Application
 {
-    private const string INVALID_APPLICATION_OPERATION = "";
+    private const string INVALID_APPLICATION_OPERATION = "Invalid Application Operation. Application has not been Initialized";
     private const string DEFAULT_APPLICATION_TITLE = "Default Application Title";
 
     private List<Scene> sceneList = [];

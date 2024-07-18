@@ -9,18 +9,21 @@ public static class Logger
         MainViewModel.Instance.Logs.Add(new() { Level = logLevel, Message = message });
     }
 
-    public static void LogInfo(string message)
+    public static void LogInfo(params object[] message)
     {
-        Log(message, LogEntry.LogLevel.INFO);
+        string toSend = string.Join(' ', message.Select(o => o.ToString() ?? ""));
+        Log(toSend, LogEntry.LogLevel.INFO);
     }
 
-    public static void LogWarning(string message)
+    public static void LogWarning(params object[] message)
     {
-        Log(message, LogEntry.LogLevel.WARNING);
+        string toSend = string.Join(' ', message.Select(o => o.ToString() ?? ""));
+        Log(toSend, LogEntry.LogLevel.WARNING);
     }
 
-    public static void LogError(string message)
+    public static void LogError(params object[] message)
     {
-        Log(message, LogEntry.LogLevel.ERROR);
+        string toSend = string.Join(' ', message.Select(o => o.ToString() ?? ""));
+        Log(toSend, LogEntry.LogLevel.ERROR);
     }
 }
