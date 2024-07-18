@@ -213,7 +213,6 @@ public class MainViewModel : ViewModelBase
         });
     }
 
-    // private static readonly string[] _specialProperties = ["Position", "Rotation", "Scale"];
     public void LoadScene(string filePath)
     {
         ModifySceneObjectsListWrapper(() =>

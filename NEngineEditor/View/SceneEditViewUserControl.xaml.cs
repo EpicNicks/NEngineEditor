@@ -76,8 +76,11 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         // hard values for now
         // e.Delta will be 1 for a scroll up, -1 for a scroll down
         float zoomDelta = e.Delta == 1 ? 0.5f : 2.0f;
-        _nengineApplication.GameWindow.MainView.Zoom(zoomDelta);
-        _curZoom *= zoomDelta;
+        if (_curZoom * zoomDelta < 100 && _curZoom * zoomDelta > 0.01)
+        {
+            _curZoom *= zoomDelta;
+            _nengineApplication.GameWindow.MainView.Zoom(zoomDelta);
+        }
     }
 
     Vector2i? initialDragPoint = null;
@@ -126,7 +129,7 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
             Vector2i currentMousePosition = new Vector2i(e.X, e.Y);
             Vector2f delta = (Vector2f)(initialDragPoint - currentMousePosition);
 
-            _nengineApplication.GameWindow.MainView.Center += delta;
+            _nengineApplication.GameWindow.MainView.Center += delta * _curZoom;
 
             initialDragPoint = currentMousePosition;
         }
