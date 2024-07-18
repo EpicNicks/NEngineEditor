@@ -9,6 +9,14 @@
              d:DesignHeight="450" d:DesignWidth="300"
              HorizontalAlignment="Stretch"
              VerticalAlignment="Stretch">
+    <UserControl.Resources>
+        <ContextMenu x:Key="ItemContextMenu">
+            <MenuItem Header="Delete Instance" 
+                      Command="{Binding DataContext.DeleteInstanceCommand, 
+                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      CommandParameter="{Binding}"/>
+        </ContextMenu>
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -19,19 +27,21 @@
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch"
                   SelectionChanged="LeftListView_SelectionChanged"
-                  MouseDoubleClick="LeftListView_MouseDoubleClick">
+                  MouseDoubleClick="LeftListView_MouseDoubleClick"
+                  ItemsSource="{Binding SceneObjects}">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="ContextMenu" 
+                            Value="{StaticResource ItemContextMenu}"/>
+                </Style>
+            </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <Grid>
-                        <TextBlock Text="{Binding GameObject.Name, FallbackValue='Nameless GameObject'}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
-                    </Grid>
+                    <TextBlock Text="{Binding GameObject.Name, FallbackValue='Nameless GameObject'}" 
+                               HorizontalAlignment="Stretch" 
+                               VerticalAlignment="Stretch" />
                 </DataTemplate>
             </ListView.ItemTemplate>
-            <ListView.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete Instance" Click="DeleteInstance_Click"/>
-                </ContextMenu>
-            </ListView.ContextMenu>
         </ListView>
     </Grid>
 </UserControl>

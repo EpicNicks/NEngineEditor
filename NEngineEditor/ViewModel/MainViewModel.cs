@@ -10,6 +10,7 @@ using NEngine.GameObjects;
 using NEngine.Window;
 
 using NEngineEditor.Commands;
+using NEngineEditor.Commands.Generic;
 using NEngineEditor.Helpers;
 using NEngineEditor.Model;
 using NEngineEditor.Model.JsonSerialized;
@@ -23,7 +24,10 @@ public class MainViewModel : ViewModelBase
     private ProjectDirectoryWatcher _projectDirectoryWatcher;
 
     private ICommand? _saveCommand;
-    public ICommand SaveCommand => _saveCommand ??= new ActionCommand(() => SaveScene());
+    public ICommand SaveCommand => _saveCommand ??= new ActionCommand(SaveScene);
+
+    private ICommand? _deleteInstanceCommand;
+    public ICommand DeleteInstanceCommand => _deleteInstanceCommand ??= new ActionCommand<LayeredGameObject>(selectedLgo => SceneGameObjects.Remove(selectedLgo));
 
     private (string name, string filepath) _loadedScene;
     public (string name, string filepath) LoadedScene
