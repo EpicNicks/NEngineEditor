@@ -7,6 +7,7 @@ using NEngine.Scheduling.Coroutines;
 
 using NEngine.CoreLibs;
 using NEngine.Window;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NEngine.GameObjects;
 
@@ -108,7 +109,7 @@ public class GameObject
     }
 
     // TODO: should also handle "marked for destruction" once implemented
-    public static implicit operator bool(GameObject? gameObject)
+    public static implicit operator bool([NotNullWhen(true)] GameObject? gameObject)
     {
         return gameObject is not null;
     }

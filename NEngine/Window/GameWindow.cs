@@ -57,13 +57,10 @@ public class GameWindow
         };
     }
 
-    public void Render(List<(RenderLayer, GameObject)> layeredGameObjects, Action onDrawAction, bool drawBefore)
+    public void Render(List<(RenderLayer, GameObject)> layeredGameObjects, Action? onDrawAction, Action? afterDrawAction)
     {
         RenderWindow.Clear(WindowBackgroundColor);
-        if (drawBefore)
-        {
-            onDrawAction();
-        }
+        onDrawAction?.Invoke();
         foreach ((RenderLayer renderLayer, GameObject gameObject) in layeredGameObjects)
         {
             if (renderLayer == RenderLayer.NONE)
@@ -84,10 +81,7 @@ public class GameWindow
                 RenderWindow.Draw(drawable);
             }
         }
-        if (!drawBefore)
-        {
-            onDrawAction();
-        }
+        afterDrawAction?.Invoke();
         RenderWindow.Display();
     }
 

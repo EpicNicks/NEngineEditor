@@ -3,8 +3,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d" 
+             xmlns:vm="clr-namespace:NEngineEditor.ViewModel"
+             d:DataContext="{d:DesignInstance Type=vm:SceneEditViewModel}"
+             mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.InputBindings>
+        <KeyBinding Key="P" Command="{Binding ActivatePositionGizmoSet}"/>
+        <KeyBinding Key="R" Command="{Binding ActivateRotationGizmoSet}"/>
+        <KeyBinding Key="S" Command="{Binding ActivateScaleGizmoSet}"/>
+    </UserControl.InputBindings>
     <Grid>
         <TabControl>
             <TabItem Header="SceneEditor">
