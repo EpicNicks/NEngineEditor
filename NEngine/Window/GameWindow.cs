@@ -28,6 +28,12 @@ public class GameWindow
     public Color WindowBackgroundColor { get; set; } = CORNFLOWER_BLUE;
     private static readonly Color CORNFLOWER_BLUE = new(147, 204, 234);
 
+    /// <summary>
+    /// Constructs the GameWindow with a SFML RenderWindow to render to.
+    /// Assigns an SFML View MainView for GameObjects to be rendered in world-space and an SFML View UIView from the RenderWindow's DefaultView
+    /// to render GameObjects in screen-space.
+    /// </summary>
+    /// <param name="renderWindow">The RenderWindow the GameWindow should manage</param>
     public GameWindow(RenderWindow renderWindow)
     {
         RenderWindow = renderWindow;
@@ -56,11 +62,17 @@ public class GameWindow
             RenderWindow.SetView(MainView);
         };
     }
-
-    public void Render(List<(RenderLayer, GameObject)> layeredGameObjects, Action? onDrawAction, Action? afterDrawAction)
+    /// <summary>
+    /// Clears the RenderWindow with the set WindowBackgroundColor, calls beforeDrawAction, 
+    /// RenderWindow.Draw each GameObject on its corresponding view, calls afterDrawAction, and then Display on the RenderWindow
+    /// </summary>
+    /// <param name="layeredGameObjects">GameObjects to render and their layers to render them on</param>
+    /// <param name="beforeDrawAction">An optional action to call before the GameObjects are drawn (Draws will always be drawn underneath)</param>
+    /// <param name="afterDrawAction">An optional action to call after the GameObjects are drawn (Draws will always be drawn on top)</param>
+    public void Render(List<(RenderLayer, GameObject)> layeredGameObjects, Action? beforeDrawAction, Action? afterDrawAction)
     {
         RenderWindow.Clear(WindowBackgroundColor);
-        onDrawAction?.Invoke();
+        beforeDrawAction?.Invoke();
         foreach ((RenderLayer renderLayer, GameObject gameObject) in layeredGameObjects)
         {
             if (renderLayer == RenderLayer.NONE)
@@ -85,6 +97,12 @@ public class GameWindow
         RenderWindow.Display();
     }
 
+    /// <summary>
+    /// Clears the RenderWindow with the set WindowBackgroundColor, 
+    /// RenderWindow.Draw each GameObject on its corresponding view,
+    /// and then Display on the RenderWindow
+    /// </summary>
+    /// <param name="layeredGameObjects">GameObjects to render and their layers to render them on</param>
     public void Render(List<(RenderLayer, GameObject)> layeredGameObjects)
     {
         RenderWindow.Clear(WindowBackgroundColor);

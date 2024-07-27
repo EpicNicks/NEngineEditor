@@ -15,6 +15,7 @@ using SFML.Graphics;
 using NEngine;
 using NEngine.Window;
 using NEngine.GameObjects;
+using NEngine.CoreLibs.GameObjects;
 
 /// <summary>
 /// Based in the root directory of your project.
@@ -33,6 +34,32 @@ public partial class Program
 
     // NO REFERENCES TO NEngineEditor ALLOWED
     //  ALL TYPES MUST BE DEFINED OR REDEFINED HERE EXPLICITLY
+#if DEBUG
+    class WarningText : UIAnchored
+    {
+        private Color _textColor = Color.White;
+        public Color TextColor { get => _textColor; set => _textColor = value; }
+        private Text warningText = new Text { DisplayedString = """
+            You probably forgot to add scenes to the build.
+            Go to 'File > Add Scenes To Build' and select a scene to add to the build!
+        """,
+        };
+        public override (UIAnchor x, UIAnchor y) Anchors => (UIAnchor.CENTER, UIAnchor.CENTER);
+        public override void Update()
+        {
+            if (Application.Instance is not null)
+            {
+                uint originalColor = Application.Instance.GameWindow.WindowBackgroundColor.ToInteger();
+                uint invertedRGB = ~originalColor & 0x00FFFFFF;
+                uint originalAlpha = originalColor & 0xFF000000;
+                warningText.FillColor = new Color(new Color(invertedRGB | originalAlpha));
+            }
+            Position = PositionLocally(warningText.GetGlobalBounds());
+        }
+    }
+#endif
+
+
     public static void Main()
     {
         ProjectSettings? projectSettings = LoadProjectSettings();
@@ -50,6 +77,14 @@ public partial class Program
             {
                 Application.AddScene(scene);
             }
+#if DEBUG
+            if (scenes.Count == 0)
+            {
+                scenes = [new Scene("You Forgot to Add Scenes to the build!", add => {
+                    add((RenderLayer.UI, new WarningText()));
+                })];
+            }
+#endif
         }
         application.Run();
     }

@@ -7,11 +7,9 @@ using SFML.Window;
 
 using NEngine.GameObjects;
 using NEngine.Window;
-using static NEngine.CoreLibs.Mathematics.Vector2fExtensions;
 
 using NEngineEditor.ViewModel;
 using NEngine.CoreLibs.GameObjects;
-using NEngineEditor.Extensions;
 
 namespace NEngineEditor.View;
 /// <summary>

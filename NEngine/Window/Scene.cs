@@ -94,7 +94,7 @@ public class Scene
         {
             GameObjects[renderLayer] = [gameObject];
         }
-        Application.Instance.AttachQueue.Enqueue(gameObject);
+        Application.Instance?.AttachQueue.Enqueue(gameObject);
     }
     public void Add(IEnumerable<(RenderLayer renderLayer, GameObject gameObject)> layeredGameObjects)
     {
@@ -117,11 +117,11 @@ public class Scene
         return result;
     }
 
-    public T? FindObjectOfType<T>(RenderLayer renderLayer) where T : GameObject
+    public T? FindObjectOfType<T>(RenderLayer renderLayer, string? name = null) where T : GameObject
     {
         foreach (var gameObject in GameObjects[renderLayer])
         {
-            if (gameObject is T t)
+            if (gameObject is T t && (name == null || name == t.Name))
             {
                 return t;
             }
