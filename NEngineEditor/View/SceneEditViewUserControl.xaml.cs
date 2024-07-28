@@ -7,6 +7,7 @@ using SFML.Window;
 
 using NEngine.GameObjects;
 using NEngine.Window;
+using static NEngine.CoreLibs.Mathematics.Vector2fExtensions;
 
 using NEngineEditor.ViewModel;
 using NEngine.CoreLibs.GameObjects;
@@ -140,6 +141,10 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 {
                     sceneObjectDrag = new(new(e.X, e.Y), DraggingGizmo.XY_SCALE);
                 }
+                else if (GizmoIntersects(rotationGizmo, clickCastRect))
+                {
+                    sceneObjectDrag = new(new(e.X, e.Y), DraggingGizmo.ROT);
+                }
             }
 
             MainViewModel.LayeredGameObject? selectedLgo = MainViewModel.Instance.SceneGameObjects
@@ -200,6 +205,10 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 {
                     p.Scale -= delta * scaleScale;
                 }
+                else if (sceneObjectDrag.draggingGizmo is DraggingGizmo.ROT)
+                {
+                    p.Rotation -= delta.X;
+                }
                 // notify the SelectedGameObject was changed
                 MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
             }
@@ -258,13 +267,15 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
     private RectangleShape? yPositionGizmoRect;
     private RectangleShape? xyPositionGizmo;
 
+    private CircleShape? rotationGizmo;
+
     private RectangleShape? xScaleGizmo;
     private RectangleShape? yScaleGizmo;
     private RectangleShape? xyScaleGizmo;
     private void DrawGizmos()
     {
         MainViewModel.LayeredGameObject? selectedGameObject = MainViewModel.Instance.SelectedGameObject;
-        if (selectedGameObject is null || selectedGameObject.GameObject is UIAnchored || selectedGameObject.GameObject is not Positionable selectedPositionable)
+        if (selectedGameObject is null || selectedGameObject.GameObject is UIAnchored || selectedGameObject.GameObject is not Positionable selectedPositionable || DataContext is not SceneEditViewModel sevm)
         {
             return;
         }
@@ -273,56 +284,73 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 
         List<Drawable> toDraw = [];
         
-        if (DataContext is SceneEditViewModel sevm)
+        if (sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.POSITION)
         {
-            if (sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.POSITION)
-            {
-                xPositionGizmoRect = GizmosConstants.XPositionGizmoRect;
-                xPositionGizmoRect.Position += selectedPositionableScreenSpacePosition;
-                yPositionGizmoRect = GizmosConstants.YPositionGizmoRect;
-                yPositionGizmoRect.Position += selectedPositionableScreenSpacePosition;
-                xPositionGizmo = GizmosConstants.XPositionGizmoTriangle;
-                xPositionGizmo.Position = selectedPositionableScreenSpacePosition + new Vector2f(-15f + xPositionGizmoRect.Size.X, -5f);
-                yPositionGizmo = GizmosConstants.YPositionGizmoTriangle;
-                yPositionGizmo.Position = selectedPositionableScreenSpacePosition + new Vector2f(-15f, -20f + yPositionGizmoRect.Size.Y);
-                xyPositionGizmo = GizmosConstants.XYPositionGizmo;
-                xyPositionGizmo.Position += selectedPositionableScreenSpacePosition - new Vector2f(-2f, 2f + xyPositionGizmo.Size.Y);
+            xPositionGizmoRect = GizmosConstants.XPositionGizmoRect;
+            xPositionGizmoRect.Position += selectedPositionableScreenSpacePosition;
+            yPositionGizmoRect = GizmosConstants.YPositionGizmoRect;
+            yPositionGizmoRect.Position += selectedPositionableScreenSpacePosition;
+            xPositionGizmo = GizmosConstants.XPositionGizmoTriangle;
+            xPositionGizmo.Position = selectedPositionableScreenSpacePosition + new Vector2f(-15f + xPositionGizmoRect.Size.X, -5f);
+            yPositionGizmo = GizmosConstants.YPositionGizmoTriangle;
+            yPositionGizmo.Position = selectedPositionableScreenSpacePosition + new Vector2f(-15f, -20f + yPositionGizmoRect.Size.Y);
+            xyPositionGizmo = GizmosConstants.XYPositionGizmo;
+            xyPositionGizmo.Position += selectedPositionableScreenSpacePosition - new Vector2f(-2f, 2f + xyPositionGizmo.Size.Y);
 
-                toDraw.AddRange([xPositionGizmo, yPositionGizmo, xPositionGizmoRect, yPositionGizmoRect, xyPositionGizmo]);
-            }
-            else
+            toDraw.AddRange([xPositionGizmo, yPositionGizmo, xPositionGizmoRect, yPositionGizmoRect, xyPositionGizmo]);
+        }
+        else
+        {
+            xPositionGizmo = null;
+            yPositionGizmo = null;
+            xPositionGizmoRect = null;
+            yPositionGizmoRect = null;
+            xyPositionGizmo = null;
+        }
+        if (sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.ROTATION)
+        {
+            // TODO: set rotation gizmos
+            float radius = 20;
+            float endAngle = 90;
+            float startAngle = 0;
+            Color circleColor = Color.Blue;
+            rotationGizmo = new CircleShape(radius)
             {
-                xPositionGizmo = null;
-                yPositionGizmo = null;
-                xPositionGizmoRect = null;
-                yPositionGizmoRect = null;
-                xyPositionGizmo = null;
-            }
-            if (sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.ROTATION)
-            {
-                // TODO: set rotation gizmos
-            }
-            else
-            {
-                // TODO: set all rotation gizmos to null
-            }
-            if (sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.SCALE)
-            {
-                xScaleGizmo = GizmosConstants.XScaleGizmo;
-                yScaleGizmo = GizmosConstants.YScaleGizmo;
-                xyScaleGizmo = GizmosConstants.XYScaleGizmo;
-                xScaleGizmo.Position += selectedPositionableScreenSpacePosition + new Vector2f(xyScaleGizmo.Size.X, 0);
-                yScaleGizmo.Position += selectedPositionableScreenSpacePosition + new Vector2f(0, xyScaleGizmo.Size.Y + xScaleGizmo.Size.Y);
-                xyScaleGizmo.Position += selectedPositionableScreenSpacePosition - new Vector2f(0, -xScaleGizmo.Size.Y);
+                Position = selectedPositionableScreenSpacePosition - new Vector2f(radius, radius),
+                Rotation = startAngle,
+                FillColor = Color.Transparent,
+                OutlineThickness = 3,
+                OutlineColor = circleColor
+            };
 
-                toDraw.AddRange([xScaleGizmo, yScaleGizmo, xyScaleGizmo]);
-            }
-            else
-            {
-                xScaleGizmo = null;
-                yScaleGizmo = null;
-                xyScaleGizmo = null;
-            }
+            float endRadians = endAngle * (float)Math.PI;
+            Vector2f endPoint = selectedPositionableScreenSpacePosition + new Vector2f(
+                (float)Math.Cos(endRadians) * radius,
+                (float)Math.Sin(endRadians) * radius
+            );
+
+            toDraw.AddRange([rotationGizmo]);
+        }
+        else
+        {
+            rotationGizmo = null;
+        }
+        if (sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.SCALE)
+        {
+            xScaleGizmo = GizmosConstants.XScaleGizmo;
+            yScaleGizmo = GizmosConstants.YScaleGizmo;
+            xyScaleGizmo = GizmosConstants.XYScaleGizmo;
+            xScaleGizmo.Position += selectedPositionableScreenSpacePosition + new Vector2f(xyScaleGizmo.Size.X, 0);
+            yScaleGizmo.Position += selectedPositionableScreenSpacePosition + new Vector2f(0, xyScaleGizmo.Size.Y + xScaleGizmo.Size.Y);
+            xyScaleGizmo.Position += selectedPositionableScreenSpacePosition - new Vector2f(0, -xScaleGizmo.Size.Y);
+
+            toDraw.AddRange([xScaleGizmo, yScaleGizmo, xyScaleGizmo]);
+        }
+        else
+        {
+            xScaleGizmo = null;
+            yScaleGizmo = null;
+            xyScaleGizmo = null;
         }
 
         toDraw.ForEach(_nengineApplication.GameWindow.RenderWindow.Draw);
