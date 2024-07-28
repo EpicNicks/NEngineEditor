@@ -22,7 +22,7 @@ namespace NEngine.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    public class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace NEngine.Properties {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("NEngine.Properties.Resources", typeof(Resources).Assembly);
@@ -51,7 +51,7 @@ namespace NEngine.Properties {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -63,7 +63,7 @@ namespace NEngine.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] Arial {
+        public static byte[] Arial {
             get {
                 object obj = ResourceManager.GetObject("Arial", resourceCulture);
                 return ((byte[])(obj));
@@ -73,7 +73,7 @@ namespace NEngine.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] Inter_Regular {
+        public static byte[] Inter_Regular {
             get {
                 object obj = ResourceManager.GetObject("Inter-Regular", resourceCulture);
                 return ((byte[])(obj));
@@ -83,7 +83,7 @@ namespace NEngine.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] Roboto_Regular {
+        public static byte[] Roboto_Regular {
             get {
                 object obj = ResourceManager.GetObject("Roboto-Regular", resourceCulture);
                 return ((byte[])(obj));

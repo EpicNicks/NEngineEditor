@@ -5,6 +5,11 @@ using System.Windows.Input;
 namespace NEngineEditor.ViewModel;
 public class SceneEditViewModel : ViewModelBase
 {
+    public SceneEditViewModel()
+    {
+        ActiveGizmos = ActiveGizmoSet.POSITION;
+    }
+
     public enum ActiveGizmoSet
     {
         POSITION,
@@ -12,7 +17,7 @@ public class SceneEditViewModel : ViewModelBase
         SCALE
     }
 
-    private ActiveGizmoSet _activeGizmoSet = ActiveGizmoSet.POSITION;
+    private ActiveGizmoSet _activeGizmoSet;
     public ActiveGizmoSet ActiveGizmos
     {
         get => _activeGizmoSet;

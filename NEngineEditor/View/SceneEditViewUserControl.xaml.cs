@@ -11,6 +11,7 @@ using static NEngine.CoreLibs.Mathematics.Vector2fExtensions;
 
 using NEngineEditor.ViewModel;
 using NEngine.CoreLibs.GameObjects;
+using NEngine.CoreLibs.StandardFonts;
 
 namespace NEngineEditor.View;
 /// <summary>
@@ -117,6 +118,22 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
             
             if (MainViewModel.Instance.SelectedGameObject is not null && MainViewModel.Instance.SelectedGameObject.GameObject is Positionable)
             {
+                if (DataContext is SceneEditViewModel sevm)
+                {
+                    if (GizmoIntersects(positionSelectButton, clickCastRect))
+                    {
+                        sevm.ActivatePositionGizmoSet.Execute(null);
+                    }
+                    else if (GizmoIntersects(rotationSelectButton, clickCastRect))
+                    {
+                        sevm.ActivateRotationGizmoSet.Execute(null);
+                    }
+                    else if (GizmoIntersects(scaleSelectButton, clickCastRect))
+                    {
+                        sevm.ActivateScaleGizmoSet.Execute(null);
+                    }
+                }
+
                 if (GizmoIntersects(xPositionGizmo, clickCastRect))
                 {
                     sceneObjectDrag = new(new(e.X, e.Y), DraggingGizmo.X_POS);
@@ -258,9 +275,13 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
     }
 
 
-    // Access these in the click and drag detection to
-    //  react in the UI (make the color lighter/darker while dragging, make it glow when hovering, etc)
-    //  move SelectedGameObject if SelectedGameObject.GameObject is Positionable
+    private RectangleShape? positionSelectButton;
+    private Text? positionSelectText;
+    private RectangleShape? rotationSelectButton;
+    private Text? rotationSelectText;
+    private RectangleShape? scaleSelectButton;
+    private Text? scaleSelectText;
+
     private CircleShape? xPositionGizmo;
     private CircleShape? yPositionGizmo;
     private RectangleShape? xPositionGizmoRect;
@@ -283,7 +304,50 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         _nengineApplication.GameWindow.RenderWindow.SetView(_nengineApplication.GameWindow.UiView);
 
         List<Drawable> toDraw = [];
-        
+
+        // hot-reloading the text instances corrupts memory, probably due to failing to load the Resources from NEngine.CoreLibs.StandardFonts
+        positionSelectButton = new RectangleShape(new Vector2f(20, 20))
+        {
+            Position = new(20, 20),
+            FillColor = new Color(0, 255, 255, 64),
+            OutlineThickness = 2,
+            OutlineColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.POSITION ? Color.Cyan : Color.White
+        };
+        positionSelectText = new Text("P", Fonts.Arial)
+        {
+            Position = positionSelectButton.Position - new Vector2f(0, 5),
+            CharacterSize = 24,
+            FillColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.POSITION ? Color.Cyan : Color.White
+        };
+        rotationSelectButton = new RectangleShape(new Vector2f(20, 20))
+        {
+            Position = positionSelectButton.Position with { X = positionSelectButton.Position.X + 30 },
+            FillColor = new Color(0, 255, 255, 64),
+            OutlineThickness = 2,
+            OutlineColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.ROTATION ? Color.Blue : Color.White
+        };
+        rotationSelectText = new Text("R", Fonts.Arial)
+        {
+            Position = rotationSelectButton.Position - new Vector2f(0, 5),
+            CharacterSize = 24,
+            FillColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.ROTATION ? Color.Blue : Color.White
+        };
+        scaleSelectButton = new RectangleShape(new Vector2f(20, 20))
+        {
+            Position = rotationSelectButton.Position with { X = rotationSelectButton.Position.X + 30 },
+            FillColor = new Color(0, 255, 255, 64),
+            OutlineThickness = 2,
+            OutlineColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.SCALE ? Color.Green : Color.White
+        };
+        scaleSelectText = new Text("S", Fonts.Arial)
+        {
+            Position = scaleSelectButton.Position - new Vector2f(0, 5),
+            CharacterSize = 24,
+            FillColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.SCALE ? Color.Green : Color.White
+        };
+
+        toDraw.AddRange([positionSelectButton, positionSelectText, rotationSelectButton, rotationSelectText, scaleSelectButton, scaleSelectText]);
+
         if (sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.POSITION)
         {
             xPositionGizmoRect = GizmosConstants.XPositionGizmoRect;
