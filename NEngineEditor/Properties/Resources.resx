@@ -133,6 +133,12 @@
   <data name="GameObjectTemplate_cs" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\FileTemplates\CodeTemplates\GameObjectTemplate.cs.template;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="MoveableTemplate_cs" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FileTemplates\CodeTemplates\MoveableTemplate.cs.template;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="PositionableTemplate_cs" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FileTemplates\CodeTemplates\PositionableTemplate.cs.template;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
   <data name="ProjectProgram" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\FileTemplates\CodeTemplates\ProjectProgram.cs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>

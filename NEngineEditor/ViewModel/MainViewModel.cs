@@ -260,7 +260,9 @@ public class MainViewModel : ViewModelBase
                     return;
                 }
                 ContentBrowserViewModel.CreateItem(ContentBrowserViewModel.subDirectory.CurrentSubDir, createItemType, newItemDialog.EnteredName);
-                Save(Path.Combine(ContentBrowserViewModel.subDirectory.CurrentSubDir, newItemDialog.EnteredName + ".scene"));
+                string newSceneFilePath = Path.Combine(ContentBrowserViewModel.subDirectory.CurrentSubDir, newItemDialog.EnteredName + ".scene");
+                Save(newSceneFilePath);
+                LoadedScene = (newItemDialog.EnteredName, newSceneFilePath);
             }
         }
         else

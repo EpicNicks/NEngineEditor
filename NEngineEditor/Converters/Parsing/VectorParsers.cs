@@ -14,7 +14,7 @@ public static partial class Vector2fParser
         }
         return new(0, 0);
     }
-    [GeneratedRegex(@"\{\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*\}")]
+    [GeneratedRegex(@"\{\s*([-+]?\d+(?:\.\d+)?)\s*,\s*([-+]?\d+(?:\.\d+)?)\s*\}")]
     public static partial Regex ValidVector2fRegex();
 }
 
@@ -29,7 +29,7 @@ public static partial class Vector2iParser
         }
         return new(0, 0);
     }
-    [GeneratedRegex(@"\{\s*(\d+)\s*,\s*(\d+)\s*\}")]
+    [GeneratedRegex(@"\{\s*([-+]?\d+)\s*,\s*([-+]?\d+)\s*\}")]
     public static partial Regex ValidVector2iRegex();
 }
 public static partial class Vector2uParser
@@ -58,6 +58,6 @@ public static partial class Vector3fParser
         }
         return new(0, 0, 0);
     }
-    [GeneratedRegex(@"\{\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*\}")]
+    [GeneratedRegex(@"\{\s*([-+]?\d+(?:\.\d+)?)\s*,\s*([-+]?\d+(?:\.\d+)?)\s*,\s*([-+]?\d+(?:\.\d+)?)\s*\}")]
     public static partial Regex ValidVector3fRegex();
 }

@@ -16,6 +16,7 @@ using NEngine;
 using NEngine.Window;
 using NEngine.GameObjects;
 using NEngine.CoreLibs.GameObjects;
+using NEngine.CoreLibs.StandardFonts;
 
 /// <summary>
 /// Based in the root directory of your project.
@@ -39,22 +40,32 @@ public partial class Program
     {
         private Color _textColor = Color.White;
         public Color TextColor { get => _textColor; set => _textColor = value; }
-        private Text warningText = new Text { DisplayedString = """
+        private Text warningText = new Text
+        {
+            DisplayedString = """
             You probably forgot to add scenes to the build.
             Go to 'File > Add Scenes To Build' and select a scene to add to the build!
-        """,
+            """,
+            CharacterSize = 32,
+            Font = Fonts.Arial
         };
         public override (UIAnchor x, UIAnchor y) Anchors => (UIAnchor.CENTER, UIAnchor.CENTER);
+
+        public WarningText()
+        {
+            Drawables = [warningText];
+        }
+
         public override void Update()
         {
             if (Application.Instance is not null)
             {
                 uint originalColor = Application.Instance.GameWindow.WindowBackgroundColor.ToInteger();
-                uint invertedRGB = ~originalColor & 0x00FFFFFF;
-                uint originalAlpha = originalColor & 0xFF000000;
+                uint invertedRGB = ~originalColor & 0xFFFFFF00;
+                uint originalAlpha = originalColor & 0x000000FF;
                 warningText.FillColor = new Color(new Color(invertedRGB | originalAlpha));
             }
-            Position = PositionLocally(warningText.GetGlobalBounds());
+            warningText.Position = PositionLocally(warningText.GetGlobalBounds());
         }
     }
 #endif
@@ -80,9 +91,9 @@ public partial class Program
 #if DEBUG
             if (scenes.Count == 0)
             {
-                scenes = [new Scene("You Forgot to Add Scenes to the build!", add => {
+                Application.AddScene(new Scene("You Forgot to Add Scenes to the build!", add => {
                     add((RenderLayer.UI, new WarningText()));
-                })];
+                }));
             }
 #endif
         }

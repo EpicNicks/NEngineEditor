@@ -209,6 +209,8 @@ public class ContentBrowserViewModel : ViewModelBase
             {
                 NewScriptDialog.CsScriptType.GAMEOBJECT => Resources.GameObjectTemplate_cs,
                 NewScriptDialog.CsScriptType.UIANCHORED => Resources.UIAnchoredTemplate_cs,
+                NewScriptDialog.CsScriptType.POSITIONABLE => Resources.PositionableTemplate_cs,
+                NewScriptDialog.CsScriptType.MOVEABLE => Resources.MoveableTemplate_cs,
                 _ => throw new InvalidOperationException($"Provided CsScriptType ({csScriptType}) was out of bounds of the enum")
             };
             string scriptOutput = gameObjectScriptTemplate.Replace("{CLASSNAME}", itemName.Replace("-", "_"));

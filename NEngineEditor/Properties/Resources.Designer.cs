@@ -143,6 +143,64 @@ namespace NEngineEditor.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to using SFML.System;
+        ///
+        ///using NEngine.GameObjects;
+        ///
+        ///public class {CLASSNAME} : Moveable
+        ///{
+        ///    // where to pass movement, (remember to normalize when passing in player inputs)
+        ///    private Vector2f moveVector;
+        ///
+        ///    // where you should add your Drawables to the Drawables list
+        ///    public {CLASSNAME}()
+        ///    {
+        ///        // your drawable references go here
+        ///        Drawables = [];
+        ///    }
+        ///
+        ///    // Called when the object is first added to the scene (if active)
+        ///    public override void Attach()
+        ///    {
+        ///
+        ///    } [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string MoveableTemplate_cs {
+            get {
+                return ResourceManager.GetString("MoveableTemplate_cs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to using SFML.System;
+        ///
+        ///using NEngine.GameObjects;
+        ///
+        ///// change &quot;Positionable&quot; to &quot;Moveable&quot; to handle movement with its Move function in Update
+        ///public class {CLASSNAME} : Positionable
+        ///{
+        ///    // where you should add your Drawables to the Drawables list
+        ///    public {CLASSNAME}()
+        ///    {
+        ///        // your drawable references go here
+        ///        Drawables = [];
+        ///    }
+        ///
+        ///    // Called when the object is first added to the scene (if active)
+        ///    public override void Attach()
+        ///    {
+        ///
+        ///    }
+        ///
+        ///    // Called every fr [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string PositionableTemplate_cs {
+            get {
+                return ResourceManager.GetString("PositionableTemplate_cs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to // Implicit Usings not enabled in generated projects
         ///using System;
         ///using System.Collections.Generic;
@@ -160,10 +218,11 @@ namespace NEngineEditor.Properties {
         ///using NEngine;
         ///using NEngine.Window;
         ///using NEngine.GameObjects;
+        ///using NEngine.CoreLibs.GameObjects;
+        ///using NEngine.CoreLibs.StandardFonts;
         ///
         ////// &lt;summary&gt;
-        ////// Based in the root directory of your project.
-        ////// Runs the scenes created here along with your config files in the  [rest of string was truncated]&quot;;.
+        ////// Based in the root directory of your pro [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string ProjectProgram {
             get {

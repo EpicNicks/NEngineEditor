@@ -1,0 +1,28 @@
+using SFML.System;
+
+using NEngine.GameObjects;
+
+public class {CLASSNAME} : Moveable
+{
+    // where to pass movement, (remember to normalize when passing in player inputs)
+    private Vector2f moveVector;
+
+    // where you should add your Drawables to the Drawables list
+    public {CLASSNAME}()
+    {
+        // your drawable references go here
+        Drawables = [];
+    }
+
+    // Called when the object is first added to the scene (if active)
+    public override void Attach()
+    {
+
+    }
+
+    // Called every frame the object is enabled in the scene (use Application.DeltaTime to get the time since last frame)
+    public override void Update()
+    {
+        Move(moveVector);
+    }
+}

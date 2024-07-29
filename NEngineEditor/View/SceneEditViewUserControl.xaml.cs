@@ -7,11 +7,10 @@ using SFML.Window;
 
 using NEngine.GameObjects;
 using NEngine.Window;
-using static NEngine.CoreLibs.Mathematics.Vector2fExtensions;
-
-using NEngineEditor.ViewModel;
 using NEngine.CoreLibs.GameObjects;
 using NEngine.CoreLibs.StandardFonts;
+
+using NEngineEditor.ViewModel;
 
 namespace NEngineEditor.View;
 /// <summary>
@@ -200,15 +199,15 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
             {
                 if (sceneObjectDrag.draggingGizmo is DraggingGizmo.X_POS)
                 {
-                    p.Position = p.Position with { X = p.Position.X - delta.X };
+                    p.Position = p.Position with { X = p.Position.X - delta.X * _curZoom };
                 }
                 else if (sceneObjectDrag.draggingGizmo is DraggingGizmo.Y_POS)
                 {
-                    p.Position = p.Position with { Y = p.Position.Y - delta.Y };
+                    p.Position = p.Position with { Y = p.Position.Y - delta.Y * _curZoom };
                 }
                 else if (sceneObjectDrag.draggingGizmo is DraggingGizmo.XY_POS)
                 {
-                    p.Position -= delta;
+                    p.Position -= delta * _curZoom;
                 }
                 else if (sceneObjectDrag.draggingGizmo is DraggingGizmo.X_SCALE)
                 {
@@ -313,12 +312,10 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
             OutlineThickness = 2,
             OutlineColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.POSITION ? Color.Cyan : Color.White
         };
-        positionSelectText = new Text("P", Fonts.Arial)
-        {
-            Position = positionSelectButton.Position - new Vector2f(0, 5),
-            CharacterSize = 24,
-            FillColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.POSITION ? Color.Cyan : Color.White
-        };
+        positionSelectText = GizmosConstants.positionSelectText;
+        positionSelectText.Position = positionSelectButton.Position - new Vector2f(0, 5);
+        positionSelectText.FillColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.POSITION ? Color.Cyan : Color.White;
+
         rotationSelectButton = new RectangleShape(new Vector2f(20, 20))
         {
             Position = positionSelectButton.Position with { X = positionSelectButton.Position.X + 30 },
@@ -326,12 +323,10 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
             OutlineThickness = 2,
             OutlineColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.ROTATION ? Color.Blue : Color.White
         };
-        rotationSelectText = new Text("R", Fonts.Arial)
-        {
-            Position = rotationSelectButton.Position - new Vector2f(0, 5),
-            CharacterSize = 24,
-            FillColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.ROTATION ? Color.Blue : Color.White
-        };
+        rotationSelectText = GizmosConstants.rotationSelectText;
+        rotationSelectText.Position = rotationSelectButton.Position - new Vector2f(0, 5);
+        rotationSelectText.FillColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.ROTATION ? Color.Blue : Color.White;
+
         scaleSelectButton = new RectangleShape(new Vector2f(20, 20))
         {
             Position = rotationSelectButton.Position with { X = rotationSelectButton.Position.X + 30 },
@@ -339,12 +334,9 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
             OutlineThickness = 2,
             OutlineColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.SCALE ? Color.Green : Color.White
         };
-        scaleSelectText = new Text("S", Fonts.Arial)
-        {
-            Position = scaleSelectButton.Position - new Vector2f(0, 5),
-            CharacterSize = 24,
-            FillColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.SCALE ? Color.Green : Color.White
-        };
+        scaleSelectText = GizmosConstants.scaleSelectText;
+        scaleSelectText.Position = scaleSelectButton.Position - new Vector2f(0, 5);
+        scaleSelectText.FillColor = sevm.ActiveGizmos is SceneEditViewModel.ActiveGizmoSet.SCALE ? Color.Green : Color.White;
 
         toDraw.AddRange([positionSelectButton, positionSelectText, rotationSelectButton, rotationSelectText, scaleSelectButton, scaleSelectText]);
 
@@ -468,6 +460,10 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 
     private static class GizmosConstants
     {
+        public static Text positionSelectText = new Text("P", Fonts.Arial) { CharacterSize = 24 };
+        public static Text rotationSelectText = new Text("R", Fonts.Arial) { CharacterSize = 24 };
+        public static Text scaleSelectText = new Text("S", Fonts.Arial) { CharacterSize = 24 };
+
         #region Position Gizmos
         public static CircleShape XPositionGizmoTriangle => new(15, 3) { FillColor = Color.Red, Rotation = -30 };
         public static RectangleShape XPositionGizmoRect => new() { Size = new(40, 2), FillColor = Color.Red };

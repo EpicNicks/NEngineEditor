@@ -14,6 +14,8 @@ public partial class NewScriptDialog : Window, INotifyPropertyChanged
     public enum CsScriptType
     {
         GAMEOBJECT,
+        POSITIONABLE,
+        MOVEABLE,
         UIANCHORED
     }
 
