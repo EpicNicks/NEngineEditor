@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.IO;
 
 using NEngine.GameObjects;
@@ -17,10 +18,9 @@ using NEngineEditor.Model.JsonSerialized;
 using NEngineEditor.Managers;
 using NEngineEditor.Windows;
 using NEngineEditor.View;
-using System.Text.RegularExpressions;
 
 namespace NEngineEditor.ViewModel;
-public class MainViewModel : ViewModelBase
+public partial class MainViewModel : ViewModelBase
 {
     private ProjectDirectoryWatcher _projectDirectoryWatcher;
 
@@ -39,21 +39,7 @@ public class MainViewModel : ViewModelBase
         }
         ObjectCloner.CloneMembers(selectedLgo.GameObject, reloadedGameObject, ObjectCloner.MemberTypes.Fields | ObjectCloner.MemberTypes.Properties);
         reloadedGameObject.Name = selectedLgo.GameObject.Name ?? "Nameless GO";
-        while (SceneGameObjects.Any(sgo => sgo.GameObject.Name == reloadedGameObject.Name))
-        {
-            Regex instanceNumberRegex = new Regex(@"(.+)\((\d+)\)$");
-            Match match = instanceNumberRegex.Match(reloadedGameObject.Name);
-            if (match.Groups.Count == 3 && int.TryParse(match.Groups[2].Value, out int instanceNumber))
-            {
-                reloadedGameObject.Name = $"{match.Groups[1].Value}({instanceNumber + 1})";
-            }
-            else
-            {
-                reloadedGameObject.Name += " (1)";
-            }
-        }
-        SceneGameObjects.Add(new LayeredGameObject { GameObject = reloadedGameObject, RenderLayer = selectedLgo.RenderLayer });
-        SoftReloadScene();
+        AddGameObjectToScene(new LayeredGameObject { GameObject = reloadedGameObject, RenderLayer = selectedLgo.RenderLayer });
     });
 
     private (string name, string filepath) _loadedScene;
@@ -206,6 +192,29 @@ public class MainViewModel : ViewModelBase
             return;
         }
         ReloadChangedFile(e);
+    }
+
+    public void AddGameObjectToScene(LayeredGameObject lgo)
+    {
+        GameObject toAdd = lgo.GameObject;
+        if (toAdd.Name is null)
+        {
+            toAdd.Name = "Nameless GO";
+        }
+        while (SceneGameObjects.Any(sgo => sgo.GameObject.Name == toAdd.Name))
+        {
+            Match match = SceneGameObjectInstanceNumberRegex().Match(toAdd.Name);
+            if (match.Groups.Count == 3 && int.TryParse(match.Groups[2].Value, out int instanceNumber))
+            {
+                toAdd.Name = $"{match.Groups[1].Value}({instanceNumber + 1})";
+            }
+            else
+            {
+                toAdd.Name += " (1)";
+            }
+        }
+        SceneGameObjects.Add(new LayeredGameObject { GameObject = toAdd, RenderLayer = lgo.RenderLayer });
+        SoftReloadScene();
     }
 
     public void ReloadScene()
@@ -365,4 +374,7 @@ public class MainViewModel : ViewModelBase
             }
         }
     }
+
+    [GeneratedRegex(@"(.+)\((\d+)\)$")]
+    private static partial Regex SceneGameObjectInstanceNumberRegex();
 }

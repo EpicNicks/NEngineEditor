@@ -150,22 +150,8 @@ public class ContentBrowserViewModel : ViewModelBase
             object? compiledObject = ScriptCompiler.CompileAndInstantiateFromFile(filePath);
             if (compiledObject is GameObject compiledGameObject)
             {
-                string originalName = compiledGameObject.Name ?? $"New {compiledGameObject.GetType().Name}";
-                compiledGameObject.Name = originalName;
-                while (MainViewModel.Instance.SceneGameObjects.Any(sgo => sgo.GameObject.Name == compiledGameObject.Name))
-                {
-                    Regex instanceNumberRegex = new Regex(@"(.+)\((\d+)\)$");
-                    Match match = instanceNumberRegex.Match(compiledGameObject.Name);
-                    if (match.Groups.Count == 3 && int.TryParse(match.Groups[2].Value, out int instanceNumber))
-                    {
-                        compiledGameObject.Name = $"{match.Groups[1].Value}({instanceNumber + 1})";
-                    }
-                    else
-                    {
-                        compiledGameObject.Name += " (1)";
-                    }
-                }
-                MainViewModel.Instance.SceneGameObjects.Add(new() { GameObject = compiledGameObject, RenderLayer = compiledGameObject is UIAnchored ? RenderLayer.UI : RenderLayer.BASE});
+                compiledGameObject.Name = $"New {compiledGameObject.GetType().Name}";
+                MainViewModel.Instance.AddGameObjectToScene(new() { GameObject = compiledGameObject, RenderLayer = compiledGameObject is UIAnchored ? RenderLayer.UI : RenderLayer.BASE});
             }
             else
             {
