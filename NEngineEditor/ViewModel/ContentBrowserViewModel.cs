@@ -17,6 +17,7 @@ using NEngineEditor.Model;
 using System.Text.Json.Nodes;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace NEngineEditor.ViewModel;
 public class ContentBrowserViewModel : ViewModelBase
@@ -151,9 +152,18 @@ public class ContentBrowserViewModel : ViewModelBase
             {
                 string originalName = compiledGameObject.Name ?? $"New {compiledGameObject.GetType().Name}";
                 compiledGameObject.Name = originalName;
-                for (int i = 1; MainViewModel.Instance.SceneGameObjects.Any(sgo => sgo.GameObject.Name == compiledGameObject.Name); i++)
+                while (MainViewModel.Instance.SceneGameObjects.Any(sgo => sgo.GameObject.Name == compiledGameObject.Name))
                 {
-                    compiledGameObject.Name = originalName + $"({i})";
+                    Regex instanceNumberRegex = new Regex(@"(.+)\((\d+)\)$");
+                    Match match = instanceNumberRegex.Match(compiledGameObject.Name);
+                    if (match.Groups.Count == 3 && int.TryParse(match.Groups[2].Value, out int instanceNumber))
+                    {
+                        compiledGameObject.Name = $"{match.Groups[1].Value}({instanceNumber + 1})";
+                    }
+                    else
+                    {
+                        compiledGameObject.Name += " (1)";
+                    }
                 }
                 MainViewModel.Instance.SceneGameObjects.Add(new() { GameObject = compiledGameObject, RenderLayer = compiledGameObject is UIAnchored ? RenderLayer.UI : RenderLayer.BASE});
             }

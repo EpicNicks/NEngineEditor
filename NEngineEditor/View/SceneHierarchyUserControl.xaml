@@ -12,8 +12,10 @@
     <UserControl.Resources>
         <ContextMenu x:Key="ItemContextMenu">
             <MenuItem Header="Delete Instance" 
-                      Command="{Binding DataContext.DeleteInstanceCommand, 
-                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      Command="{Binding DataContext.DeleteInstanceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      CommandParameter="{Binding}"/>
+            <MenuItem Header="Duplicate Instance"
+                      Command="{Binding DataContext.DuplicateInstanceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                       CommandParameter="{Binding}"/>
         </ContextMenu>
     </UserControl.Resources>

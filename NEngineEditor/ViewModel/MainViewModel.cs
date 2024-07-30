@@ -17,6 +17,7 @@ using NEngineEditor.Model.JsonSerialized;
 using NEngineEditor.Managers;
 using NEngineEditor.Windows;
 using NEngineEditor.View;
+using System.Text.RegularExpressions;
 
 namespace NEngineEditor.ViewModel;
 public class MainViewModel : ViewModelBase
@@ -28,6 +29,32 @@ public class MainViewModel : ViewModelBase
 
     private ICommand? _deleteInstanceCommand;
     public ICommand DeleteInstanceCommand => _deleteInstanceCommand ??= new ActionCommand<LayeredGameObject>(selectedLgo => SceneGameObjects.Remove(selectedLgo));
+    private ICommand? _duplicateInstanceCommand;
+    public ICommand DuplicateInstanceCommand => _duplicateInstanceCommand ??= new ActionCommand<LayeredGameObject>(selectedLgo =>
+    {
+        if (Activator.CreateInstance(selectedLgo.GameObject.GetType()) is not GameObject reloadedGameObject)
+        {
+            MessageBox.Show("Failed to create duplicate instance of GameObject", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+        ObjectCloner.CloneMembers(selectedLgo.GameObject, reloadedGameObject, ObjectCloner.MemberTypes.Fields | ObjectCloner.MemberTypes.Properties);
+        reloadedGameObject.Name = selectedLgo.GameObject.Name ?? "Nameless GO";
+        while (SceneGameObjects.Any(sgo => sgo.GameObject.Name == reloadedGameObject.Name))
+        {
+            Regex instanceNumberRegex = new Regex(@"(.+)\((\d+)\)$");
+            Match match = instanceNumberRegex.Match(reloadedGameObject.Name);
+            if (match.Groups.Count == 3 && int.TryParse(match.Groups[2].Value, out int instanceNumber))
+            {
+                reloadedGameObject.Name = $"{match.Groups[1].Value}({instanceNumber + 1})";
+            }
+            else
+            {
+                reloadedGameObject.Name += " (1)";
+            }
+        }
+        SceneGameObjects.Add(new LayeredGameObject { GameObject = reloadedGameObject, RenderLayer = selectedLgo.RenderLayer });
+        SoftReloadScene();
+    });
 
     private (string name, string filepath) _loadedScene;
     public (string name, string filepath) LoadedScene
