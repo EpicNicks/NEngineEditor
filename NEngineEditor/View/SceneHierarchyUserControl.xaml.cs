@@ -16,14 +16,18 @@ public partial class SceneHierarchyUserControl : UserControl
     public SceneHierarchyUserControl()
     {
         InitializeComponent();
-        LeftListView.ItemsSource = MainViewModel.Instance.SceneGameObjects;
-        DataContext = MainViewModel.Instance;
+        SceneHierarchyViewModel shvm = new();
+        DataContext = shvm;
+        LeftListView.ItemsSource = shvm.SceneGameObjects;
     }
 
     private void LeftListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        // as cast returns null on failure (intended behavior)
-        MainViewModel.Instance.SelectedGameObject = LeftListView.SelectedItem as MainViewModel.LayeredGameObject;
+        if (DataContext is not SceneHierarchyViewModel shvm)
+        {
+            return;
+        }
+        shvm.SelectedGameObject = LeftListView.SelectedItem as MainViewModel.LayeredGameObject;
     }
 
     private void LeftListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -39,9 +43,9 @@ public partial class SceneHierarchyUserControl : UserControl
 
     private void DeleteInstance_Click(object sender, RoutedEventArgs e)
     {
-        if (LeftListView.SelectedItem is MainViewModel.LayeredGameObject layeredGameObject)
+        if (LeftListView.SelectedItem is MainViewModel.LayeredGameObject layeredGameObject && DataContext is SceneHierarchyViewModel shvm)
         {
-            MainViewModel.Instance.SceneGameObjects.Remove(layeredGameObject);
+            shvm.DeleteInstanceCommand.Execute(layeredGameObject);
         }
         else
         {

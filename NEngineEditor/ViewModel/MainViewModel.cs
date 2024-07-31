@@ -28,8 +28,26 @@ public partial class MainViewModel : ViewModelBase
     private ICommand? _saveCommand;
     public ICommand SaveCommand => _saveCommand ??= new ActionCommand(SaveScene);
 
+    private ICommand? _deleteSelectedInstanceCommand;
+    public ICommand DeleteSelectedInstanceCommand => _deleteSelectedInstanceCommand ??= new ActionCommand(() =>
+    {
+        if (SelectedGameObject is not null)
+        {
+            DeleteInstanceCommand.Execute(SelectedGameObject);
+            SelectedGameObject = null;
+        }
+    });
+
     private ICommand? _deleteInstanceCommand;
-    public ICommand DeleteInstanceCommand => _deleteInstanceCommand ??= new ActionCommand<LayeredGameObject>(selectedLgo => SceneGameObjects.Remove(selectedLgo));
+    public ICommand DeleteInstanceCommand => _deleteInstanceCommand ??= new ActionCommand<LayeredGameObject>(selectedLgo =>
+    {
+        PerformActionCommand.Execute(new EditorAction
+        {
+            DoAction = () => SceneGameObjects.Remove(selectedLgo),
+            UndoAction = () => SceneGameObjects.Add(selectedLgo)
+        });
+        SceneGameObjects.Remove(selectedLgo);
+    });
     private ICommand? _duplicateInstanceCommand;
     public ICommand DuplicateInstanceCommand => _duplicateInstanceCommand ??= new ActionCommand<LayeredGameObject>(selectedLgo =>
     {
@@ -208,10 +226,7 @@ public partial class MainViewModel : ViewModelBase
     public void AddGameObjectToScene(LayeredGameObject lgo)
     {
         GameObject toAdd = lgo.GameObject;
-        if (toAdd.Name is null)
-        {
-            toAdd.Name = "Nameless GO";
-        }
+        toAdd.Name ??= "Nameless GO";
         while (SceneGameObjects.Any(sgo => sgo.GameObject.Name == toAdd.Name))
         {
             Match match = SceneGameObjectInstanceNumberRegex().Match(toAdd.Name);
@@ -224,7 +239,13 @@ public partial class MainViewModel : ViewModelBase
                 toAdd.Name += " (1)";
             }
         }
-        SceneGameObjects.Add(new LayeredGameObject { GameObject = toAdd, RenderLayer = lgo.RenderLayer });
+        LayeredGameObject layeredGameObjectToAdd = new LayeredGameObject { GameObject = toAdd, RenderLayer = lgo.RenderLayer };
+        SceneGameObjects.Add(layeredGameObjectToAdd);
+        PerformActionCommand.Execute(new EditorAction
+        {
+            DoAction = () => SceneGameObjects.Add(layeredGameObjectToAdd),
+            UndoAction = () => SceneGameObjects.Remove(layeredGameObjectToAdd)
+        });
         SoftReloadScene();
     }
 
@@ -271,6 +292,7 @@ public partial class MainViewModel : ViewModelBase
                 SceneGameObjects.Clear();
                 loadedGameObjects.ForEach(SceneGameObjects.Add);
                 LoadedScene = (sceneName, filePath);
+                _editorActionHistory.ClearHistory();
             }
             catch (Exception ex)
             {

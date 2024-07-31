@@ -183,6 +183,11 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         {
             return;
         }
+        if (MainViewModel.Instance.SelectedGameObject is null)
+        {
+            // if we lose the reference, the drag is no longer valid
+            sevm.CurrentSceneObjectDrag = null;
+        }
         if (sevm.CurrentSceneObjectDrag is not null)
         {
             Vector2i currentMousePosition = new Vector2i(e.X, e.Y);
@@ -391,6 +396,19 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         MainViewModel.LayeredGameObject? selectedGameObject = MainViewModel.Instance.SelectedGameObject;
         if (selectedGameObject is null || selectedGameObject.GameObject is UIAnchored || selectedGameObject.GameObject is not Positionable selectedPositionable || DataContext is not SceneEditViewModel sevm)
         {
+            positionSelectButton = null;
+            positionSelectText = null;
+            rotationSelectButton = null;
+            rotationSelectText = null;
+            scaleSelectButton = null;
+            scaleSelectText = null;
+            xPositionGizmo = null;
+            yPositionGizmo = null;
+            xyPositionGizmo = null;
+            rotationGizmo = null;
+            xScaleGizmo = null;
+            yScaleGizmo = null;
+            xyScaleGizmo = null;
             return;
         }
         Vector2f selectedPositionableScreenSpacePosition = (Vector2f)_nengineApplication.GameWindow.RenderWindow.MapCoordsToPixel(selectedPositionable.Position, _nengineApplication.GameWindow.MainView);
@@ -511,12 +529,12 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         const float gridSpacing = 100f;
         Color gridColor = new(128, 128, 128, 128);
 
+        SFML.Graphics.View mainView = _nengineApplication.GameWindow.MainView;
         RenderWindow window = _nengineApplication.GameWindow.RenderWindow;
-        SFML.Graphics.View view = _nengineApplication.GameWindow.MainView;
-        window.SetView(_nengineApplication.GameWindow.MainView);
+        window.SetView(mainView);
 
-        Vector2f viewSize = view.Size;
-        Vector2f viewCenter = view.Center;
+        Vector2f viewSize = mainView.Size;
+        Vector2f viewCenter = mainView.Center;
 
         float left = viewCenter.X - viewSize.X / 2;
         float right = viewCenter.X + viewSize.X / 2;
@@ -550,6 +568,9 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
             ];
             window.Draw(line, PrimitiveType.Lines);
         }
+        CircleShape _originCircle = new(10 * _curZoom) { FillColor = new Color(128, 128, 128, 128) };
+        _originCircle.Position = new Vector2f(0, 0) - new Vector2f(_originCircle.Radius, _originCircle.Radius);
+        window.Draw(_originCircle);
     }
 
     private static class GizmosConstants
