@@ -23,6 +23,7 @@ namespace NEngineEditor.ViewModel;
 public partial class MainViewModel : ViewModelBase
 {
     private ProjectDirectoryWatcher _projectDirectoryWatcher;
+    private EditorActionHistory _editorActionHistory;
 
     private ICommand? _saveCommand;
     public ICommand SaveCommand => _saveCommand ??= new ActionCommand(SaveScene);
@@ -41,6 +42,15 @@ public partial class MainViewModel : ViewModelBase
         reloadedGameObject.Name = selectedLgo.GameObject.Name ?? "Nameless GO";
         AddGameObjectToScene(new LayeredGameObject { GameObject = reloadedGameObject, RenderLayer = selectedLgo.RenderLayer });
     });
+
+    private ICommand? _performActionCommand;
+    public ICommand PerformActionCommand => _performActionCommand ??= new ActionCommand<EditorAction>(_editorActionHistory.PerformAction);
+
+    private ICommand? _undoActionCommand;
+    public ICommand UndoActionCommand => _undoActionCommand ??= new ActionCommand(() => _editorActionHistory.UndoAction());
+
+    private ICommand? _redoActionCommand;
+    public ICommand RedoActionCommand => _redoActionCommand ??= new ActionCommand(() => _editorActionHistory.RedoAction());
 
     private (string name, string filepath) _loadedScene;
     public (string name, string filepath) LoadedScene
@@ -129,6 +139,7 @@ public partial class MainViewModel : ViewModelBase
         _projectDirectoryWatcher = new ProjectDirectoryWatcher(Path.Combine(MainWindow.ProjectDirectory, "Assets"), Application.Current.Dispatcher);
         _projectDirectoryWatcher.FileChanged += _projectDirectoryWatcher_FileChanged;
         _projectDirectoryWatcher.FileRenamed += _projectDirectoryWatcher_FileRenamed;
+        _editorActionHistory = new EditorActionHistory();
     }
 
     private async void ModifySceneObjectsListWrapper(Action modifySceneAction)

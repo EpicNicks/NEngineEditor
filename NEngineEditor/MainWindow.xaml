@@ -3,9 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:view="clr-namespace:NEngineEditor.View"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:vm="clr-namespace:NEngineEditor.ViewModel"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
+        mc:Ignorable="d"
         Title="Game Engine Editor" Height="800" Width="1200">
     <Window.InputBindings>
         <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveCommand}" />
+        <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoActionCommand}" />
+        <KeyBinding Key="Y" Modifiers="Ctrl" Command="{Binding RedoActionCommand}" />
     </Window.InputBindings>
     <Grid>
         <!-- Define Rows and Columns -->

@@ -1,5 +1,5 @@
 ﻿using NEngineEditor.Commands;
-
+using SFML.System;
 using System.Windows.Input;
 
 namespace NEngineEditor.ViewModel;
@@ -9,6 +9,19 @@ public class SceneEditViewModel : ViewModelBase
     {
         ActiveGizmos = ActiveGizmoSet.POSITION;
     }
+    public enum DraggingGizmo
+    {
+        X_POS,
+        Y_POS,
+        XY_POS,
+        ROT,
+        X_SCALE,
+        Y_SCALE,
+        XY_SCALE
+    }
+    public record SceneObjectDrag(Vector2i startDragPoint, Vector2i currentDragPoint, DraggingGizmo draggingGizmo);
+    public SceneObjectDrag? CurrentSceneObjectDrag { get; set; }
+    public bool IsDraggingSceneObject => CurrentSceneObjectDrag is not null;
 
     public enum ActiveGizmoSet
     {
@@ -29,11 +42,19 @@ public class SceneEditViewModel : ViewModelBase
     }
 
     private ICommand? _activatePositionGizmoSet;
-    public ICommand ActivatePositionGizmoSet => _activatePositionGizmoSet ??= new ActionCommand(() => ActiveGizmos = ActiveGizmoSet.POSITION);
+    public ICommand ActivatePositionGizmoSet => _activatePositionGizmoSet ??= new ActionCommand(() => SetActiveGizmoSet(ActiveGizmoSet.POSITION));
 
     private ICommand? _activateRotationGizmoSet;
-    public ICommand ActivateRotationGizmoSet => _activateRotationGizmoSet ??= new ActionCommand(() => ActiveGizmos = ActiveGizmoSet.ROTATION);
+    public ICommand ActivateRotationGizmoSet => _activateRotationGizmoSet ??= new ActionCommand(() => SetActiveGizmoSet(ActiveGizmoSet.ROTATION));
 
     private ICommand? _activateScaleGizmoSet;
-    public ICommand ActivateScaleGizmoSet => _activateScaleGizmoSet ??= new ActionCommand(() => ActiveGizmos = ActiveGizmoSet.SCALE);
+    public ICommand ActivateScaleGizmoSet => _activateScaleGizmoSet ??= new ActionCommand(() => SetActiveGizmoSet(ActiveGizmoSet.SCALE));
+
+    private void SetActiveGizmoSet(ActiveGizmoSet activeGizmoSet)
+    {
+        if (!IsDraggingSceneObject)
+        {
+            ActiveGizmos = activeGizmoSet;
+        }
+    }
 }
