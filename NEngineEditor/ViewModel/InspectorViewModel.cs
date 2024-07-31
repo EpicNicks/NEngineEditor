@@ -8,6 +8,8 @@ using SFML.System;
 using NEngine.GameObjects;
 using NEngine.Window;
 using System.Globalization;
+using NEngineEditor.Managers;
+using NEngineEditor.Model;
 
 namespace NEngineEditor.ViewModel;
 
@@ -35,6 +37,20 @@ public class InspectorViewModel : ViewModelBase
         {
             if (SelectedLayeredGameObject != null && SelectedLayeredGameObject.RenderLayer != value)
             {
+                RenderLayer originalValue = SelectedLayeredGameObject.RenderLayer;
+                MainViewModel.Instance.PerformActionCommand.Execute(new EditorAction
+                {
+                    DoAction = () =>
+                    {
+                        SelectedLayeredGameObject.RenderLayer = value;
+                        OnPropertyChanged(nameof(RenderLayer));
+                    },
+                    UndoAction = () =>
+                    {
+                        SelectedLayeredGameObject.RenderLayer = originalValue;
+                        OnPropertyChanged(nameof(RenderLayer));
+                    }
+                });
                 SelectedLayeredGameObject.RenderLayer = value;
                 OnPropertyChanged(nameof(RenderLayer));
                 MainViewModel.Instance.SelectedGameObject = SelectedLayeredGameObject;
@@ -241,12 +257,15 @@ public class MemberWrapper : INotifyPropertyChanged
 
     private void SetValue(object value)
     {
+        object? originalValue;
         switch (MemberInfo)
         {
             case PropertyInfo prop:
+                originalValue = prop.GetValue(_target);
                 prop.SetValue(_target, value);
                 break;
             case FieldInfo field:
+                originalValue = field.GetValue(_target);
                 field.SetValue(_target, value);
                 break;
             default:
@@ -254,6 +273,41 @@ public class MemberWrapper : INotifyPropertyChanged
         }
         OnPropertyChanged(nameof(Value));
 
+        MainViewModel.Instance.PerformActionCommand.Execute(new EditorAction
+        {
+            DoAction = () =>
+            {
+                switch (MemberInfo)
+                {
+                    case PropertyInfo prop:
+                        prop.SetValue(_target, value);
+                        break;
+                    case FieldInfo field:
+                        field.SetValue(_target, value);
+                        break;
+                    default:
+                        throw new InvalidOperationException("Unsupported MemberInfo type");
+                }
+                MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
+                OnPropertyChanged(nameof(Value));
+            },
+            UndoAction = () =>
+            {
+                switch (MemberInfo)
+                {
+                    case PropertyInfo prop:
+                        prop.SetValue(_target, originalValue);
+                        break;
+                    case FieldInfo field:
+                        field.SetValue(_target, originalValue);
+                        break;
+                    default:
+                        throw new InvalidOperationException("Unsupported MemberInfo type");
+                }
+                MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
+                OnPropertyChanged(nameof(Value));
+            }
+        });
         // Don't update _valueString here to preserve user input
     }
 
