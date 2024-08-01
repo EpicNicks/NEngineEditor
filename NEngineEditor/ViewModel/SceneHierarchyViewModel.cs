@@ -18,6 +18,10 @@ public class SceneHierarchyViewModel : ViewModelBase
         {
             OnPropertyChanged(nameof(LoadedSceneName));
         }
+        else if (e.PropertyName == nameof(MainViewModel.Instance.SelectedGameObject))
+        {
+            OnPropertyChanged(nameof(SelectedGameObject));
+        }
     }
 
     public MainViewModel.LayeredGameObject? SelectedGameObject

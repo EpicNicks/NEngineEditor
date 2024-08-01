@@ -2,10 +2,11 @@
 using System.Windows.Controls;
 using System.Windows.Input;
 
-using NEngineEditor.ViewModel;
-
 using NEngine.GameObjects;
+
+using NEngineEditor.Extensions;
 using NEngineEditor.Managers;
+using NEngineEditor.ViewModel;
 
 namespace NEngineEditor.View;
 /// <summary>
@@ -19,6 +20,14 @@ public partial class SceneHierarchyUserControl : UserControl
         SceneHierarchyViewModel shvm = new();
         DataContext = shvm;
         LeftListView.ItemsSource = shvm.SceneGameObjects;
+        shvm.PropertyChanged += (_, propChangedEventArgs) =>
+        {
+            if (propChangedEventArgs.PropertyName == nameof(shvm.SelectedGameObject))
+            {
+                MainViewModel.LayeredGameObject? foundObject = shvm.SceneGameObjects.Where(sgo => sgo.GameObject.Name == shvm.SelectedGameObject?.GameObject.Name).FirstOrDefault();
+                LeftListView.SelectedIndex = shvm.SceneGameObjects.TryGetIndexOf(foundObject);
+            }
+        };
     }
 
     private void LeftListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
