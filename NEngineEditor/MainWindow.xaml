@@ -12,7 +12,7 @@
         <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveCommand}" />
         <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoActionCommand}" />
         <KeyBinding Key="Y" Modifiers="Ctrl" Command="{Binding RedoActionCommand}" />
-        <KeyBinding Key="D" Modifiers="Ctrl" Command="{Binding DuplicateInstanceCommand}" />
+        <KeyBinding Key="D" Modifiers="Ctrl" Command="{Binding DuplicateSelectedInstanceCommand}" />
         <KeyBinding Key="Delete" Command="{Binding DeleteSelectedInstanceCommand}" />
     </Window.InputBindings>
     <Grid>

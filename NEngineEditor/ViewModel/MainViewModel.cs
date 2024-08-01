@@ -48,6 +48,15 @@ public partial class MainViewModel : ViewModelBase
         });
         SceneGameObjects.Remove(selectedLgo);
     });
+    private ICommand? _duplicateSelectedInstanceCommand;
+    public ICommand DuplicateSelectedInstanceCommand => _duplicateSelectedInstanceCommand ??= new ActionCommand(() =>
+    {
+        if (SelectedGameObject is not null)
+        {
+            DuplicateInstanceCommand.Execute(SelectedGameObject);
+        }
+    });
+
     private ICommand? _duplicateInstanceCommand;
     public ICommand DuplicateInstanceCommand => _duplicateInstanceCommand ??= new ActionCommand<LayeredGameObject>(selectedLgo =>
     {
@@ -58,7 +67,7 @@ public partial class MainViewModel : ViewModelBase
         }
         ObjectCloner.CloneMembers(selectedLgo.GameObject, reloadedGameObject, ObjectCloner.MemberTypes.Fields | ObjectCloner.MemberTypes.Properties);
         reloadedGameObject.Name = selectedLgo.GameObject.Name ?? "Nameless GO";
-        AddGameObjectToScene(new LayeredGameObject { GameObject = reloadedGameObject, RenderLayer = selectedLgo.RenderLayer });
+        SelectedGameObject = AddGameObjectToScene(new LayeredGameObject { GameObject = reloadedGameObject, RenderLayer = selectedLgo.RenderLayer });
     });
 
     private ICommand? _performActionCommand;
@@ -160,7 +169,7 @@ public partial class MainViewModel : ViewModelBase
         _editorActionHistory = new EditorActionHistory();
     }
 
-    private async void ModifySceneObjectsListWrapper(Action modifySceneAction)
+    private void ModifySceneObjectsListWrapper(Action modifySceneAction)
     {
         if (SceneEditViewUserControl.LazyInstance is null)
         {
@@ -168,7 +177,6 @@ public partial class MainViewModel : ViewModelBase
             return;
         }
         SceneEditViewUserControl.LazyInstance.ShouldRender = false;
-        await Task.Delay(100);
         modifySceneAction?.Invoke();
         SceneEditViewUserControl.LazyInstance.ShouldRender = true;
     }
@@ -223,7 +231,12 @@ public partial class MainViewModel : ViewModelBase
         ReloadChangedFile(e);
     }
 
-    public void AddGameObjectToScene(LayeredGameObject lgo)
+    /// <summary>
+    /// Creates a LayeredGameObject based on the one passed, adds it to the Scene, and returns the result.
+    /// </summary>
+    /// <param name="lgo">The LayeredGameObject to add.</param>
+    /// <returns>The created LayeredGameObject actually added.</returns>
+    public LayeredGameObject AddGameObjectToScene(LayeredGameObject lgo)
     {
         GameObject toAdd = lgo.GameObject;
         toAdd.Name ??= "Nameless GO";
@@ -247,6 +260,7 @@ public partial class MainViewModel : ViewModelBase
             UndoAction = () => SceneGameObjects.Remove(layeredGameObjectToAdd)
         });
         SoftReloadScene();
+        return layeredGameObjectToAdd;
     }
 
     public void ReloadScene()

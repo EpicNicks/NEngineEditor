@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows.Input;
 
 using NEngineEditor.Commands.Generic;
@@ -6,6 +7,19 @@ using NEngineEditor.Commands.Generic;
 namespace NEngineEditor.ViewModel;
 public class SceneHierarchyViewModel : ViewModelBase
 {
+    public SceneHierarchyViewModel()
+    {
+        MainViewModel.Instance.PropertyChanged += MainViewModel_PropertyChanged;
+    }
+
+    private void MainViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.Instance.LoadedSceneName))
+        {
+            OnPropertyChanged(nameof(LoadedSceneName));
+        }
+    }
+
     public MainViewModel.LayeredGameObject? SelectedGameObject
     {
         get => MainViewModel.Instance.SelectedGameObject;

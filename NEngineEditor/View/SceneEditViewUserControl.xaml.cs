@@ -250,7 +250,7 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         if (e.Button is Mouse.Button.Left && sevm.CurrentSceneObjectDrag is not null && MainViewModel.Instance.SelectedGameObject is not null && MainViewModel.Instance.SelectedGameObject.GameObject is Positionable selectedPositionable)
         {
             Vector2f delta = (Vector2f)(sevm.CurrentSceneObjectDrag.currentDragPoint - sevm.CurrentSceneObjectDrag.startDragPoint);
-            EditorAction performedAction = sevm.CurrentSceneObjectDrag.draggingGizmo switch
+            EditorAction? performedAction = sevm.CurrentSceneObjectDrag.draggingGizmo switch
             {
                 SceneEditViewModel.DraggingGizmo.X_POS => new EditorAction 
                 { 
@@ -342,9 +342,13 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                         selectedPositionable.Scale -= delta * _curZoom;
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     }
-                }
+                },
+                _ => null
             };
-            MainViewModel.Instance.PerformActionCommand.Execute(performedAction);
+            if (performedAction is not null)
+            {
+                MainViewModel.Instance.PerformActionCommand.Execute(performedAction);
+            }
             sevm.CurrentSceneObjectDrag = null;
         }
         if (e.Button is Mouse.Button.Right)
