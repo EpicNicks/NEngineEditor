@@ -15,4 +15,12 @@ Mainly to improve my skills as a software architect and programmer.
 I've always loved games programming and have had a desire to dig into what makes it all work.
 
 ## How to Build
-Run the build script (TODO)
+### Requirements
+[dotnet 8.0](https://dotnet.microsoft.com/en-us/download) or greater
+
+### To Build
+Run the build script provided in the root directory.
+It should invoke dotnet build in release mode and runs the release binary of NEngineEditor.
+
+You may also use the built engine binaries without the editor as the editor itself is merely a visual
+scene editor which provides projects with a base entrypoint which evaluates the generated scene files.
