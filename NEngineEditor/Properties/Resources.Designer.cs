@@ -143,27 +143,22 @@ namespace NEngineEditor.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to using SFML.System;
+        ///   Looks up a localized string similar to using System.Collections.Generic;
+        ///
+        ///using SFML.System;
+        ///using static SFML.Window.Keyboard;
         ///
         ///using NEngine.GameObjects;
+        ///using NEngine;
+        ///using SFML.Window;
         ///
+        ///// A sample implementation handling movement over a Positionable. Feel free to extend from Positionable if you would prefer to handle the basic setup yourself.
         ///public class {CLASSNAME} : Moveable
         ///{
         ///    // where to pass movement, (remember to normalize when passing in player inputs)
         ///    private Vector2f moveVector;
         ///
-        ///    // where you should add your Drawables to the Drawables list
-        ///    public {CLASSNAME}()
-        ///    {
-        ///        // your drawable references go here
-        ///        Drawables = [];
-        ///    }
-        ///
-        ///    // Called when the object is first added to the scene (if active)
-        ///    public override void Attach()
-        ///    {
-        ///
-        ///    } [rest of string was truncated]&quot;;.
+        ///    // where to place keys t [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string MoveableTemplate_cs {
             get {

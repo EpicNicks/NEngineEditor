@@ -1,17 +1,37 @@
+using System.Collections.Generic;
+
 using SFML.System;
+using static SFML.Window.Keyboard;
 
 using NEngine.GameObjects;
+using NEngine;
+using SFML.Window;
 
+// A sample implementation handling movement over a Positionable. Feel free to extend from Positionable if you would prefer to handle the basic setup yourself.
 public class {CLASSNAME} : Moveable
 {
     // where to pass movement, (remember to normalize when passing in player inputs)
     private Vector2f moveVector;
+
+    // where to place keys to check for input, include all Keys you wish to check for in the parameter passed or remove this if you have no need for keyboard input
+    private Dictionary<Key, bool> keysPressedDict = KeysToPressedDict([]);
 
     // where you should add your Drawables to the Drawables list
     public {CLASSNAME}()
     {
         // your drawable references go here
         Drawables = [];
+        // register your input events
+        Application.Instance!.GameWindow.RenderWindow.KeyPressed += OnKeyPressed;
+        Application.Instance!.GameWindow.RenderWindow.KeyReleased += OnKeyReleased;
+    }
+
+    // cleanup for your object
+    public override void OnDestroy()
+    {
+        // deregister your input events
+        Application.Instance!.GameWindow.RenderWindow.KeyPressed -= OnKeyPressed;
+        Application.Instance!.GameWindow.RenderWindow.KeyReleased -= OnKeyReleased;
     }
 
     // Called when the object is first added to the scene (if active)
@@ -23,6 +43,24 @@ public class {CLASSNAME} : Moveable
     // Called every frame the object is enabled in the scene (use Application.DeltaTime to get the time since last frame)
     public override void Update()
     {
-        Move(moveVector);
+        Move(moveVector * moveSpeed * Application.DeltaTime.AsSeconds());
+    }
+
+    // sets the key pressed to true if you have it in your keysPressedDict
+    private void OnKeyPressed(object? _, KeyEventArgs keyEvent)
+    {
+        if (keysPressedDict.ContainsKey(keyEvent.Code))
+        {
+            keysPressedDict[keyEvent.Code] = true;
+        }
+    }
+
+    // sets the key pressed to false if you have it in your keysPressedDict
+    private void OnKeyReleased(object? _, KeyEventArgs keyEvent)
+    {
+        if (keysPressedDict.ContainsKey(keyEvent.Code))
+        {
+            keysPressedDict[keyEvent.Code] = false;
+        }
     }
 }
