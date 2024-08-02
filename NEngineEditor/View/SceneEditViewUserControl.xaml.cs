@@ -469,7 +469,7 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
             xyPositionGizmo = GizmosConstants.XYPositionGizmo;
             xyPositionGizmo.Position += selectedPositionableScreenSpacePosition - new Vector2f(-2f, 2f + xyPositionGizmo.Size.Y);
 
-            toDraw.AddRange([xPositionGizmo, yPositionGizmo, xPositionGizmoRect, yPositionGizmoRect, xyPositionGizmo]);
+            toDraw.AddRange([xPositionGizmoRect, yPositionGizmoRect, xPositionGizmo, yPositionGizmo, xyPositionGizmo]);
         }
         else
         {
@@ -584,21 +584,17 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         public static Text scaleSelectText = new Text("S", Fonts.Arial) { CharacterSize = 24 };
 
         #region Position Gizmos
-        public static CircleShape XPositionGizmoTriangle => new(15, 3) { FillColor = Color.Red, Rotation = -30 };
-        public static RectangleShape XPositionGizmoRect => new() { Size = new(40, 2), FillColor = Color.Red };
-        public static CircleShape YPositionGizmoTriangle => new(15, 3) { FillColor = Color.Green };
-        public static RectangleShape YPositionGizmoRect => new() { Size = new(2, -40), FillColor = Color.Green };
-        public static RectangleShape XYPositionGizmo => new() { Size = new(20, 20), FillColor = new Color(0, 255, 255, 128) };
-        #endregion
-
-        #region Rotation Gizmos
-        // TODO, more visually complex potentially
+        public static CircleShape XPositionGizmoTriangle => new(15, 3) { FillColor = Color.Red, Rotation = -30, OutlineThickness = 1, OutlineColor = Color.Black };
+        public static RectangleShape XPositionGizmoRect => new() { Size = new(40, 2), FillColor = Color.Red, OutlineThickness = 1, OutlineColor = Color.Black };
+        public static CircleShape YPositionGizmoTriangle => new(15, 3) { FillColor = Color.Green, OutlineThickness = 1, OutlineColor = Color.Black };
+        public static RectangleShape YPositionGizmoRect => new() { Size = new(2, -40), FillColor = Color.Green, OutlineThickness = 1, OutlineColor = Color.Black };
+        public static RectangleShape XYPositionGizmo => new() { Size = new(20, 20), FillColor = new Color(0, 255, 255, 128), OutlineThickness = 1, OutlineColor = Color.Black };
         #endregion
 
         #region ScaleGizmos
-        public static RectangleShape XScaleGizmo => new() { Size = new(50, -6), FillColor = Color.Red };
-        public static RectangleShape YScaleGizmo => new() { Size = new(6, 50), FillColor = Color.Green };
-        public static RectangleShape XYScaleGizmo => new() { Size = new(20, 20), FillColor = Color.Magenta };
+        public static RectangleShape XScaleGizmo => new() { Size = new(50, -6), FillColor = Color.Red, OutlineThickness = 1, OutlineColor = Color.Black };
+        public static RectangleShape YScaleGizmo => new() { Size = new(6, 50), FillColor = Color.Green, OutlineThickness = 1, OutlineColor = Color.Black };
+        public static RectangleShape XYScaleGizmo => new() { Size = new(20, 20), FillColor = Color.Magenta, OutlineThickness = 1, OutlineColor = Color.Black };
         #endregion
     }
 }

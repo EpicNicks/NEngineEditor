@@ -271,7 +271,7 @@ public static class SceneLoader
                 {
                     sceneToWrite.SceneGameObjects[i].GameObjectPropertyNameTypeValue?.Add(field.Name, new()
                     {
-                        Type = field.FieldType.Name,
+                        Type = field.FieldType.AssemblyQualifiedName,
                         Value = MemberValueToString(field.GetValue(lgo.GameObject))
                     });
                 }

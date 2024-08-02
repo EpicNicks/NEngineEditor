@@ -155,7 +155,7 @@ public class ContentBrowserViewModel : ViewModelBase
             }
             else
             {
-                Logger.LogError("The script you have tried to add was not derived from GameObject or a derived type of GameObject and could not be added to the scene.");
+                Logger.LogError("The script you have tried to add either was not derived from GameObject or was a derived type of GameObject and failed to compile.");
             }
         }
         catch (Exception ex)
