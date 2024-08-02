@@ -2,7 +2,6 @@
 using SFML.Window;
 
 using NEngine.CoreLibs.Mathematics;
-using NEngine.Window;
 
 namespace NEngine.GameObjects;
 
@@ -24,13 +23,12 @@ public abstract class Moveable : Positionable
     /// <returns>A Dictionary of Keys which may be pressed mapped to a boolean representing whether or not the key is currently pressed</returns>
     public static Dictionary<Keyboard.Key, bool> KeysToPressedDict(IEnumerable<Keyboard.Key> keys) => new(keys.Select(key => new KeyValuePair<Keyboard.Key, bool>(key, false)));
 
+    /// <summary>
+    /// Moves the Moveable by the given Vector2f.
+    /// </summary>
+    /// <param name="input">The input Vector to move the Moveable by.</param>
     public void Move(Vector2f input)
     {
-        if (input != new Vector2f())
-        {
-            Vector2f inputNormal = input.Normalize();
-            Vector2f delta = inputNormal * moveSpeed * Application.DeltaTime.AsSeconds();
-            Position += delta;
-        }
+        Position += input;
     }
 }

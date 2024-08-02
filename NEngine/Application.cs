@@ -368,6 +368,15 @@ public class Application
     {
         HandleQuit();
     }
+
+    public List<GameObject> ActiveGameObjects => GameObjects.Keys.SelectMany(key => GameObjects[key]).Where(gameObject => gameObject.IsActive).ToList();
+    public List<(RenderLayer renderLayer, GameObject gameObject)> ActiveLayeredGameObjects =>
+        GameObjects.Keys
+            .SelectMany(key =>
+                GameObjects[key]
+                    .Where(gameObject => gameObject.IsActive)
+                    .Select(gameObject => (key, gameObject))
+            ).ToList();
     private void Init()
     {
         GameWindow.RenderWindow.SetFramerateLimit(120);
@@ -420,15 +429,6 @@ public class Application
         LoadedScene?.UpdateCoroutines();
         OnEachGameObject((gameObject) => gameObject.Update());
     }
-
-    private List<GameObject> ActiveGameObjects => GameObjects.Keys.SelectMany(key => GameObjects[key]).Where(gameObject => gameObject.IsActive).ToList();
-    private List<(RenderLayer renderLayer, GameObject gameObject)> ActiveLayeredGameObjects =>
-        GameObjects.Keys
-            .SelectMany(key =>
-                GameObjects[key]
-                    .Where(gameObject => gameObject.IsActive)
-                    .Select(gameObject => (key, gameObject))
-            ).ToList();
 
     // layers should be iterated over in the correct order due to the SortedDictionary calling Render on lower layers first
     /// <summary>

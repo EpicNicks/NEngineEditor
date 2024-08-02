@@ -33,8 +33,9 @@ public class CollisionSystem
             {
                 Vector2f originalPos = col1.PositionableGameObject.Position;
                 col1.RepositionFromCollision(col2.Bounds);
-                col1.PositionableGameObject.Position -= originalPos / 2;
-                col2.PositionableGameObject.Position = originalPos;
+                col2.RepositionFromCollision(col1.Bounds);
+                //col1.PositionableGameObject.Position -= originalPos / 2;
+                //col2.PositionableGameObject.Position = originalPos;
                 // move both evenly
                 //Vector2f distanceToMove = col1.PositionableGameObject.Position - col1.PositionableGameObject.Position.PosOfNearestEdge(col2.Bounds);
                 //col1.PositionableGameObject.Position += distanceToMove / 2;
@@ -59,6 +60,7 @@ public class CollisionSystem
                         if (OneIsTrigger(firstGameObject.Collider, otherGameObject.Collider))
                         {
                             firstGameObject.OnTriggerStay2D(otherGameObject.Collider);
+                            otherGameObject.OnTriggerStay2D(firstGameObject.Collider);
                         }
                         else // already handled the both are triggers case at the top in the early return
                         {
@@ -72,7 +74,9 @@ public class CollisionSystem
                         if (OneIsTrigger(firstGameObject.Collider, otherGameObject.Collider))
                         {
                             firstGameObject.OnTriggerEnter2D(otherGameObject.Collider);
+                            otherGameObject.OnTriggerEnter2D(firstGameObject.Collider);
                             firstGameObject.Collider.CollidingWith.Add(otherGameObject.Collider.PositionableGameObject);
+                            otherGameObject.Collider.CollidingWith.Add(firstGameObject.Collider.PositionableGameObject);
                         }
                         else // already handled the both are triggers case at the top in the early return
                         {
@@ -97,6 +101,7 @@ public class CollisionSystem
                         else
                         {
                             firstGameObject.OnTriggerExit2D(otherGameObject.Collider);
+                            otherGameObject.OnTriggerExit2D(firstGameObject.Collider);
                         }
                         firstGameObject.Collider.CollidingWith.Remove(otherGameObject.Collider.PositionableGameObject);
                     }
