@@ -102,8 +102,8 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         if (e.Button == Mouse.Button.Left)
         {
             // try check for what is on screen at that point, for multiple hits, cycle in a predictable order if Z component is 0 (Vector2f cast to 3f works here too)
-            Vector2f clickPos = _nengineApplication.GameWindow.RenderWindow.MapPixelToCoords(new(e.X, e.Y));
-            Vector2f clickCastSize = new(0.1f, 0.1f);
+            Vector2f clickPos = _nengineApplication.GameWindow.RenderWindow.MapPixelToCoords(new(e.X, e.Y), _nengineApplication.GameWindow.UiView);
+            Vector2f clickCastSize = new Vector2f(1f, 1f) * _curZoom;
             FloatRect clickCastRect = new(clickPos, clickCastSize);
 
             // TODO: First check if click hit any drawn gizmos
@@ -153,8 +153,12 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 }
             }
 
+            Vector2f worldSpaceClickPos = _nengineApplication.GameWindow.RenderWindow.MapPixelToCoords(new(e.X, e.Y), _nengineApplication.GameWindow.MainView);
+            Vector2f worldSpaceClickCastSize = new Vector2f(1f, 1f) * _curZoom;
+            FloatRect worldSpaceClickCastRect = new FloatRect(worldSpaceClickPos, worldSpaceClickCastSize);
+
             MainViewModel.LayeredGameObject? selectedLgo = MainViewModel.Instance.SceneGameObjects
-                .FirstOrDefault(sgo => sgo.GameObject is Positionable p && p.Collider is not null && p.Collider.Bounds.Intersects(clickCastRect));
+                .FirstOrDefault(sgo => sgo.GameObject is Positionable p && p.Collider is not null && p.Collider.Bounds.Intersects(worldSpaceClickCastRect));
             if (selectedLgo is not null && selectedLgo.GameObject is Positionable selectedPositionable)
             {
                 MainViewModel.Instance.SelectedGameObject = selectedLgo;
