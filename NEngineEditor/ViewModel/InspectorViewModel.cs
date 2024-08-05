@@ -131,7 +131,8 @@ public class InspectorViewModel : ViewModelBase
                type == typeof(Vector2f) ||
                type == typeof(Vector2i) ||
                type == typeof(Vector2u) ||
-               type == typeof(Vector3f);
+               type == typeof(Vector3f) ||
+               type.IsAssignableTo(typeof(GameObject));
     }
 
     private void AddMemberWrapper(MemberInfo memberInfo, object target, ObservableCollection<MemberWrapper> collection)
@@ -173,7 +174,7 @@ public class MemberWrapper : INotifyPropertyChanged
         if (memberType == typeof(Vector2f) || memberType == typeof(Vector2i) ||
             memberType == typeof(Vector2u) || memberType == typeof(Vector3f))
         {
-            object initialValue = GetValue() ?? GetDefaultValue();
+            object? initialValue = GetValue() ?? GetDefaultValue();
             VectorWrapper = new VectorWrapper(initialValue);
             VectorWrapper.ValueChanged += (sender, args) =>
             {
@@ -188,12 +189,12 @@ public class MemberWrapper : INotifyPropertyChanged
 
     public string Name => MemberInfo.Name;
 
-    public object Value
+    public object? Value
     {
         get => VectorWrapper?.Value ?? GetValue() ?? GetDefaultValue();
         set
         {
-            if (VectorWrapper != null)
+            if (VectorWrapper is not null)
             {
                 VectorWrapper.Value = value;
             }
@@ -358,11 +359,15 @@ public class MemberWrapper : INotifyPropertyChanged
             if (targetType == typeof(double))
                 return double.TryParse(stringValue, NumberStyles.Any, CultureInfo.InvariantCulture, out double doubleResult) ? doubleResult : 0d;
         }
+        if (typeof(GameObject).IsAssignableFrom(value.GetType()))
+        {
+            return value as GameObject;
+        }
 
         return Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
     }
 
-    private object GetDefaultValue()
+    private object? GetDefaultValue()
     {
         Type targetType = MemberInfo switch
         {
@@ -390,9 +395,7 @@ public class MemberWrapper : INotifyPropertyChanged
             Type t when t == typeof(ulong) => 0UL,
             Type t when t == typeof(decimal) => 0m,
             Type t when t.IsEnum => Enum.ToObject(t, 0),
-            _ =>
-                Activator.CreateInstance(targetType) ??
-                throw new InvalidOperationException($"Cannot create an instance of {targetType}"),
+            _ => null,
         };
     }
 

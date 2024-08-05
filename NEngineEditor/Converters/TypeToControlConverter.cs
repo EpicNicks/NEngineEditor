@@ -1,12 +1,15 @@
 ﻿using System.Globalization;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows;
 using System.Reflection;
 
 using SFML.System;
 
 using NEngineEditor.ViewModel;
+using NEngine.GameObjects;
+using NEngineEditor.Helpers;
 
 namespace NEngineEditor.Converters;
 
@@ -46,6 +49,10 @@ public class TypeToControlConverter : IValueConverter
         else if (type == typeof(Vector3f))
         {
             return CreateVector3Control(memberWrapper);
+        }
+        else if (type.IsAssignableTo(typeof(GameObject)))
+        {
+            return CreateGameObjectReferenceControl(memberWrapper);
         }
 
         return null;
@@ -100,6 +107,94 @@ public class TypeToControlConverter : IValueConverter
         });
         return comboBox;
     }
+
+    private UIElement CreateGameObjectReferenceControl(MemberWrapper memberWrapper)
+    {
+        Type memberType = memberWrapper.MemberInfo switch
+        {
+            PropertyInfo prop => prop.PropertyType,
+            FieldInfo field => field.FieldType,
+            _ => typeof(object)
+        };
+
+        var comboBox = new ComboBox
+        {
+            DisplayMemberPath = "Name",
+            Width = 100,
+            IsTextSearchEnabled = false,
+            IsEditable = true,
+            ItemsSource = MainViewModel.Instance.SceneGameObjects
+                .Select(sgo => sgo.GameObject)
+                .Where(go => go.GetType().IsAssignableTo(memberType))
+                .ToList()
+        };
+
+        comboBox.PreviewTextInput += (sender, e) =>
+        {
+            ComboBox cmb = (ComboBox)sender;
+            cmb.IsDropDownOpen = true;
+
+            if (!string.IsNullOrEmpty(cmb.Text))
+            {
+                TextBox? innerTextBox = WpfHelpers.GetChildOfType<TextBox>(cmb);
+                if (innerTextBox is not null)
+                {
+                    string fullText = cmb.Text.Insert(innerTextBox.CaretIndex, e.Text);
+                    cmb.ItemsSource = MainViewModel.Instance.SceneGameObjects
+                        .Select(sgo => sgo.GameObject)
+                        .Where(go => go.GetType().IsAssignableTo(memberType) && go.Name != null && go.Name.Contains(fullText, StringComparison.InvariantCultureIgnoreCase))
+                        .ToList();
+                }
+            }
+            else if (!string.IsNullOrEmpty(e.Text))
+            {
+                cmb.ItemsSource = MainViewModel.Instance.SceneGameObjects
+                    .Select(sgo => sgo.GameObject)
+                    .Where(go => go.GetType().IsAssignableTo(memberType) && go.Name != null && go.Name.Contains(e.Text, StringComparison.InvariantCultureIgnoreCase))
+                    .ToList();
+            }
+            else
+            {
+                cmb.ItemsSource = MainViewModel.Instance.SceneGameObjects
+                    .Select(sgo => sgo.GameObject)
+                    .Where(go => go.GetType().IsAssignableTo(memberType))
+                    .ToList();
+            }
+        };
+
+        comboBox.PreviewKeyUp += (sender, e) =>
+        {
+            if (e.Key == Key.Back || e.Key == Key.Delete)
+            {
+                ComboBox cmb = (ComboBox)sender;
+                cmb.IsDropDownOpen = true;
+                if (!string.IsNullOrEmpty(cmb.Text))
+                {
+                    cmb.ItemsSource = MainViewModel.Instance.SceneGameObjects
+                        .Select(sgo => sgo.GameObject)
+                        .Where(go => go.GetType().IsAssignableTo(memberType) && go.Name != null && go.Name.Contains(cmb.Text, StringComparison.InvariantCultureIgnoreCase))
+                        .ToList();
+                }
+                else
+                {
+                    cmb.ItemsSource = MainViewModel.Instance.SceneGameObjects
+                        .Select(sgo => sgo.GameObject)
+                        .Where(go => go.GetType().IsAssignableTo(memberType))
+                        .ToList();
+                }
+            }
+        };
+
+        comboBox.SetBinding(ComboBox.SelectedItemProperty, new Binding("Value")
+        {
+            Source = memberWrapper,
+            Mode = BindingMode.TwoWay,
+            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+        });
+
+        return comboBox;
+    }
+
 
     private UIElement CreateNumericControl(MemberWrapper memberWrapper)
     {
