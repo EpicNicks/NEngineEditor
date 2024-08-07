@@ -1,6 +1,8 @@
 ﻿using System.Collections.Specialized;
+using System.IO;
 using System.Windows;
 
+using NEngineEditor.Managers;
 using NEngineEditor.ViewModel;
 
 namespace NEngineEditor;
@@ -11,6 +13,9 @@ namespace NEngineEditor;
 public partial class MainWindow : Window
 {
     public static string ProjectDirectory { get; private set; } = "";
+    public static string AssetsPath => Path.Combine(ProjectDirectory, "Assets");
+    public static string EngineFolderPath => Path.Combine(ProjectDirectory, ".Engine");
+    public static string MainFolderPath => Path.Combine(ProjectDirectory, ".Main");
 
     public MainWindow(string projectPath)
     {
@@ -18,7 +23,7 @@ public partial class MainWindow : Window
         MainViewModel.ClearInstance();
         InitializeComponent();
         MainViewModel.Instance.ContentBrowserViewModel = ContentBrowserControl.DataContext as ContentBrowserViewModel;
-        MainViewModel.Instance.Logs.CollectionChanged += LoggerLogs_CollectionChanged;
+        Logger.Instance.Logs.CollectionChanged += LoggerLogs_CollectionChanged;
         DataContext = MainViewModel.Instance;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }

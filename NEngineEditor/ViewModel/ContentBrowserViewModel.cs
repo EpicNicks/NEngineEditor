@@ -147,15 +147,9 @@ public class ContentBrowserViewModel : ViewModelBase
     {
         try
         {
-            object? compiledObject = ScriptCompiler.CompileAndInstantiateFromFile(filePath);
-            if (compiledObject is GameObject compiledGameObject)
+            if (MainViewModel.Instance.AddGameObjectToScene(filePath) is null)
             {
-                compiledGameObject.Name = $"New {compiledGameObject.GetType().Name}";
-                MainViewModel.Instance.AddGameObjectToScene(new() { GameObject = compiledGameObject, RenderLayer = compiledGameObject is UIAnchored ? RenderLayer.UI : RenderLayer.BASE});
-            }
-            else
-            {
-                Logger.LogError("The script you have tried to add either was not derived from GameObject or was a derived type of GameObject and failed to compile.");
+                Logger.LogError("The script you have tried to add either was not derived from GameObject or was not found in the loaded assemblies.");
             }
         }
         catch (Exception ex)

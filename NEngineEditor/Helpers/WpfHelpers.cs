@@ -4,7 +4,7 @@ using System.Windows;
 namespace NEngineEditor.Helpers;
 public static class WpfHelpers
 {
-    public static T? GetChildOfType<T>(DependencyObject depObj) where T : DependencyObject
+    public static T? GetChildOfType<T>(this DependencyObject? depObj) where T : DependencyObject
     {
         if (depObj == null) return null;
 
@@ -12,7 +12,7 @@ public static class WpfHelpers
         {
             var child = VisualTreeHelper.GetChild(depObj, i);
 
-            var result = (child as T) ?? GetChildOfType<T>(child);
+            var result = (child as T) ?? child.GetChildOfType<T>();
             if (result != null) return result;
         }
         return null;
