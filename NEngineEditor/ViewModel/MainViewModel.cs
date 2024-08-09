@@ -154,7 +154,8 @@ public partial class MainViewModel : ViewModelBase
         _sceneGameObjects = [];
         string projectName = Directory.GetFiles(MainWindow.ProjectDirectory).FirstOrDefault(path => path.EndsWith(".csproj")) ?? throw new InvalidDataException("csproj is missing from root directory!");
         _scriptCompilationSystem = new ScriptCompilationSystem(projectName);
-        _scriptCompilationSystem.StartWatching();
+        _scriptCompilationSystem.InitializeAssembliesAsync();
+        _scriptCompilationSystem.AssemblyInitialized += (_, _) => _scriptCompilationSystem.StartWatching();
         _editorActionHistory = new EditorActionHistory();
     }
 
@@ -178,6 +179,7 @@ public partial class MainViewModel : ViewModelBase
             GameObject? gameObjectInstance = _scriptCompilationSystem.CreateInstance<GameObject>(className);
             if (gameObjectInstance is not null)
             {
+                gameObjectInstance.Name = $"New {className}";
                 RenderLayer renderLayer = gameObjectInstance switch
                 {
                     UIAnchored => RenderLayer.UI,

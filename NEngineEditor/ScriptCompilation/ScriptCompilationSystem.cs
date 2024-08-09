@@ -1,30 +1,22 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Emit;
-using Microsoft.CodeAnalysis.Text;
-
-using NEngineEditor.Managers;
-
-using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Reflection;
+﻿using System.IO;
 using System.Xml.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.MSBuild;
+using Microsoft.CodeAnalysis.Text;
 
 namespace NEngineEditor.ScriptCompilation;
 public class ScriptCompilationSystem
 {
-    private readonly AdhocWorkspace _workspace;
+    private readonly MSBuildWorkspace _workspace;
     private readonly VSCompatibleFileWatcher _fileWatcher;
-    private readonly ConcurrentDictionary<string, DocumentId> _documentIds;
-    private readonly ConcurrentDictionary<string, MetadataReference> _metadataReferences;
     private readonly HotReloadableAssemblyManager _hotReloadableAssemblyManager;
-    private readonly string _targetFramework;
     private readonly string _projectFilePath;
     private readonly string _projectDirectory;
 
-    private Project _project;
+    private Microsoft.CodeAnalysis.Project _project;
 
     public event EventHandler<FileSystemEventArgs>? FileChanged;
+    public event EventHandler? AssemblyInitialized;
     public event EventHandler<string>? CompilationSucceeded;
     public event EventHandler<string>? CompilationFailed;
 
@@ -32,95 +24,86 @@ public class ScriptCompilationSystem
     {
         _projectFilePath = projectFilePath;
         _projectDirectory = Path.GetDirectoryName(projectFilePath)!;
-        _workspace = new AdhocWorkspace();
-        _documentIds = new ConcurrentDictionary<string, DocumentId>();
-        _metadataReferences = new ConcurrentDictionary<string, MetadataReference>();
-        _targetFramework = GetTargetFrameworkFromProject();
+        _workspace = MSBuildWorkspace.Create();
+        _project = _workspace.OpenProjectAsync(projectFilePath).GetAwaiter().GetResult();
         _fileWatcher = new VSCompatibleFileWatcher(Path.GetDirectoryName(projectFilePath)!);
         _fileWatcher.FileChanged += OnFileChanged;
-        _hotReloadableAssemblyManager = new HotReloadableAssemblyManager(Path.GetDirectoryName(projectFilePath)!, _targetFramework);
-
-        InitializeProject();
+        _hotReloadableAssemblyManager = new HotReloadableAssemblyManager(Path.GetDirectoryName(projectFilePath)!, GetTargetFrameworkFromProject());
     }
     public T? CreateInstance<T>(string fullyQualifiedTypeName) where T : class
     {
         return _hotReloadableAssemblyManager.CreateInstance<T>(fullyQualifiedTypeName);
     }
 
-
-    public void UpdateScript(string scriptPath, string scriptContent)
+    public async void InitializeAssembliesAsync()
     {
-        if (!_documentIds.TryGetValue(scriptPath, out var documentId))
+        await _hotReloadableAssemblyManager.InitializeAsync(this);
+        AssemblyInitialized?.Invoke(null, EventArgs.Empty);
+    }
+
+    public Microsoft.CodeAnalysis.Project UpdateScript(string scriptPath)
+    {
+        string scriptContent = File.ReadAllText(scriptPath);
+        Document? document = _project.Documents.FirstOrDefault(d => d.Name == "") ?? throw new ArgumentException($"Document '{scriptPath}' not found in the project.");
+        SourceText newText = SourceText.From(scriptContent);
+        Document newDocument = document.WithText(newText);
+        Microsoft.CodeAnalysis.Project newProject = newDocument.Project;
+        Solution newSolution = newProject.Solution;
+
+        if (!_project.Solution.Workspace.TryApplyChanges(newSolution))
         {
-            documentId = DocumentId.CreateNewId(_project.Id);
-            _documentIds[scriptPath] = documentId;
-            var sourceText = SourceText.From(scriptContent);
-            _project = _project.AddDocument(
-                Path.GetFileName(scriptPath),  // name
-                sourceText,                    // text
-                filePath: scriptPath           // filePath
-            ).Project;
+            throw new InvalidOperationException("Failed to apply changes to the workspace.");
         }
-        else
+
+        return newProject;
+    }
+
+    public Microsoft.CodeAnalysis.Project AddScript(string scriptPath)
+    {
+        try
         {
-            var document = _project.GetDocument(documentId);
-            var sourceText = SourceText.From(scriptContent);
-            var newDocument = document.WithText(sourceText);
-            _project = newDocument.Project;
+            string scriptContent = File.ReadAllText(scriptPath);
+             Microsoft.CodeAnalysis.Project updatedProject = AddDocument(scriptPath, scriptContent);
+
+            // If you need to update the workspace with the new project:
+            var newSolution = updatedProject.Solution;
+            _workspace.TryApplyChanges(newSolution);
+
+            return updatedProject;
         }
+        catch (Exception)
+        {
+            Managers.Logger.LogError($"Unable to add script with path: {scriptPath}");
+            throw;
+        }
+    }
+
+    public Microsoft.CodeAnalysis.Project AddDocument(string name, string content, string? filePath = null)
+    {
+        DocumentId documentId = DocumentId.CreateNewId(_project.Id);
+        Solution solution = _project.Solution.AddDocument(documentId, name, content, filePath: filePath);
+        return solution.GetProject(_project.Id)!;
     }
 
     public void RemoveScript(string scriptPath)
     {
-        if (_documentIds.TryRemove(scriptPath, out var documentId))
+        var document = _project.Documents.FirstOrDefault(d => d.FilePath == scriptPath);
+        if (document == null)
         {
-            _project = _project.RemoveDocument(documentId);
+            throw new FileNotFoundException($"Script not found in project: {scriptPath}");
         }
+
+        _project = _project.RemoveDocument(document.Id);
+
+        // Optionally, you can delete the file from disk
+        // File.Delete(scriptPath);
+
+        UpdateProjectFile();
     }
 
-    public async Task<Assembly?> CompileAsync()
+    public async Task<Compilation?> GetCompilationAsync()
     {
-        byte[]? compiledResult = await CompileToByteArrayAsync();
-        if (compiledResult is null)
-        {
-            Logger.LogError("An assembly could not be emitted");
-            return null;
-        }
-        else
-        {
-            return Assembly.Load(compiledResult);
-        }
-    }
-
-    public async Task<byte[]?> CompileToByteArrayAsync()
-    {
-        var compilation = await _project.GetCompilationAsync();
-        using var ms = new MemoryStream();
-
-        EmitResult? result = compilation?.Emit(ms);
-
-        if (result is null)
-        {
-            Logger.LogError("Result of compilation emission in CompileAsync was null");
-            return null;
-        }
-        if (!result.Success)
-        {
-            var failures = result.Diagnostics.Where(diagnostic =>
-                diagnostic.IsWarningAsError ||
-                diagnostic.Severity == DiagnosticSeverity.Error);
-
-            foreach (var diagnostic in failures)
-            {
-                Logger.LogError($"{diagnostic.Id}: {diagnostic.GetMessage()}");
-            }
-            CompilationFailed?.Invoke(this, "Compilation failed. See error output for details.");
-            return null;
-        }
-
-        ms.Seek(0, SeekOrigin.Begin);
-        CompilationSucceeded?.Invoke(this, "Compilation succeeded.");
-        return ms.ToArray();
+        return await _project.GetCompilationAsync();
     }
 
     public void StartWatching()
@@ -133,54 +116,16 @@ public class ScriptCompilationSystem
         _fileWatcher.StopWatching();
     }
 
-    public void RemoveReference(string assemblyName)
+    private void UpdateProjectFile()
     {
-        if (_metadataReferences.TryRemove(assemblyName, out var reference))
+        var solution = _project.Solution;
+        if (_workspace.TryApplyChanges(solution))
         {
-            _project = _project.RemoveMetadataReference(reference);
-            Logger.LogInfo($"Removed reference: {assemblyName}");
+            Managers.Logger.LogInfo("Project updated successfully.");
         }
-    }
-
-    public bool HasReference(string assemblyName)
-    {
-        return _metadataReferences.ContainsKey(assemblyName);
-    }
-
-    public IEnumerable<string> GetLoadedReferences()
-    {
-        return _metadataReferences.Keys;
-    }
-
-    private void AddProjectReference(string projectPath)
-    {
-        try
+        else
         {
-            if (!File.Exists(projectPath))
-            {
-                Logger.LogWarning($"Warning: Project file not found: {projectPath}");
-                return;
-            }
-
-            var projectId = ProjectId.CreateNewId();
-            var projectInfo = ProjectInfo.Create(
-                projectId,
-                VersionStamp.Create(),
-                Path.GetFileNameWithoutExtension(projectPath),
-                Path.GetFileNameWithoutExtension(projectPath),
-                LanguageNames.CSharp,
-                filePath: projectPath
-            );
-
-            var newProject = _workspace.AddProject(projectInfo);
-            var projectReference = new ProjectReference(projectId);
-            _project = _project.AddProjectReference(projectReference);
-
-            Logger.LogInfo($"Added project reference: {projectPath}");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError($"Failed to add project reference {projectPath}: {ex.Message}");
+            Managers.Logger.LogError("Failed to update project.");
         }
     }
 
@@ -190,71 +135,16 @@ public class ScriptCompilationSystem
         {
             RemoveScript(e.FullPath);
         }
+        else if (e.ChangeType == WatcherChangeTypes.Created)
+        {
+            AddScript(e.FullPath);
+        }
         else
         {
-            string content = File.ReadAllText(e.FullPath);
-            UpdateScript(e.FullPath, content);
+            UpdateScript(e.FullPath);
         }
-        await _hotReloadableAssemblyManager.ReloadAssemblyAsync(this);
+        await _hotReloadableAssemblyManager.UpdateAssemblyAsync(this);
         FileChanged?.Invoke(sender, e);
-    }
-
-    [MemberNotNull(nameof(_project))]
-    private void InitializeProject()
-    {
-        var projectName = Path.GetFileNameWithoutExtension(_projectFilePath);
-        _project = _workspace.AddProject(projectName, LanguageNames.CSharp);
-        LoadProjectReferences();
-        AddDefaultReferences();
-    }
-
-    private void LoadProjectReferences()
-    {
-        XDocument projectFile = XDocument.Load(_projectFilePath);
-        XNamespace ns = projectFile.Root.GetDefaultNamespace();
-
-        // Load assembly references
-        var assemblyReferences = projectFile.Descendants(ns + "Reference")
-            .Select(r => r.Attribute("Include")?.Value)
-            .Where(r => !string.IsNullOrEmpty(r));
-
-        foreach (var reference in assemblyReferences)
-        {
-            AddAssemblyReference(reference);
-        }
-
-        // Load project references
-        var projectReferences = projectFile.Descendants(ns + "ProjectReference")
-            .Select(r => r.Attribute("Include")?.Value)
-            .Where(r => !string.IsNullOrEmpty(r));
-
-        foreach (var reference in projectReferences)
-        {
-            AddProjectReference(Path.GetFullPath(Path.Combine(_projectDirectory, reference)));
-        }
-    }
-
-    private void AddAssemblyReference(string assemblyName)
-    {
-        try
-        {
-            string? assemblyPath = ResolveAssemblyPath(assemblyName);
-            if (assemblyPath is not null)
-            {
-                var reference = MetadataReference.CreateFromFile(assemblyPath);
-                _metadataReferences[assemblyName] = reference;
-                _project = _project.AddMetadataReference(reference);
-                Logger.LogInfo($"Added assembly reference: {assemblyName}");
-            }
-            else
-            {
-                Logger.LogWarning($"Warning: Could not resolve assembly path for {assemblyName}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError($"Failed to add assembly reference {assemblyName}: {ex.Message}");
-        }
     }
 
     private string GetTargetFrameworkFromProject()
@@ -278,60 +168,5 @@ public class ScriptCompilationSystem
 
         // Default to a common framework version if not found
         return "net8.0";
-    }
-
-    private string? ResolveAssemblyPath(string assemblyName)
-    {
-        // Remove .dll extension if present
-        assemblyName = Path.GetFileNameWithoutExtension(assemblyName);
-
-        string[] searchPaths =
-        [
-            Path.Combine(_projectDirectory, ".Engine"),
-            Path.Combine(_projectDirectory, "bin", "Debug", _targetFramework),
-            Path.Combine(_projectDirectory, "bin", "Release", _targetFramework),
-            Path.GetDirectoryName(typeof(object).Assembly.Location)!  // Framework directory
-        ];
-
-        foreach (var searchPath in searchPaths)
-        {
-            string[] possibleExtensions = [".dll", ".exe", ""];
-            foreach (var ext in possibleExtensions)
-            {
-                string fullPath = Path.Combine(searchPath, assemblyName + ext);
-                if (File.Exists(fullPath))
-                {
-                    return fullPath;
-                }
-            }
-        }
-
-        // If not found in predefined paths, try to load from GAC or current directory
-        try
-        {
-            var assembly = Assembly.Load(new AssemblyName(assemblyName));
-            return assembly.Location;
-        }
-        catch
-        {
-            // Assembly not found
-            return null;
-        }
-    }
-
-    private void AddDefaultReferences()
-    {
-        var defaultAssemblies = new[]
-        {
-            typeof(object).Assembly.Location,
-            typeof(Console).Assembly.Location,
-            typeof(System.Linq.Enumerable).Assembly.Location,
-            typeof(System.Xml.XmlDocument).Assembly.Location
-        };
-
-        foreach (var assembly in defaultAssemblies)
-        {
-            AddAssemblyReference(Path.GetFileNameWithoutExtension(assembly));
-        }
     }
 }

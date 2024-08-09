@@ -1,23 +1,16 @@
 ﻿using System.Collections.ObjectModel;
 using System.IO;
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
-using NEngineEditor.Helpers;
 using NEngineEditor.Managers;
-using NEngineEditor.Properties;
-
-using NEngine.Window;
-using NEngine.CoreLibs.GameObjects;
-using NEngine.GameObjects;
-using NEngineEditor.Windows;
 using NEngineEditor.Model;
-using System.Text.Json.Nodes;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
+using NEngineEditor.Properties;
+using NEngineEditor.Windows;
 
 namespace NEngineEditor.ViewModel;
 public class ContentBrowserViewModel : ViewModelBase

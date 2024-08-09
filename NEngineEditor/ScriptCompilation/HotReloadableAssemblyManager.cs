@@ -1,43 +1,40 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Runtime.Loader;
+
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Emit;
 
 namespace NEngineEditor.ScriptCompilation;
 public class HotReloadableAssemblyManager
 {
     private AssemblyLoadContext _loadContext;
     private Assembly? _currentAssembly;
-    private readonly Dictionary<string, WeakReference> _instanceTracker = [];
+    private readonly Dictionary<string, WeakReference> _instanceTracker = new();
     private readonly string _projectDirectory;
     private readonly string _targetFramework;
 
-    public event EventHandler<EventArgs>? AssemblyReloaded;
+    public event EventHandler<EventArgs>? AssemblyUpdated;
 
     public HotReloadableAssemblyManager(string projectDirectory, string targetFramework)
     {
         _projectDirectory = projectDirectory;
         _targetFramework = targetFramework;
-        CreateNewLoadContext();
-    }
-
-    [MemberNotNull(nameof(_loadContext))]
-    private void CreateNewLoadContext()
-    {
-        _loadContext = new AssemblyLoadContext("DynamicScriptContext", isCollectible: true);
+        _loadContext = new AssemblyLoadContext("UpdateableScriptContext", isCollectible: true);
         _loadContext.Resolving += OnResolving;
     }
 
     private Assembly? OnResolving(AssemblyLoadContext context, AssemblyName assemblyName)
     {
-        // Define search paths for assemblies
         string[] searchPaths =
         [
             Path.Combine(_projectDirectory, ".Engine"),
-            Path.Combine(_projectDirectory, "bin", "Debug", _targetFramework),
-            Path.Combine(_projectDirectory, "bin", "Release", _targetFramework),
-            Path.GetDirectoryName(typeof(object).Assembly.Location)!, // Framework directory
-            AppDomain.CurrentDomain.BaseDirectory // Application base directory
+                Path.Combine(_projectDirectory, "bin", "Debug", _targetFramework),
+                Path.Combine(_projectDirectory, "bin", "Release", _targetFramework),
+                Path.GetDirectoryName(typeof(object).Assembly.Location)!, // Framework directory
+                AppDomain.CurrentDomain.BaseDirectory // Application base directory
         ];
 
         foreach (var searchPath in searchPaths)
@@ -49,27 +46,43 @@ public class HotReloadableAssemblyManager
             }
         }
 
-        // If the assembly is not found in any of the search paths, return null
-        // This allows the runtime to continue with its default probing
         return null;
     }
 
-    public async Task ReloadAssemblyAsync(ScriptCompilationSystem compilationSystem)
+    public async Task InitializeAsync(ScriptCompilationSystem compilationSystem)
     {
-        byte[]? assemblyBytes = await compilationSystem.CompileToByteArrayAsync() ?? throw new InvalidOperationException("Compilation failed");
-        var oldLoadContext = _loadContext;
-        CreateNewLoadContext();
+        await UpdateAssemblyAsync(compilationSystem);
+    }
 
-        using (MemoryStream ms = new(assemblyBytes))
+    public async Task UpdateAssemblyAsync(ScriptCompilationSystem compilationSystem)
+    {
+        var compilation = await compilationSystem.GetCompilationAsync();
+        if (compilation is null)
         {
-            _currentAssembly = _loadContext.LoadFromStream(ms);
+            return;
+        }
+        using var peStream = new MemoryStream();
+        using var pdbStream = new MemoryStream();
+
+        var emitResult = compilation.Emit(peStream, pdbStream);
+
+        if (!emitResult.Success)
+        {
+            throw new InvalidOperationException("Compilation failed: " + string.Join(", ", emitResult.Diagnostics));
         }
 
-        // Unload the old context
+        peStream.Seek(0, SeekOrigin.Begin);
+        pdbStream.Seek(0, SeekOrigin.Begin);
+
+        var oldLoadContext = _loadContext;
+        _loadContext = new AssemblyLoadContext("UpdateableScriptContext", isCollectible: true);
+        _loadContext.Resolving += OnResolving;
+
+        _currentAssembly = _loadContext.LoadFromStream(peStream, pdbStream);
+
         oldLoadContext.Unload();
 
-        // Raise the AssemblyReloaded event
-        AssemblyReloaded?.Invoke(this, EventArgs.Empty);
+        AssemblyUpdated?.Invoke(this, EventArgs.Empty);
 
         // Clear the instance tracker as all old instances are now invalid
         _instanceTracker.Clear();
@@ -85,7 +98,8 @@ public class HotReloadableAssemblyManager
             throw new InvalidOperationException("No assembly has been loaded yet.");
         }
 
-        Type? type = _currentAssembly.GetType(fullyQualifiedTypeName) ?? throw new ArgumentException($"Type {fullyQualifiedTypeName} not found in the current assembly.");
+        Type? type = _currentAssembly.GetType(fullyQualifiedTypeName)
+            ?? throw new ArgumentException($"Type {fullyQualifiedTypeName} not found in the current assembly.");
         var instance = Activator.CreateInstance(type) as T;
         _instanceTracker[fullyQualifiedTypeName] = new WeakReference(instance);
         return instance;
@@ -95,10 +109,10 @@ public class HotReloadableAssemblyManager
     {
         if (_currentAssembly is null)
         {
-            return [];
+            return Array.Empty<string>();
         }
 
-        return _currentAssembly.GetTypes().Select(t => t.FullName).OfType<string>();
+        return _currentAssembly.GetTypes().Select(t => t.FullName!).Where(name => name != null);
     }
 
     public void InvalidateInstances()
