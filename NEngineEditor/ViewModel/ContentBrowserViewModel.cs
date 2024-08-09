@@ -1,23 +1,16 @@
 ﻿using System.Collections.ObjectModel;
 using System.IO;
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
-using NEngineEditor.Helpers;
 using NEngineEditor.Managers;
-using NEngineEditor.Properties;
-
-using NEngine.Window;
-using NEngine.CoreLibs.GameObjects;
-using NEngine.GameObjects;
-using NEngineEditor.Windows;
 using NEngineEditor.Model;
-using System.Text.Json.Nodes;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
+using NEngineEditor.Properties;
+using NEngineEditor.Windows;
 
 namespace NEngineEditor.ViewModel;
 public class ContentBrowserViewModel : ViewModelBase
@@ -147,15 +140,9 @@ public class ContentBrowserViewModel : ViewModelBase
     {
         try
         {
-            object? compiledObject = ScriptCompiler.CompileAndInstantiateFromFile(filePath);
-            if (compiledObject is GameObject compiledGameObject)
+            if (MainViewModel.Instance.AddGameObjectToScene(filePath) is null)
             {
-                compiledGameObject.Name = $"New {compiledGameObject.GetType().Name}";
-                MainViewModel.Instance.AddGameObjectToScene(new() { GameObject = compiledGameObject, RenderLayer = compiledGameObject is UIAnchored ? RenderLayer.UI : RenderLayer.BASE});
-            }
-            else
-            {
-                Logger.LogError("The script you have tried to add either was not derived from GameObject or was a derived type of GameObject and failed to compile.");
+                Logger.LogError("The script you have tried to add either was not derived from GameObject or was not found in the loaded assemblies.");
             }
         }
         catch (Exception ex)

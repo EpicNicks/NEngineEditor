@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
+using NEngineEditor.Managers;
 using NEngineEditor.Model;
 using NEngineEditor.ViewModel;
 
@@ -14,8 +15,8 @@ public partial class ConsoleUserControl : UserControl
     public ConsoleUserControl()
     {
         InitializeComponent();
-        logListView.ItemsSource = MainViewModel.Instance.Logs;
-        MainViewModel.Instance.Logs.CollectionChanged += Logs_CollectionChanged;
+        logListView.ItemsSource = Logger.Instance.Logs;
+        Logger.Instance.Logs.CollectionChanged += Logs_CollectionChanged;
     }
     private void Logs_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {

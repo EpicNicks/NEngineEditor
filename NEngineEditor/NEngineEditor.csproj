@@ -40,18 +40,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis" Version="4.10.0" />
-    <PackageReference Include="SFML.Net" Version="2.6.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\NEngine\NEngine.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Build" Version="17.10.4" />
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.10.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.10.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="SFML.Net" Version="2.6.0" />
-    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.7" />
   </ItemGroup>
 
   <ItemGroup>

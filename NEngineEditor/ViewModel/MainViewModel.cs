@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Input;
 using System.Text.Json;
@@ -18,12 +17,14 @@ using NEngineEditor.Model.JsonSerialized;
 using NEngineEditor.Managers;
 using NEngineEditor.Windows;
 using NEngineEditor.View;
+using NEngineEditor.ScriptCompilation;
+using NEngine.CoreLibs.GameObjects;
 
 namespace NEngineEditor.ViewModel;
 public partial class MainViewModel : ViewModelBase
 {
-    private ProjectDirectoryWatcher _projectDirectoryWatcher;
-    private EditorActionHistory _editorActionHistory;
+    private readonly EditorActionHistory _editorActionHistory;
+    private ScriptCompilationSystem _scriptCompilationSystem;
 
     private ICommand? _saveCommand;
     public ICommand SaveCommand => _saveCommand ??= new ActionCommand(SaveScene);
@@ -125,17 +126,6 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
-    public ObservableCollection<LogEntry> _logs = [];
-    public ObservableCollection<LogEntry> Logs
-    {
-        get => _logs;
-        set
-        {
-            _logs = value;
-            OnPropertyChanged(nameof(Logs));
-        }
-    }
-
     private static Lazy<MainViewModel> instance = new(() => new());
     public static MainViewModel Instance => instance.Value;
     public static void ClearInstance()
@@ -160,12 +150,12 @@ public partial class MainViewModel : ViewModelBase
 
     private MainViewModel()
     {
-        Logs.CollectionChanged += Logs_CollectionChanged;
         _loadedScene = ("Unnamed Scene", "");
         _sceneGameObjects = [];
-        _projectDirectoryWatcher = new ProjectDirectoryWatcher(Path.Combine(MainWindow.ProjectDirectory, "Assets"), Application.Current.Dispatcher);
-        _projectDirectoryWatcher.FileChanged += _projectDirectoryWatcher_FileChanged;
-        _projectDirectoryWatcher.FileRenamed += _projectDirectoryWatcher_FileRenamed;
+        string projectName = Directory.GetFiles(MainWindow.ProjectDirectory).FirstOrDefault(path => path.EndsWith(".csproj")) ?? throw new InvalidDataException("csproj is missing from root directory!");
+        _scriptCompilationSystem = new ScriptCompilationSystem(projectName);
+        _scriptCompilationSystem.InitializeAssembliesAsync();
+        _scriptCompilationSystem.AssemblyInitialized += (_, _) => _scriptCompilationSystem.StartWatching();
         _editorActionHistory = new EditorActionHistory();
     }
 
@@ -181,54 +171,28 @@ public partial class MainViewModel : ViewModelBase
         SceneEditViewUserControl.LazyInstance.ShouldRender = true;
     }
 
-    private void ReloadChangedFile(FileSystemEventArgs e)
+    public LayeredGameObject? AddGameObjectToScene(string filepath)
     {
-        if (File.Exists(e.FullPath))
+        string? className = Path.GetFileNameWithoutExtension(filepath);
+        if (className is not null)
         {
-            ModifySceneObjectsListWrapper(() =>
+            GameObject? gameObjectInstance = _scriptCompilationSystem.CreateInstance<GameObject>(className);
+            if (gameObjectInstance is not null)
             {
-                Queue<LayeredGameObject> toRemove = [];
-                Queue<LayeredGameObject> toAdd = [];
-
-                foreach (LayeredGameObject layeredGameObject in SceneGameObjects)
+                gameObjectInstance.Name = $"New {className}";
+                RenderLayer renderLayer = gameObjectInstance switch
                 {
-                    if (layeredGameObject.GameObject is not null && layeredGameObject.GameObject.GetType().Name == e.Name)
-                    {
-                        GameObject? reloadedGameObject = ScriptCompiler.CompileAndInstantiateFromFile(e.FullPath) as GameObject;
-                        if (reloadedGameObject is not null)
-                        {
-                            ObjectCloner.CloneMembers(layeredGameObject.GameObject, reloadedGameObject, ObjectCloner.MemberTypes.Fields | ObjectCloner.MemberTypes.Properties);
-                            toAdd.Enqueue(new() { GameObject = reloadedGameObject, RenderLayer = layeredGameObject.RenderLayer });
-                            toRemove.Enqueue(layeredGameObject);
-                            if (SelectedGameObject == layeredGameObject)
-                            {
-                                SelectedGameObject = null;
-                            }
-                        }
-                    }
-                }
-                while (toAdd.Count > 0)
-                {
-                    SceneGameObjects.Remove(toRemove.Dequeue());
-                    SceneGameObjects.Add(toAdd.Dequeue());
-                }
-            });
+                    UIAnchored => RenderLayer.UI,
+                    _ => RenderLayer.BASE
+                };
+                return AddGameObjectToScene(new LayeredGameObject { GameObject = gameObjectInstance, RenderLayer = renderLayer });
+            }
+            else
+            {
+                // the className may have not matched any compiled types
+            }
         }
-    }
-
-    private void _projectDirectoryWatcher_FileRenamed(object sender, RenamedEventArgs e)
-    {
-        // visual studio deletes the original file and renames the temp file to the new file, so file changes from a visual studio context would occur here
-        ReloadChangedFile(e);
-    }
-
-    private void _projectDirectoryWatcher_FileChanged(object sender, FileSystemEventArgs e)
-    {
-        if (e.ChangeType != WatcherChangeTypes.Changed)
-        {
-            return;
-        }
-        ReloadChangedFile(e);
+        return null;
     }
 
     /// <summary>
@@ -284,7 +248,7 @@ public partial class MainViewModel : ViewModelBase
             {
                 SelectedGameObject = null;
                 SceneModel tempScene = SceneLoader.WriteGameObjectsToScene(_loadedScene.name, SceneGameObjects);
-                List<LayeredGameObject> loadedGameObjects = SceneLoader.LoadSceneFromSceneModel(tempScene);
+                List<LayeredGameObject> loadedGameObjects = SceneLoader.LoadSceneFromSceneModel(tempScene, _scriptCompilationSystem);
                 SceneGameObjects.Clear();
                 loadedGameObjects.ForEach(SceneGameObjects.Add);
             }
@@ -302,7 +266,7 @@ public partial class MainViewModel : ViewModelBase
             string jsonString = File.ReadAllText(filePath);
             try
             {
-                (string sceneName, List<LayeredGameObject> loadedGameObjects) = SceneLoader.LoadSceneFromJson(jsonString);
+                (string sceneName, List<LayeredGameObject> loadedGameObjects) = SceneLoader.LoadSceneFromJson(jsonString, _scriptCompilationSystem);
                 SceneGameObjects.Clear();
                 loadedGameObjects.ForEach(SceneGameObjects.Add);
                 LoadedScene = (sceneName, filePath);
@@ -385,39 +349,6 @@ public partial class MainViewModel : ViewModelBase
             catch (Exception ex)
             {
                 Logger.LogError($"An Exception occurred while processing the selected scenes\n\n{ex}");
-            }
-        }
-    }
-
-    private readonly object _lockObject = new();
-    private void Logs_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-    {
-        const int MAX_LOGS = 10_000;
-        if (e.NewItems is not null)
-        {
-            Task.Run(() => TrimLogs(MAX_LOGS));
-        }
-    }
-    private void TrimLogs(int maxLogs)
-    {
-        lock (_lockObject)
-        {
-            try
-            {
-                while (Logs.Count > maxLogs)
-                {
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        if (Logs.Count > maxLogs)
-                        {
-                            Logs.RemoveAt(0);
-                        }
-                    });
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.LogError($"An Error Occurred while Trimming Logs from the Logger {e}");
             }
         }
     }

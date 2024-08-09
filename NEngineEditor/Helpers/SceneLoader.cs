@@ -12,11 +12,12 @@ using NEngineEditor.Converters.Parsing;
 using NEngineEditor.Managers;
 using NEngineEditor.Model;
 using NEngineEditor.ViewModel;
+using NEngineEditor.ScriptCompilation;
 
 namespace NEngineEditor.Helpers;
 public static class SceneLoader
 {
-    public static List<MainViewModel.LayeredGameObject> LoadSceneFromSceneModel(SceneModel sceneModel)
+    public static List<MainViewModel.LayeredGameObject> LoadSceneFromSceneModel(SceneModel sceneModel, ScriptCompilationSystem scriptCompilationSystem)
     {
         List<MainViewModel.LayeredGameObject> loadedGameObjects = [];
         string sceneName = "Unnamed Scene";
@@ -66,8 +67,7 @@ public static class SceneLoader
                 if
                 (
                     gameObjectData.GameObjectClass is null
-                    || FindFilePathMatchingTypeInProject(Path.Join(MainWindow.ProjectDirectory, "Assets"), gameObjectData.GameObjectClass) is not string pathToFile
-                    || ScriptCompiler.CompileAndInstantiateFromFile(pathToFile) is not GameObject gameObject
+                    || scriptCompilationSystem.CreateInstance<GameObject>(gameObjectData.GameObjectClass) is not GameObject gameObject
                 )
                 {
                     invalidGameObjects.Add(gameObjectData);
@@ -184,7 +184,7 @@ public static class SceneLoader
         }
     }
 
-    public static (string sceneName, List<MainViewModel.LayeredGameObject>) LoadSceneFromJson(string jsonString)
+    public static (string sceneName, List<MainViewModel.LayeredGameObject>) LoadSceneFromJson(string jsonString, ScriptCompilationSystem scriptCompilationSystem)
     {
         JsonSerializerOptions jsonSerializerOptions = new();
         JsonConverter[] jsonConverters = [
@@ -198,7 +198,7 @@ public static class SceneLoader
             jsonSerializerOptions.Converters.Add(jsonConverter);
         }
         SceneModel sceneModel = JsonSerializer.Deserialize<SceneModel>(jsonString, jsonSerializerOptions) ?? throw new InvalidDataException("Provided Scene Model was null");
-        return (sceneModel.Name ?? "Unnamed Scene", LoadSceneFromSceneModel(sceneModel));
+        return (sceneModel.Name ?? "Unnamed Scene", LoadSceneFromSceneModel(sceneModel, scriptCompilationSystem));
     }
 
     public static SceneModel WriteGameObjectsToScene(string sceneName, IList<MainViewModel.LayeredGameObject> gameObjects)
