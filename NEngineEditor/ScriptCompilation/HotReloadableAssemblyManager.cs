@@ -1,11 +1,8 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
-using System.Reflection.Metadata;
 using System.Runtime.Loader;
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Emit;
 
 namespace NEngineEditor.ScriptCompilation;
 public class HotReloadableAssemblyManager
@@ -68,7 +65,8 @@ public class HotReloadableAssemblyManager
 
         if (!emitResult.Success)
         {
-            throw new InvalidOperationException("Compilation failed: " + string.Join(", ", emitResult.Diagnostics));
+            Managers.Logger.LogError("Compilation failed: ", string.Join(", ", emitResult.Diagnostics));
+            return;
         }
 
         peStream.Seek(0, SeekOrigin.Begin);

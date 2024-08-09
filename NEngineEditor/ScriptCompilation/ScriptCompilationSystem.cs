@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Xml.Linq;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Text;
@@ -11,9 +12,8 @@ public class ScriptCompilationSystem
     private readonly VSCompatibleFileWatcher _fileWatcher;
     private readonly HotReloadableAssemblyManager _hotReloadableAssemblyManager;
     private readonly string _projectFilePath;
-    private readonly string _projectDirectory;
 
-    private Microsoft.CodeAnalysis.Project _project;
+    private Project _project;
 
     public event EventHandler<FileSystemEventArgs>? FileChanged;
     public event EventHandler? AssemblyInitialized;
@@ -23,7 +23,6 @@ public class ScriptCompilationSystem
     public ScriptCompilationSystem(string projectFilePath)
     {
         _projectFilePath = projectFilePath;
-        _projectDirectory = Path.GetDirectoryName(projectFilePath)!;
         _workspace = MSBuildWorkspace.Create();
         _project = _workspace.OpenProjectAsync(projectFilePath).GetAwaiter().GetResult();
         _fileWatcher = new VSCompatibleFileWatcher(Path.GetDirectoryName(projectFilePath)!);
@@ -41,29 +40,34 @@ public class ScriptCompilationSystem
         AssemblyInitialized?.Invoke(null, EventArgs.Empty);
     }
 
-    public Microsoft.CodeAnalysis.Project UpdateScript(string scriptPath)
+    public Project UpdateScript(string scriptPath)
     {
         string scriptContent = File.ReadAllText(scriptPath);
-        Document? document = _project.Documents.FirstOrDefault(d => d.Name == "") ?? throw new ArgumentException($"Document '{scriptPath}' not found in the project.");
+        string scriptName = Path.GetFileName(scriptPath);
+        Document? document = _project.Documents.FirstOrDefault(d => d.Name == scriptName) ?? throw new ArgumentException($"Document '{scriptPath}' not found in the project.");
         SourceText newText = SourceText.From(scriptContent);
         Document newDocument = document.WithText(newText);
-        Microsoft.CodeAnalysis.Project newProject = newDocument.Project;
+        Project newProject = newDocument.Project;
         Solution newSolution = newProject.Solution;
 
         if (!_project.Solution.Workspace.TryApplyChanges(newSolution))
         {
-            throw new InvalidOperationException("Failed to apply changes to the workspace.");
+            Managers.Logger.LogInfo("Project was already up to date.");
+        }
+        else
+        {
+            Managers.Logger.LogInfo($"Project updated at script {scriptName}");
         }
 
         return newProject;
     }
 
-    public Microsoft.CodeAnalysis.Project AddScript(string scriptPath)
+    public Project AddScript(string scriptPath)
     {
         try
         {
             string scriptContent = File.ReadAllText(scriptPath);
-             Microsoft.CodeAnalysis.Project updatedProject = AddDocument(scriptPath, scriptContent);
+            Project updatedProject = AddDocument(scriptPath, scriptContent);
 
             // If you need to update the workspace with the new project:
             var newSolution = updatedProject.Solution;
@@ -78,7 +82,7 @@ public class ScriptCompilationSystem
         }
     }
 
-    public Microsoft.CodeAnalysis.Project AddDocument(string name, string content, string? filePath = null)
+    public Project AddDocument(string name, string content, string? filePath = null)
     {
         DocumentId documentId = DocumentId.CreateNewId(_project.Id);
         Solution solution = _project.Solution.AddDocument(documentId, name, content, filePath: filePath);
@@ -87,12 +91,7 @@ public class ScriptCompilationSystem
 
     public void RemoveScript(string scriptPath)
     {
-        var document = _project.Documents.FirstOrDefault(d => d.FilePath == scriptPath);
-        if (document == null)
-        {
-            throw new FileNotFoundException($"Script not found in project: {scriptPath}");
-        }
-
+        var document = _project.Documents.FirstOrDefault(d => d.FilePath == scriptPath) ?? throw new FileNotFoundException($"Script not found in project: {scriptPath}");
         _project = _project.RemoveDocument(document.Id);
 
         // Optionally, you can delete the file from disk
@@ -118,7 +117,7 @@ public class ScriptCompilationSystem
 
     private void UpdateProjectFile()
     {
-        var solution = _project.Solution;
+        Solution solution = _project.Solution;
         if (_workspace.TryApplyChanges(solution))
         {
             Managers.Logger.LogInfo("Project updated successfully.");
@@ -150,20 +149,22 @@ public class ScriptCompilationSystem
     private string GetTargetFrameworkFromProject()
     {
         XDocument projectFile = XDocument.Load(_projectFilePath);
-        XNamespace ns = projectFile.Root.GetDefaultNamespace();
-
-        var targetFrameworkNode = projectFile.Descendants(ns + "TargetFramework").FirstOrDefault();
-        if (targetFrameworkNode != null)
+        XNamespace? ns = projectFile.Root?.GetDefaultNamespace();
+        if (ns is not null)
         {
-            return targetFrameworkNode.Value;
-        }
+            XElement? targetFrameworkNode = projectFile.Descendants(ns + "TargetFramework").FirstOrDefault();
+            if (targetFrameworkNode is not null)
+            {
+                return targetFrameworkNode.Value;
+            }
 
-        // For multi-targeting projects
-        var targetFrameworksNode = projectFile.Descendants(ns + "TargetFrameworks").FirstOrDefault();
-        if (targetFrameworksNode != null)
-        {
-            // Taking the first framework in case of multi-targeting
-            return targetFrameworksNode.Value.Split(';').First();
+            // For multi-targeting projects
+            XElement? targetFrameworksNode = projectFile.Descendants(ns + "TargetFrameworks").FirstOrDefault();
+            if (targetFrameworksNode is not null)
+            {
+                // Taking the first framework in case of multi-targeting
+                return targetFrameworksNode.Value.Split(';').First();
+            }
         }
 
         // Default to a common framework version if not found

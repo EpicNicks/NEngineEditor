@@ -154,18 +154,24 @@ public class VSCompatibleFileWatcher
 
     private string CalculateFileHash(string filePath)
     {
-        try
+        const int MAX_ITER = 300;
+        const int SLEEP_MS = 100;
+
+        for (int i = 0; i < MAX_ITER; i++)
         {
-            using MD5 md5 = MD5.Create();
-            using FileStream stream = File.OpenRead(filePath);
-            byte[] hash = md5.ComputeHash(stream);
-            return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            try
+            {
+                using MD5 md5 = MD5.Create();
+                using FileStream stream = File.OpenRead(filePath);
+                byte[] hash = md5.ComputeHash(stream);
+                return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            }
+            catch (IOException)
+            {
+                // File might be locked by Visual Studio, retry after a short delay
+                Thread.Sleep(SLEEP_MS);
+            }
         }
-        catch (IOException)
-        {
-            // File might be locked by Visual Studio, retry after a short delay
-            Thread.Sleep(100);
-            return CalculateFileHash(filePath);
-        }
+        throw new TimeoutException($"Calulation of FileHash for file at: {filePath} exceeded {SLEEP_MS * MAX_ITER}");
     }
 }
