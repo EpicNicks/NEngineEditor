@@ -28,10 +28,10 @@ public class HotReloadableAssemblyManager
         string[] searchPaths =
         [
             Path.Combine(_projectDirectory, ".Engine"),
-                Path.Combine(_projectDirectory, "bin", "Debug", _targetFramework),
-                Path.Combine(_projectDirectory, "bin", "Release", _targetFramework),
-                Path.GetDirectoryName(typeof(object).Assembly.Location)!, // Framework directory
-                AppDomain.CurrentDomain.BaseDirectory // Application base directory
+            Path.Combine(_projectDirectory, "bin", "Debug", _targetFramework),
+            Path.Combine(_projectDirectory, "bin", "Release", _targetFramework),
+            Path.GetDirectoryName(typeof(object).Assembly.Location)!, // Framework directory
+            AppDomain.CurrentDomain.BaseDirectory // Application base directory
         ];
 
         foreach (var searchPath in searchPaths)
@@ -105,12 +105,7 @@ public class HotReloadableAssemblyManager
 
     public IEnumerable<string> GetAvailableTypeNames()
     {
-        if (_currentAssembly is null)
-        {
-            return Array.Empty<string>();
-        }
-
-        return _currentAssembly.GetTypes().Select(t => t.FullName!).Where(name => name != null);
+        return _currentAssembly?.GetTypes().Select(t => t.FullName!).Where(name => name != null) ?? [];
     }
 
     public void InvalidateInstances()

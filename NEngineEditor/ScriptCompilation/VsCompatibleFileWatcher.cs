@@ -146,6 +146,10 @@ public class VSCompatibleFileWatcher
 
     private void OnFileRenamedInternal(object sender, RenamedEventArgs e)
     {
+        if (e.FullPath.EndsWith(".TMP"))
+        {
+            return;
+        }
         _fileHashes.TryRemove(e.OldFullPath, out _);
         string hash = CalculateFileHash(e.FullPath);
         _fileHashes[e.FullPath] = hash;

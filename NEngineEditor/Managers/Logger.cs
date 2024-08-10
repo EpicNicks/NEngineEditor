@@ -1,7 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Windows;
-
+using System.Windows.Threading;
 using NEngineEditor.Model;
 using NEngineEditor.ViewModel;
 
@@ -51,7 +51,8 @@ public class Logger : ViewModelBase
 
     private static void Log(string? message, LogEntry.LogLevel logLevel)
     {
-        Instance.Logs.Add(new() { Level = logLevel, Message = message ?? "null" });
+        // allows the logger to be called from any context
+        Application.Current.Dispatcher.Invoke(() => Instance.Logs.Add(new() { Level = logLevel, Message = message ?? "null" }));
     }
 
     private void Logs_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

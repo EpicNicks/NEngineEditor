@@ -1,19 +1,25 @@
 ﻿using System.IO;
+using System.Text.Json;
+using System.Windows;
 using System.Xml.Linq;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.VisualBasic.Logging;
+using NEngine.GameObjects;
+using NEngineEditor.Helpers;
+using NEngineEditor.ViewModel;
 
 namespace NEngineEditor.ScriptCompilation;
 public class ScriptCompilationSystem
 {
-    private readonly MSBuildWorkspace _workspace;
     private readonly VSCompatibleFileWatcher _fileWatcher;
     private readonly HotReloadableAssemblyManager _hotReloadableAssemblyManager;
     private readonly string _projectFilePath;
 
     private Project _project;
+    private MSBuildWorkspace _workspace;
 
     public event EventHandler<FileSystemEventArgs>? FileChanged;
     public event EventHandler? AssemblyInitialized;
@@ -28,7 +34,16 @@ public class ScriptCompilationSystem
         _fileWatcher = new VSCompatibleFileWatcher(Path.GetDirectoryName(projectFilePath)!);
         _fileWatcher.FileChanged += OnFileChanged;
         _hotReloadableAssemblyManager = new HotReloadableAssemblyManager(Path.GetDirectoryName(projectFilePath)!, GetTargetFrameworkFromProject());
+        _hotReloadableAssemblyManager.AssemblyUpdated += AssemblyManager_AssemblyUpdated;
     }
+
+    private void AssemblyManager_AssemblyUpdated(object? sender, EventArgs e)
+    {
+        // replace all references to types in the old assembly with types in the new assembly
+        _workspace = MSBuildWorkspace.Create();
+        _project = _workspace.OpenProjectAsync(_projectFilePath).GetAwaiter().GetResult();
+    }
+
     public T? CreateInstance<T>(string fullyQualifiedTypeName) where T : class
     {
         return _hotReloadableAssemblyManager.CreateInstance<T>(fullyQualifiedTypeName);
@@ -44,18 +59,36 @@ public class ScriptCompilationSystem
     {
         string scriptContent = File.ReadAllText(scriptPath);
         string scriptName = Path.GetFileName(scriptPath);
-        Document? document = _project.Documents.FirstOrDefault(d => d.Name == scriptName) ?? throw new ArgumentException($"Document '{scriptPath}' not found in the project.");
+        Document? document = _project.Documents.FirstOrDefault(d => d.Name == scriptName) ?? throw new ArgumentException($"Document '{scriptName}' not found in the project.");
         SourceText newText = SourceText.From(scriptContent);
         Document newDocument = document.WithText(newText);
         Project newProject = newDocument.Project;
         Solution newSolution = newProject.Solution;
-
         if (!_project.Solution.Workspace.TryApplyChanges(newSolution))
         {
             Managers.Logger.LogInfo("Project was already up to date.");
         }
         else
         {
+            List<(MainViewModel.LayeredGameObject lgo, int index)> originalLgos = MainViewModel.Instance.SceneGameObjects
+                    .Select((sgo, index) => (sgo, index))
+                    .Where(pair => pair.sgo.GameObject.GetType().Name == Path.GetFileNameWithoutExtension(scriptPath))
+                    .ToList();
+            if (originalLgos.Count == 0)
+            {
+                return newProject;
+            }
+            string typeName = originalLgos[0].lgo.GameObject.GetType().FullName ?? throw new InvalidOperationException("FullName of the type being updated was null");
+            _hotReloadableAssemblyManager.UpdateAssemblyAsync(this).Wait();
+            foreach (var (lgo, index) in originalLgos)
+            {
+                GameObject? newInstance = CreateInstance<GameObject>(typeName);
+                if (newInstance is not null)
+                {
+                    ObjectCloner.CloneMembers(lgo.GameObject, newInstance);
+                    Application.Current.Dispatcher.Invoke(() => MainViewModel.Instance.SceneGameObjects[index] = new() { RenderLayer = lgo.RenderLayer, GameObject = newInstance });
+                }
+            }
             Managers.Logger.LogInfo($"Project updated at script {scriptName}");
         }
 
@@ -133,16 +166,17 @@ public class ScriptCompilationSystem
         if (e.ChangeType == WatcherChangeTypes.Deleted)
         {
             RemoveScript(e.FullPath);
+            await _hotReloadableAssemblyManager.UpdateAssemblyAsync(this);
         }
         else if (e.ChangeType == WatcherChangeTypes.Created)
         {
             AddScript(e.FullPath);
+            await _hotReloadableAssemblyManager.UpdateAssemblyAsync(this);
         }
         else
         {
             UpdateScript(e.FullPath);
         }
-        await _hotReloadableAssemblyManager.UpdateAssemblyAsync(this);
         FileChanged?.Invoke(sender, e);
     }
 
