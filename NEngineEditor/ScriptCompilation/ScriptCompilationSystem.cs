@@ -1,12 +1,11 @@
 ﻿using System.IO;
-using System.Text.Json;
 using System.Windows;
 using System.Xml.Linq;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Text;
-using Microsoft.VisualBasic.Logging;
+
 using NEngine.GameObjects;
 using NEngineEditor.Helpers;
 using NEngineEditor.ViewModel;

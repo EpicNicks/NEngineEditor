@@ -14,7 +14,7 @@ public class Application
     private const string INVALID_APPLICATION_OPERATION = "Invalid Application Operation. Application has not been Initialized";
     private const string DEFAULT_APPLICATION_TITLE = "Default Application Title";
 
-    private List<Scene> sceneList = [];
+    private readonly List<Scene> sceneList = [];
     private int curSceneIndex = 0;
     private Scene? LoadedScene => curSceneIndex < sceneList.Count ? sceneList[curSceneIndex] : null;
     private SortedDictionary<RenderLayer, List<GameObject>> GameObjects
@@ -39,7 +39,11 @@ public class Application
     /// <summary>
     /// The time elapsed since the previous frame was drawn
     /// </summary>
-    public static Time DeltaTime { get; private set; } = default;
+    public static Time DeltaTime => UnscaledDeltaTime * TimeScale;
+
+    public static Time UnscaledDeltaTime { get; private set; } = default;
+
+    public static float TimeScale { get; set; } = 1f;
 
     /// <summary>
     /// The time elapsed since GameWindow.Run() has been called
@@ -352,7 +356,7 @@ public class Application
         InitLoadedScene();
         while (GameWindow.RenderWindow != null && GameWindow.RenderWindow.IsOpen)
         {
-            DeltaTime = deltaClock.Restart();
+            UnscaledDeltaTime = deltaClock.Restart();
             ProcessAttachQueue();
             GameWindow.RenderWindow.DispatchEvents();
             Update();

@@ -47,7 +47,7 @@ public class WaitForFrames(uint waitFrames) : ICoroutineWait
 /// <summary>
 /// Used in IEnumerators wrapped by Coroutines to tell it to delay execution until waitSeconds has elapsed.
 /// </summary>
-/// <param name="waitSeconds">The number of seconds to wait</param>
+/// <param name="waitSeconds">The number of seconds to wait in scaled time</param>
 public class WaitForSeconds(float waitSeconds) : ICoroutineWait
 {
     private readonly float waitSeconds = waitSeconds;
@@ -56,11 +56,23 @@ public class WaitForSeconds(float waitSeconds) : ICoroutineWait
     public bool Wait()
     {
         elapsedSeconds += Application.DeltaTime.AsSeconds();
-        if (elapsedSeconds < waitSeconds)
-        {
-            return true;
-        }
-        return false;
+        return elapsedSeconds < waitSeconds;
+    }
+}
+
+/// <summary>
+/// Used in IEnumerators wrapped by Coroutines to tell it to delay execution until waitSeconds has elapsed.
+/// </summary>
+/// <param name="waitSeconds">The number of seconds to wait in unscaled time</param>
+public class WaitForSecondsRealTime(float waitSeconds) : ICoroutineWait
+{
+    private readonly float waitSeconds = waitSeconds;
+    private float elapsedSeconds = 0f;
+
+    public bool Wait()
+    {
+        elapsedSeconds += Application.UnscaledDeltaTime.AsSeconds();
+        return elapsedSeconds < waitSeconds;
     }
 }
 

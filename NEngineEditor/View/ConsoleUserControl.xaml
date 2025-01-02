@@ -31,6 +31,7 @@
             <ListView.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Copy to Clipboard" Click="CopyToClipboard_Click"/>
+                    <MenuItem Header="Clear Logs" Click="ClearLogs_Click"/>
                 </ContextMenu>
             </ListView.ContextMenu>
         </ListView>

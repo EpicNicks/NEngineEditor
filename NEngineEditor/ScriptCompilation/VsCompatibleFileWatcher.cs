@@ -1,16 +1,15 @@
 ﻿using System.IO;
 using System.Security.Cryptography;
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 
 namespace NEngineEditor.ScriptCompilation;
 
 public class VSCompatibleFileWatcher
 {
-    private string _projectPath;
-    private ConcurrentDictionary<string, string> _fileHashes;
-    private FileSystemWatcher _watcher;
-    private ConcurrentDictionary<string, Timer> _debouncers;
+    private readonly string _projectPath;
+    private readonly ConcurrentDictionary<string, string> _fileHashes;
+    private readonly ConcurrentDictionary<string, Timer> _debouncers;
+    private readonly FileSystemWatcher _watcher;
 
     public event EventHandler<FileSystemEventArgs>? FileChanged;
 
@@ -19,12 +18,7 @@ public class VSCompatibleFileWatcher
         _projectPath = projectPath;
         _fileHashes = new ConcurrentDictionary<string, string>();
         _debouncers = new ConcurrentDictionary<string, Timer>();
-        InitializeFileSystemWatcher();
-    }
 
-    [MemberNotNull(nameof(_watcher))]
-    private void InitializeFileSystemWatcher()
-    {
         _watcher = new FileSystemWatcher(_projectPath)
         {
             IncludeSubdirectories = true,
@@ -44,29 +38,34 @@ public class VSCompatibleFileWatcher
     {
         foreach (string file in Directory.EnumerateFiles(_projectPath, "*.cs", SearchOption.AllDirectories))
         {
+            if (file.EndsWith(".TMP"))
+            {
+                continue;
+            }
+            string fileDirectoryName = Path.GetDirectoryName(file)!;
             string currentHash = CalculateFileHash(file);
             if (_fileHashes.TryGetValue(file, out string? storedHash))
             {
                 if (currentHash != storedHash)
                 {
                     _fileHashes[file] = currentHash;
-                    FileChanged?.Invoke(this, new FileSystemEventArgs(WatcherChangeTypes.Changed, Path.GetDirectoryName(file), Path.GetFileName(file)));
+                    FileChanged?.Invoke(this, new FileSystemEventArgs(WatcherChangeTypes.Changed, fileDirectoryName, Path.GetFileName(file)));
                 }
             }
             else
             {
                 _fileHashes[file] = currentHash;
-                FileChanged?.Invoke(this, new FileSystemEventArgs(WatcherChangeTypes.Created, Path.GetDirectoryName(file), Path.GetFileName(file)));
+                FileChanged?.Invoke(this, new FileSystemEventArgs(WatcherChangeTypes.Created, fileDirectoryName, Path.GetFileName(file)));
             }
         }
 
         // Check for deleted files
         foreach (var storedFile in _fileHashes.Keys)
         {
-            if (!File.Exists(storedFile))
+            if (!File.Exists(storedFile) && Path.GetDirectoryName(storedFile) is string directoryName)
             {
                 _fileHashes.TryRemove(storedFile, out _);
-                FileChanged?.Invoke(this, new FileSystemEventArgs(WatcherChangeTypes.Deleted, Path.GetDirectoryName(storedFile), Path.GetFileName(storedFile)));
+                FileChanged?.Invoke(this, new FileSystemEventArgs(WatcherChangeTypes.Deleted, directoryName, Path.GetFileName(storedFile)));
             }
         }
     }
@@ -105,8 +104,12 @@ public class VSCompatibleFileWatcher
         {
             try
             {
+                if (e.FullPath.EndsWith(".TMP"))
+                {
+                    return;
+                }
                 string hash = CalculateFileHash(e.FullPath);
-                if (_fileHashes.TryGetValue(e.FullPath, out string oldHash) && oldHash != hash)
+                if (_fileHashes.TryGetValue(e.FullPath, out string? oldHash) && oldHash != hash)
                 {
                     _fileHashes[e.FullPath] = hash;
                     FileChanged?.Invoke(this, e);
@@ -156,8 +159,12 @@ public class VSCompatibleFileWatcher
         FileChanged?.Invoke(this, e);
     }
 
-    private string CalculateFileHash(string filePath)
+    private static string CalculateFileHash(string filePath)
     {
+        if (filePath.EndsWith(".TMP"))
+        {
+            throw new InvalidOperationException($"filepath passed was a .TMP file, filepath: {filePath}");
+        }
         const int MAX_ITER = 300;
         const int SLEEP_MS = 100;
 
@@ -176,6 +183,6 @@ public class VSCompatibleFileWatcher
                 Thread.Sleep(SLEEP_MS);
             }
         }
-        throw new TimeoutException($"Calulation of FileHash for file at: {filePath} exceeded {SLEEP_MS * MAX_ITER}");
+        throw new TimeoutException($"Calulation of FileHash for file at: {filePath} exceeded {SLEEP_MS * MAX_ITER} ms");
     }
 }

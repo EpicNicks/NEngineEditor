@@ -33,4 +33,9 @@ public partial class ConsoleUserControl : UserControl
             Clipboard.SetText($"{logItem.Level}: {logItem.Message}");
         }
     }
+
+    private void ClearLogs_Click(object sender, RoutedEventArgs e)
+    {
+        Logger.Instance.Logs.Clear();
+    }
 }
