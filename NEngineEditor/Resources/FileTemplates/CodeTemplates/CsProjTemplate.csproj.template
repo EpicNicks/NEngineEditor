@@ -23,7 +23,13 @@
   <ItemGroup>
     <Compile Include=".Main\**\*.cs" />
   </ItemGroup>
-  
+
+  <ItemGroup>
+    <Content Include="Resources\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
   <ItemGroup>
     <None Update="Assets\ProjectConfig.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

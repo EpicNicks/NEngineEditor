@@ -2,7 +2,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-
+using NEngineEditor.Helpers;
 using NEngineEditor.Managers;
 using NEngineEditor.ViewModel;
 using NEngineEditor.Windows;
@@ -26,25 +26,25 @@ public partial class ContentBrowserUserControl : UserControl
             // handle folder click (update current subdir), reload files in current dir for Items
             if (sender is StackPanel stackPanel)
             {
-                if (stackPanel.Tag is not string filePath || stackPanel.Children[0] is not Image img || stackPanel.Children[1] is not TextBlock txtBlock)
+                if (stackPanel.Tag is not string filePath || stackPanel.Children[0] is not Image || stackPanel.Children[1] is not TextBlock)
                 {
                     return;
                 }
-                if (img.Source == ContentBrowserViewModel.FOLDER_ICON)
+                if (Directory.Exists(filePath))
                 {
                     OpenFolder(filePath);
                 }
-                else if (img.Source == ContentBrowserViewModel.UP_ONE_LEVEL_ICON)
-                {
-                    OpenFolder(filePath);
-                }
-                else if (img.Source == ContentBrowserViewModel.CS_SCRIPT_ICON)
+                else if (FileExtensionHelper.IsScript(filePath))
                 {
                     OpenScript(filePath);
                 }
-                else if (img.Source == ContentBrowserViewModel.SCENE_ICON)
+                else if (FileExtensionHelper.IsScene(filePath))
                 {
                     OpenScene(filePath);
+                }
+                else if (FileExtensionHelper.IsImage(filePath))
+                {
+                    OpenImage(filePath);
                 }
             }
             // handle file click
@@ -58,7 +58,7 @@ public partial class ContentBrowserUserControl : UserControl
             return;
         }
         var contextMenu = new ContextMenu();
-        if (img.Source == ContentBrowserViewModel.FOLDER_ICON)
+        if (Directory.Exists(filePath))
         {
             var openMenuItem = new MenuItem { Header = "Open" };
             openMenuItem.Click += (s, args) => OpenFolder(filePath);
@@ -67,7 +67,7 @@ public partial class ContentBrowserUserControl : UserControl
             contextMenu.Items.Add(openMenuItem);
             contextMenu.Items.Add(deleteMenuItem);
         }
-        else if (img.Source == ContentBrowserViewModel.CS_SCRIPT_ICON)
+        else if (FileExtensionHelper.IsScript(filePath))
         {
             var addScriptToSceneMenuItem = new MenuItem { Header = "Add Script to Scene" };
             addScriptToSceneMenuItem.Click += (_, _) => AddScriptToScene(filePath);
@@ -84,7 +84,7 @@ public partial class ContentBrowserUserControl : UserControl
             contextMenu.Items.Add(renameMenuItem);
             contextMenu.Items.Add(deleteMenuItem);
         }
-        else if (img.Source == ContentBrowserViewModel.SCENE_ICON)
+        else if (FileExtensionHelper.IsScene(filePath))
         {
             var openSceneMenuItem = new MenuItem { Header = "Open Scene" };
             openSceneMenuItem.Click += (_, _) => OpenScene(filePath);
@@ -97,6 +97,20 @@ public partial class ContentBrowserUserControl : UserControl
             contextMenu.Items.Add(renameMenuItem);
             contextMenu.Items.Add(deleteMenuItem);
         }
+        else if (FileExtensionHelper.IsImage(filePath))
+        {
+            var openImageMenuItem = new MenuItem { Header = "Open Image" };
+            openImageMenuItem.Click += (_, _) => OpenImage(filePath);
+            var renameMenuItem = new MenuItem { Header = "Rename" };
+            renameMenuItem.Click += (_, _) => RenameItem(stackPanel);
+            var deleteMenuItem = new MenuItem { Header = "Delete" };
+            deleteMenuItem.Click += (_, _) => DeleteItem(filePath);
+            
+            contextMenu.Items.Add(openImageMenuItem);
+            contextMenu.Items.Add(renameMenuItem);
+            contextMenu.Items.Add(deleteMenuItem);
+        }
+
         stackPanel.ContextMenu = contextMenu;
         contextMenu.IsOpen = true;
         // prevents bubbling to the outer grid
@@ -152,12 +166,26 @@ public partial class ContentBrowserUserControl : UserControl
         MainViewModel.Instance.LoadScene(filePath);
     }
 
+    private void OpenImage(string filePath)
+    {
+        Process process = new()
+        {
+            StartInfo = new(filePath)
+            {
+                UseShellExecute = true,
+            }
+        };
+        process.Start();
+    }
+
     private void DeleteItem(string filePath)
     {
         if (DataContext is ContentBrowserViewModel cbvm)
         {
-            // are you sure dialog goes here if I decide to add one
-            cbvm.DeleteItem(filePath);
+            if (MessageBox.Show($"Are you sure you want to delete {Path.GetFileNameWithoutExtension(filePath)}?", "Delete Confirmation", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                cbvm.DeleteItem(filePath);
+            }
         }
     }
     

@@ -64,18 +64,32 @@ public static class SceneLoader
             List<GameObjectWrapperModel> invalidGameObjects = [];
             foreach (GameObjectWrapperModel gameObjectData in sceneGameObjectData)
             {
-                if
-                (
-                    gameObjectData.GameObjectClass is null
-                    || scriptCompilationSystem.CreateInstance<GameObject>(gameObjectData.GameObjectClass) is not GameObject gameObject
-                )
+                if (gameObjectData.GameObjectClass is null)
+                {
+                    invalidGameObjects.Add(gameObjectData);
+                    Logger.LogWarning($"Null GameObject found in scene that was being loaded");
+                    continue;
+                }
+
+                try
+                {
+                    if (scriptCompilationSystem.CreateInstance<GameObject>(gameObjectData.GameObjectClass) is GameObject gameObject)
+                    {
+                        gameObject.Name = gameObjectData.Name;
+                        loadedGameObjects.Add(new() { RenderLayer = gameObjectData.RenderLayer, GameObject = gameObject });
+                    }
+                    else
+                    {
+                        invalidGameObjects.Add(gameObjectData);
+                        Logger.LogWarning($"Invalid GameObject {gameObjectData} found in scene that was being loaded");
+                    }
+                }
+                catch (TargetInvocationException ex)
                 {
                     invalidGameObjects.Add(gameObjectData);
                     Logger.LogWarning($"Invalid GameObject {gameObjectData} found in scene that was being loaded");
-                    continue;
+                    Logger.LogError($"The GameObject threw an exception: {ex.StackTrace}");
                 }
-                gameObject.Name = gameObjectData.Name;
-                loadedGameObjects.Add(new() { RenderLayer = gameObjectData.RenderLayer, GameObject = gameObject });
             }
             sceneGameObjectData.RemoveAll(invalidGameObjects.Contains);
             // resolve properties (second loop to resolve Guid references to objects which need to be instantiated)

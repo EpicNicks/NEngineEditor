@@ -10,12 +10,17 @@
     <StartupObject>NEngineEditor.App</StartupObject>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefineConstants>NENGINEEDITOR</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <Using Remove="System.Windows.Forms" />
     <Using Remove="System.Drawing" />
   </ItemGroup>
   
   <ItemGroup>
+    <None Remove="Resources\broken-image-icon.jpg" />
     <None Remove="Resources\ellipsis-horizontal.png" />
     <None Remove="Resources\FileTemplates\CodeTemplates\GameObjectTemplate.cs.template" />
     <None Remove="Resources\csharp-script-icon.png" />
@@ -28,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Resources\broken-image-icon.jpg" />
     <Resource Include="Resources\ellipsis-horizontal.png" />
     <Resource Include="Resources\FileTemplates\CodeTemplates\UIAnchoredTemplate.cs.template" />
     <Resource Include="Resources\FileTemplates\JsonTemplates\EditorConfig.json" />
@@ -64,6 +70,11 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
@@ -71,6 +82,13 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
 </Project>

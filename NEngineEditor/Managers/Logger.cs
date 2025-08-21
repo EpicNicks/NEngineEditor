@@ -1,7 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Windows;
-using System.Windows.Threading;
 using NEngineEditor.Model;
 using NEngineEditor.ViewModel;
 

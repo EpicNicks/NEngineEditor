@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-
+using NEngineEditor.Helpers;
 using NEngineEditor.Managers;
 using NEngineEditor.Model;
 using NEngineEditor.Properties;
@@ -23,6 +23,7 @@ public class ContentBrowserViewModel : ViewModelBase
     public static readonly ImageSource CS_SCRIPT_ICON;
     public static readonly ImageSource UP_ONE_LEVEL_ICON;
     public static readonly ImageSource SCENE_ICON;
+    public static readonly ImageSource BROKEN_IMAGE_ICON;
 
     private ObservableCollection<FileIconName> _items = [];
     public ObservableCollection<FileIconName> Items
@@ -47,6 +48,8 @@ public class ContentBrowserViewModel : ViewModelBase
         UP_ONE_LEVEL_ICON.Freeze();
         SCENE_ICON = new BitmapImage(GetResourceFolderUri("scene-icon.png"));
         SCENE_ICON.Freeze();
+        BROKEN_IMAGE_ICON = new BitmapImage(GetResourceFolderUri("broken-image-icon.jpg"));
+        BROKEN_IMAGE_ICON.Freeze();
     }
 
     // uri resource to explain this shit: https://learn.microsoft.com/en-us/dotnet/desktop/wpf/app-development/pack-uris-in-wpf?view=netframeworkdesktop-4.8
@@ -68,12 +71,7 @@ public class ContentBrowserViewModel : ViewModelBase
         LoadFilesInCurrentDir();
     }
 
-    public class FileIconName(ImageSource icon, string fileName, string filePath)
-    {
-        public ImageSource Icon => icon;
-        public string FileName => fileName;
-        public string FilePath => filePath;
-    }
+    public record FileIconName(ImageSource Icon, string FileName, string FilePath);
 
     public class SubDirectory(string initialSubDirectory, Action onSubDirectoryChanged)
     {
@@ -119,17 +117,33 @@ public class ContentBrowserViewModel : ViewModelBase
         }
         foreach (string filePath in filePaths)
         {
-            string? fileName = Path.GetFileName(filePath);
-            string? extension = Path.GetExtension(filePath);
-            if (fileName is not null && extension is not null)
+            if (Path.GetFileName(filePath) is string fileName)
             {
-                if (extension.Equals(".cs", StringComparison.OrdinalIgnoreCase))
+                if (FileExtensionHelper.IsScript(fileName))
                 {
                     filesAndDirectories.Add(new(CS_SCRIPT_ICON, fileName, filePath));
                 }
-                else if (extension.Equals(".scene", StringComparison.OrdinalIgnoreCase))
+                else if (FileExtensionHelper.IsScene(fileName))
                 {
                     filesAndDirectories.Add(new(SCENE_ICON, fileName, filePath));
+                }
+                else if (FileExtensionHelper.IsImage(fileName))
+                {
+                    try
+                    {
+                        var bitmapImage = new BitmapImage();
+                        bitmapImage.BeginInit();
+                        bitmapImage.UriSource = new Uri(filePath, UriKind.Absolute);
+                        bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmapImage.EndInit();
+                        bitmapImage.Freeze();
+                        filesAndDirectories.Add(new(bitmapImage, fileName, filePath));
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError($"Failed to load image {fileName}: {ex.Message}");
+                        filesAndDirectories.Add(new(BROKEN_IMAGE_ICON, fileName, filePath));
+                    }
                 }
             }
         }

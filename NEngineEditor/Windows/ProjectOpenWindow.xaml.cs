@@ -21,6 +21,23 @@ public partial class ProjectOpenWindow : Window
         DataContext = this;
         BaseFilePathTextBox.TextChanged += BaseFilePathTextBox_TextChanged;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+        LoadSavedBaseFilePath();
+    }
+
+    private void LoadSavedBaseFilePath()
+    {
+        string savedPath = Properties.Settings.Default.BaseFilePath;
+        if (!string.IsNullOrEmpty(savedPath))
+        {
+            BaseFilePathTextBox.Text = savedPath;
+        }
+    }
+
+    private void SaveBaseFilePath(string path)
+    {
+        Properties.Settings.Default.BaseFilePath = path;
+        Properties.Settings.Default.Save();
     }
 
     private void BrowseButton_Click(object sender, RoutedEventArgs e)
@@ -29,6 +46,7 @@ public partial class ProjectOpenWindow : Window
         if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
         {
             BaseFilePathTextBox.Text = dialog.SelectedPath;
+            SaveBaseFilePath(dialog.SelectedPath);
         }
     }
 
@@ -61,6 +79,8 @@ public partial class ProjectOpenWindow : Window
             {
                 ProjectListBox.Items.Add(new ListBoxItem { Content = Path.GetFileName(dir), Tag = dir });
             }
+
+            SaveBaseFilePath(BaseFilePathTextBox.Text);
         }
     }
 

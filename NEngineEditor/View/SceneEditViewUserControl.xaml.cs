@@ -12,6 +12,8 @@ using NEngine.CoreLibs.StandardFonts;
 
 using NEngineEditor.ViewModel;
 using NEngineEditor.Model;
+using NEngine.CoreLibs.ResourceManagement;
+using System.IO;
 
 namespace NEngineEditor.View;
 /// <summary>
@@ -39,17 +41,22 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         sfmlHost.Child = mysurf;
         SetDoubleBuffered(mysurf); //same results whether or not I do this.
 
+        uint frameLimit = 120;
+
         _nengineApplication = new NEngine.Application(new RenderWindow(mysurf.Handle));
         _nengineApplication.GameWindow.InitStandardWindowEvents();
-        _nengineApplication.GameWindow.RenderWindow.SetFramerateLimit(120);
+        _nengineApplication.GameWindow.RenderWindow.SetFramerateLimit(frameLimit);
         _nengineApplication.GameWindow.RenderWindow.MouseButtonPressed += _renderWindow_MouseButtonPressed;
         _nengineApplication.GameWindow.RenderWindow.MouseMoved += _renderWindow_MouseMoved;
         _nengineApplication.GameWindow.RenderWindow.MouseButtonReleased += _renderWindow_MouseButtonReleased;
         _nengineApplication.GameWindow.RenderWindow.MouseWheelScrolled += _renderWindow_MouseWheelScrolled;
 
+        // the project itself will handle it relative to its own application build directory
+        ResourceLoader.BaseDirectory = MainWindow.ProjectDirectory;
+
         var timer = new System.Windows.Threading.DispatcherTimer
         {
-            Interval = new TimeSpan(0, 0, 0, 0, 1000 / 120)
+            Interval = new TimeSpan(0, 0, 0, 0, 1000 / (int)frameLimit)
         };
         timer.Tick += timer_Tick;
         timer.Start();
