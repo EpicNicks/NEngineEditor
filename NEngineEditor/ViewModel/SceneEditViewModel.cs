@@ -1,4 +1,5 @@
-﻿using NEngineEditor.Commands;
+﻿using NEngine.GameObjects;
+using NEngineEditor.Commands;
 using SFML.System;
 using System.Windows.Input;
 
@@ -19,7 +20,11 @@ public class SceneEditViewModel : ViewModelBase
         Y_SCALE,
         XY_SCALE
     }
-    public record SceneObjectDrag(Vector2i startDragPoint, Vector2i currentDragPoint, DraggingGizmo draggingGizmo);
+    public record PositionableTransform(Vector2f Position, float Rotation, Vector2f Scale)
+    {
+        public PositionableTransform(Positionable p) : this(p.Position, p.Rotation, p.Scale){}
+    }
+    public record SceneObjectDrag(Vector2i StartDragPoint, Vector2i CurrentDragPoint, DraggingGizmo DraggingGizmo, PositionableTransform InitialTransform);
     public SceneObjectDrag? CurrentSceneObjectDrag { get; set; }
     public bool IsDraggingSceneObject => CurrentSceneObjectDrag is not null;
 

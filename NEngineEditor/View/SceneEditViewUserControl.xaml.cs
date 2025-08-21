@@ -13,7 +13,6 @@ using NEngine.CoreLibs.StandardFonts;
 using NEngineEditor.ViewModel;
 using NEngineEditor.Model;
 using NEngine.CoreLibs.ResourceManagement;
-using System.IO;
 
 namespace NEngineEditor.View;
 /// <summary>
@@ -23,7 +22,7 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 {
     private float _curZoom = 1.0f;
     private const float SCALE_SCALE = 0.1f;
-    private NEngine.Application _nengineApplication;
+    private readonly NEngine.Application _nengineApplication;
     public bool ShouldRender { get; set; } = true;
 
     public static SceneEditViewUserControl? LazyInstance
@@ -116,7 +115,7 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
 
             // TODO: First check if click hit any drawn gizmos
             
-            if (MainViewModel.Instance.SelectedGameObject is not null && MainViewModel.Instance.SelectedGameObject.GameObject is Positionable)
+            if (MainViewModel.Instance.SelectedGameObject is not null && MainViewModel.Instance.SelectedGameObject.GameObject is Positionable p)
             {
                 if (GizmoIntersects(positionSelectButton, clickCastRect))
                 {
@@ -131,33 +130,35 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                     sevm.ActivateScaleGizmoSet.Execute(null);
                 }
 
+                SceneEditViewModel.PositionableTransform originalTransform = new(p);
+
                 if (GizmoIntersects(xPositionGizmo, clickCastRect))
                 {
-                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.X_POS);
+                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.X_POS, originalTransform);
                 }
                 else if (GizmoIntersects(yPositionGizmo, clickCastRect))
                 {
-                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.Y_POS);
+                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.Y_POS, originalTransform);
                 }
                 else if (GizmoIntersects(xyPositionGizmo, clickCastRect))
                 {
-                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.XY_POS);
+                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.XY_POS, originalTransform);
                 }
                 else if (GizmoIntersects(xScaleGizmo, clickCastRect))
                 {
-                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.X_SCALE);
+                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.X_SCALE, originalTransform);
                 }
                 else if (GizmoIntersects(yScaleGizmo, clickCastRect))
                 {
-                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.Y_SCALE);
+                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.Y_SCALE, originalTransform);
                 }
                 else if (GizmoIntersects(xyScaleGizmo, clickCastRect))
                 {
-                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.XY_SCALE);
+                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.XY_SCALE, originalTransform);
                 }
                 else if (GizmoIntersects(rotationGizmo, clickCastRect))
                 {
-                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.ROT);
+                    sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.ROT, originalTransform);
                 }
             }
 
@@ -203,35 +204,35 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         if (sevm.CurrentSceneObjectDrag is not null)
         {
             Vector2i currentMousePosition = new Vector2i(e.X, e.Y);
-            Vector2f delta = (Vector2f)(sevm.CurrentSceneObjectDrag.currentDragPoint - currentMousePosition);
+            Vector2f delta = (Vector2f)(sevm.CurrentSceneObjectDrag.CurrentDragPoint - currentMousePosition);
 
             if (MainViewModel.Instance.SelectedGameObject is not null && MainViewModel.Instance.SelectedGameObject.GameObject is Positionable p)
             {
-                if (sevm.CurrentSceneObjectDrag.draggingGizmo is SceneEditViewModel.DraggingGizmo.X_POS)
+                if (sevm.CurrentSceneObjectDrag.DraggingGizmo is SceneEditViewModel.DraggingGizmo.X_POS)
                 {
                     p.Position = p.Position with { X = p.Position.X - delta.X * _curZoom };
                 }
-                else if (sevm.CurrentSceneObjectDrag.draggingGizmo is SceneEditViewModel.DraggingGizmo.Y_POS)
+                else if (sevm.CurrentSceneObjectDrag.DraggingGizmo is SceneEditViewModel.DraggingGizmo.Y_POS)
                 {
                     p.Position = p.Position with { Y = p.Position.Y - delta.Y * _curZoom };
                 }
-                else if (sevm.CurrentSceneObjectDrag.draggingGizmo is SceneEditViewModel.DraggingGizmo.XY_POS)
+                else if (sevm.CurrentSceneObjectDrag.DraggingGizmo is SceneEditViewModel.DraggingGizmo.XY_POS)
                 {
                     p.Position -= delta * _curZoom;
                 }
-                else if (sevm.CurrentSceneObjectDrag.draggingGizmo is SceneEditViewModel.DraggingGizmo.X_SCALE)
+                else if (sevm.CurrentSceneObjectDrag.DraggingGizmo is SceneEditViewModel.DraggingGizmo.X_SCALE)
                 {
                     p.Scale = p.Scale with { X = p.Scale.X - delta.X * SCALE_SCALE };
                 }
-                else if (sevm.CurrentSceneObjectDrag.draggingGizmo is SceneEditViewModel.DraggingGizmo.Y_SCALE)
+                else if (sevm.CurrentSceneObjectDrag.DraggingGizmo is SceneEditViewModel.DraggingGizmo.Y_SCALE)
                 {
                     p.Scale = p.Scale with { Y = p.Scale.Y - delta.Y * SCALE_SCALE };
                 }
-                else if (sevm.CurrentSceneObjectDrag.draggingGizmo is SceneEditViewModel.DraggingGizmo.XY_SCALE)
+                else if (sevm.CurrentSceneObjectDrag.DraggingGizmo is SceneEditViewModel.DraggingGizmo.XY_SCALE)
                 {
                     p.Scale -= delta * SCALE_SCALE;
                 }
-                else if (sevm.CurrentSceneObjectDrag.draggingGizmo is SceneEditViewModel.DraggingGizmo.ROT)
+                else if (sevm.CurrentSceneObjectDrag.DraggingGizmo is SceneEditViewModel.DraggingGizmo.ROT)
                 {
                     p.Rotation -= delta.X;
                 }
@@ -239,7 +240,7 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
             }
 
-            sevm.CurrentSceneObjectDrag = sevm.CurrentSceneObjectDrag with { currentDragPoint = currentMousePosition };
+            sevm.CurrentSceneObjectDrag = sevm.CurrentSceneObjectDrag with { CurrentDragPoint = currentMousePosition };
         }
         if (initialDragPoint is not null)
         {
@@ -258,48 +259,25 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         {
             return;
         }
-        if (e.Button is Mouse.Button.Left && sevm.CurrentSceneObjectDrag is not null && MainViewModel.Instance.SelectedGameObject is not null && MainViewModel.Instance.SelectedGameObject.GameObject is Positionable selectedPositionable)
+        if (e.Button is Mouse.Button.Left && sevm.CurrentSceneObjectDrag is { InitialTransform: var originalTransform } && MainViewModel.Instance.SelectedGameObject is not null && MainViewModel.Instance.SelectedGameObject.GameObject is Positionable selectedPositionable)
         {
-            Vector2f delta = (Vector2f)(sevm.CurrentSceneObjectDrag.currentDragPoint - sevm.CurrentSceneObjectDrag.startDragPoint);
+            Vector2f delta = (Vector2f)(sevm.CurrentSceneObjectDrag.CurrentDragPoint - sevm.CurrentSceneObjectDrag.StartDragPoint);
             float zoomAtAction = _curZoom;
-            EditorAction? performedAction = sevm.CurrentSceneObjectDrag.draggingGizmo switch
+
+            SceneEditViewModel.PositionableTransform finalTransform = new(selectedPositionable);
+
+            EditorAction? performedAction = sevm.CurrentSceneObjectDrag.DraggingGizmo switch
             {
-                SceneEditViewModel.DraggingGizmo.X_POS => new EditorAction 
+                SceneEditViewModel.DraggingGizmo.X_POS or SceneEditViewModel.DraggingGizmo.Y_POS or SceneEditViewModel.DraggingGizmo.XY_POS => new EditorAction 
                 {
                     DoAction = () =>
                     {
-                        selectedPositionable.Position = selectedPositionable.Position with { X = selectedPositionable.Position.X + delta.X * zoomAtAction };
-                        MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
-                    }, 
-                    UndoAction = () =>
-                    {
-                        selectedPositionable.Position = selectedPositionable.Position with { X = selectedPositionable.Position.X - delta.X * zoomAtAction };
-                        MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
-                    }
-                },
-                SceneEditViewModel.DraggingGizmo.Y_POS => new EditorAction
-                {
-                    DoAction = () =>
-                    {
-                        selectedPositionable.Position = selectedPositionable.Position with { Y = selectedPositionable.Position.Y + delta.Y * zoomAtAction };
+                        selectedPositionable.Position = finalTransform.Position;
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     },
                     UndoAction = () =>
                     {
-                        selectedPositionable.Position = selectedPositionable.Position with { Y = selectedPositionable.Position.Y - delta.Y * zoomAtAction };
-                        MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
-                    }
-                },
-                SceneEditViewModel.DraggingGizmo.XY_POS => new EditorAction
-                {
-                    DoAction = () =>
-                    {
-                        selectedPositionable.Position += delta * zoomAtAction;
-                        MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
-                    },
-                    UndoAction = () =>
-                    {
-                        selectedPositionable.Position -= delta * zoomAtAction;
+                        selectedPositionable.Position = originalTransform.Position;
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     }
                 },
@@ -307,51 +285,25 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 {
                     DoAction = () =>
                     {
-                        selectedPositionable.Rotation += delta.X;
+                        selectedPositionable.Rotation = finalTransform.Rotation;
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     },
                     UndoAction = () =>
                     {
-                        selectedPositionable.Rotation -= delta.X;
+                        selectedPositionable.Rotation = originalTransform.Rotation;
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     }
                 },
-                SceneEditViewModel.DraggingGizmo.X_SCALE => new EditorAction
+                SceneEditViewModel.DraggingGizmo.X_SCALE or SceneEditViewModel.DraggingGizmo.Y_SCALE or SceneEditViewModel.DraggingGizmo.XY_SCALE => new EditorAction
                 {
                     DoAction = () =>
                     {
-                        selectedPositionable.Scale = selectedPositionable.Scale with { X = selectedPositionable.Scale.X + delta.X * SCALE_SCALE };
+                        selectedPositionable.Scale = finalTransform.Scale;
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     },
                     UndoAction = () =>
                     {
-                        selectedPositionable.Scale = selectedPositionable.Scale with { X = selectedPositionable.Scale.X - delta.X * SCALE_SCALE };
-                        MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
-                    }
-                },
-                SceneEditViewModel.DraggingGizmo.Y_SCALE => new EditorAction
-                {
-                    DoAction = () =>
-                    {
-                        selectedPositionable.Scale = selectedPositionable.Scale with { Y = selectedPositionable.Scale.Y + delta.Y * SCALE_SCALE };
-                        MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
-                    },
-                    UndoAction = () =>
-                    {
-                        selectedPositionable.Scale = selectedPositionable.Scale with { Y = selectedPositionable.Scale.Y - delta.Y * SCALE_SCALE };
-                        MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
-                    }
-                },
-                SceneEditViewModel.DraggingGizmo.XY_SCALE => new EditorAction
-                {
-                    DoAction = () =>
-                    {
-                        selectedPositionable.Scale += delta * SCALE_SCALE;
-                        MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
-                    },
-                    UndoAction = () =>
-                    {
-                        selectedPositionable.Scale -= delta * SCALE_SCALE;
+                        selectedPositionable.Scale = originalTransform.Scale;
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     }
                 },
