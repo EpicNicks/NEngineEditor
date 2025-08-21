@@ -22,6 +22,7 @@ namespace NEngineEditor.View;
 public partial class SceneEditViewUserControl : System.Windows.Controls.UserControl
 {
     private float _curZoom = 1.0f;
+    private const float SCALE_SCALE = 0.1f;
     private NEngine.Application _nengineApplication;
     public bool ShouldRender { get; set; } = true;
 
@@ -203,7 +204,6 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         {
             Vector2i currentMousePosition = new Vector2i(e.X, e.Y);
             Vector2f delta = (Vector2f)(sevm.CurrentSceneObjectDrag.currentDragPoint - currentMousePosition);
-            float scaleScale = 0.1f;
 
             if (MainViewModel.Instance.SelectedGameObject is not null && MainViewModel.Instance.SelectedGameObject.GameObject is Positionable p)
             {
@@ -221,15 +221,15 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 }
                 else if (sevm.CurrentSceneObjectDrag.draggingGizmo is SceneEditViewModel.DraggingGizmo.X_SCALE)
                 {
-                    p.Scale = p.Scale with { X = p.Scale.X - delta.X * scaleScale };
+                    p.Scale = p.Scale with { X = p.Scale.X - delta.X * SCALE_SCALE };
                 }
                 else if (sevm.CurrentSceneObjectDrag.draggingGizmo is SceneEditViewModel.DraggingGizmo.Y_SCALE)
                 {
-                    p.Scale = p.Scale with { Y = p.Scale.Y - delta.Y * scaleScale };
+                    p.Scale = p.Scale with { Y = p.Scale.Y - delta.Y * SCALE_SCALE };
                 }
                 else if (sevm.CurrentSceneObjectDrag.draggingGizmo is SceneEditViewModel.DraggingGizmo.XY_SCALE)
                 {
-                    p.Scale -= delta * scaleScale;
+                    p.Scale -= delta * SCALE_SCALE;
                 }
                 else if (sevm.CurrentSceneObjectDrag.draggingGizmo is SceneEditViewModel.DraggingGizmo.ROT)
                 {
@@ -261,18 +261,19 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
         if (e.Button is Mouse.Button.Left && sevm.CurrentSceneObjectDrag is not null && MainViewModel.Instance.SelectedGameObject is not null && MainViewModel.Instance.SelectedGameObject.GameObject is Positionable selectedPositionable)
         {
             Vector2f delta = (Vector2f)(sevm.CurrentSceneObjectDrag.currentDragPoint - sevm.CurrentSceneObjectDrag.startDragPoint);
+            float zoomAtAction = _curZoom;
             EditorAction? performedAction = sevm.CurrentSceneObjectDrag.draggingGizmo switch
             {
                 SceneEditViewModel.DraggingGizmo.X_POS => new EditorAction 
-                { 
+                {
                     DoAction = () =>
                     {
-                        selectedPositionable.Position = selectedPositionable.Position with { X = selectedPositionable.Position.X + delta.X * _curZoom };
+                        selectedPositionable.Position = selectedPositionable.Position with { X = selectedPositionable.Position.X + delta.X * zoomAtAction };
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     }, 
                     UndoAction = () =>
                     {
-                        selectedPositionable.Position = selectedPositionable.Position with { X = selectedPositionable.Position.X - delta.X * _curZoom };
+                        selectedPositionable.Position = selectedPositionable.Position with { X = selectedPositionable.Position.X - delta.X * zoomAtAction };
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     }
                 },
@@ -280,12 +281,12 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 {
                     DoAction = () =>
                     {
-                        selectedPositionable.Position = selectedPositionable.Position with { Y = selectedPositionable.Position.Y + delta.Y * _curZoom };
+                        selectedPositionable.Position = selectedPositionable.Position with { Y = selectedPositionable.Position.Y + delta.Y * zoomAtAction };
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     },
                     UndoAction = () =>
                     {
-                        selectedPositionable.Position = selectedPositionable.Position with { Y = selectedPositionable.Position.Y - delta.Y * _curZoom };
+                        selectedPositionable.Position = selectedPositionable.Position with { Y = selectedPositionable.Position.Y - delta.Y * zoomAtAction };
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     }
                 },
@@ -293,12 +294,12 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 {
                     DoAction = () =>
                     {
-                        selectedPositionable.Position += delta * _curZoom;
+                        selectedPositionable.Position += delta * zoomAtAction;
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     },
                     UndoAction = () =>
                     {
-                        selectedPositionable.Position -= delta * _curZoom;
+                        selectedPositionable.Position -= delta * zoomAtAction;
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     }
                 },
@@ -319,12 +320,12 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 {
                     DoAction = () =>
                     {
-                        selectedPositionable.Scale = selectedPositionable.Scale with { X = selectedPositionable.Scale.X + delta.X * _curZoom };
+                        selectedPositionable.Scale = selectedPositionable.Scale with { X = selectedPositionable.Scale.X + delta.X * SCALE_SCALE };
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     },
                     UndoAction = () =>
                     {
-                        selectedPositionable.Scale = selectedPositionable.Scale with { X = selectedPositionable.Scale.X - delta.X * _curZoom };
+                        selectedPositionable.Scale = selectedPositionable.Scale with { X = selectedPositionable.Scale.X - delta.X * SCALE_SCALE };
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     }
                 },
@@ -332,12 +333,12 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 {
                     DoAction = () =>
                     {
-                        selectedPositionable.Scale = selectedPositionable.Scale with { Y = selectedPositionable.Scale.Y + delta.Y * _curZoom };
+                        selectedPositionable.Scale = selectedPositionable.Scale with { Y = selectedPositionable.Scale.Y + delta.Y * SCALE_SCALE };
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     },
                     UndoAction = () =>
                     {
-                        selectedPositionable.Scale = selectedPositionable.Scale with { Y = selectedPositionable.Scale.Y - delta.Y * _curZoom };
+                        selectedPositionable.Scale = selectedPositionable.Scale with { Y = selectedPositionable.Scale.Y - delta.Y * SCALE_SCALE };
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     }
                 },
@@ -345,12 +346,12 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 {
                     DoAction = () =>
                     {
-                        selectedPositionable.Scale += delta * _curZoom;
+                        selectedPositionable.Scale += delta * SCALE_SCALE;
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     },
                     UndoAction = () =>
                     {
-                        selectedPositionable.Scale -= delta * _curZoom;
+                        selectedPositionable.Scale -= delta * SCALE_SCALE;
                         MainViewModel.Instance.SelectedGameObject = MainViewModel.Instance.SelectedGameObject;
                     }
                 },

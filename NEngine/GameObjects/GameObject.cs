@@ -5,9 +5,8 @@ using SFML.Graphics;
 using NEngine.CoreLibs.Physics;
 using NEngine.Scheduling.Coroutines;
 
-using NEngine.CoreLibs;
-using NEngine.Window;
 using System.Diagnostics.CodeAnalysis;
+using NEngine.CoreLibs.Mathematics;
 
 namespace NEngine.GameObjects;
 
@@ -18,6 +17,31 @@ namespace NEngine.GameObjects;
 /// </summary>
 public class GameObject
 {
+    public enum OriginType
+    {
+        Default,
+        Centered
+    }
+
+    // set when the origin type is explicitly set by subclasses (to not override my default override of SFML's behaviour)
+    private bool originIsSetDirty = false;
+    protected bool OriginSetDirty
+    {
+        get => originIsSetDirty;
+    }
+
+    private OriginType origin = OriginType.Centered;
+    protected OriginType Origin 
+    { 
+        get => origin;
+        set
+        {
+            originIsSetDirty = true;
+            origin = value;
+            TransformableHelper.CenterOrigins(Drawables);
+        }
+    }
+
     public record struct Persistance(bool persistOnSceneTransition, long persistId);
     /// <summary>
     /// Tells the scene if it should pass forward the instance of the GameObject created when the scene transitions to a new scene.
@@ -38,7 +62,19 @@ public class GameObject
     /// <summary>
     /// Get all Drawables on the GameObject in inverse order that the drawable will be drawn
     /// </summary>
-    public virtual List<Drawable> Drawables { get; set; } = [];
+    private List<Drawable> drawables = [];
+    public virtual List<Drawable> Drawables
+    {
+        get => drawables;
+        set
+        {
+            drawables = value;
+            if (!originIsSetDirty)
+            {
+                TransformableHelper.CenterOrigins(Drawables);
+            }
+        }
+    }
 
     public virtual Collider2D? Collider { get; set; } = null;
 
