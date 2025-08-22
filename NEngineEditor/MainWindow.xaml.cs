@@ -1,7 +1,7 @@
 ﻿using System.Collections.Specialized;
 using System.IO;
 using System.Windows;
-
+using NEngineEditor.Helpers;
 using NEngineEditor.Managers;
 using NEngineEditor.ViewModel;
 
@@ -26,6 +26,14 @@ public partial class MainWindow : Window
         Logger.Instance.Logs.CollectionChanged += LoggerLogs_CollectionChanged;
         DataContext = MainViewModel.Instance;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+        if (!string.IsNullOrEmpty(Properties.Settings.Default.LastOpenedSceneName))
+        {
+            MainViewModel.Instance.ScriptCompilationSystem.AssemblyInitialized += (_, _) =>
+            {
+                MainViewModel.Instance.LoadSceneByName(Properties.Settings.Default.LastOpenedSceneName);
+            };
+        }
     }
 
     private void LoggerLogs_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

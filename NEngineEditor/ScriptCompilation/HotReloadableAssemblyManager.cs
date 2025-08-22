@@ -7,6 +7,8 @@ using Microsoft.CodeAnalysis;
 namespace NEngineEditor.ScriptCompilation;
 public class HotReloadableAssemblyManager
 {
+    public bool IsAssemblyLoaded => _currentAssembly != null;
+
     private AssemblyLoadContext _loadContext;
     private Assembly? _currentAssembly;
     private readonly Dictionary<string, WeakReference> _instanceTracker = new();

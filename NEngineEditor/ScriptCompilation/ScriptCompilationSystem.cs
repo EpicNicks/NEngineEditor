@@ -8,11 +8,14 @@ using Microsoft.CodeAnalysis.Text;
 
 using NEngine.GameObjects;
 using NEngineEditor.Helpers;
+using NEngineEditor.Managers;
 using NEngineEditor.ViewModel;
 
 namespace NEngineEditor.ScriptCompilation;
 public class ScriptCompilationSystem
 {
+    public bool IsAssemblyLoaded => _hotReloadableAssemblyManager.IsAssemblyLoaded;
+
     private readonly VSCompatibleFileWatcher _fileWatcher;
     private readonly HotReloadableAssemblyManager _hotReloadableAssemblyManager;
     private readonly string _projectFilePath;
@@ -65,7 +68,7 @@ public class ScriptCompilationSystem
         Solution newSolution = newProject.Solution;
         if (!_project.Solution.Workspace.TryApplyChanges(newSolution))
         {
-            Managers.Logger.LogInfo("Project was already up to date.");
+            Logger.LogInfo("Project was already up to date.");
         }
         else
         {
@@ -88,7 +91,7 @@ public class ScriptCompilationSystem
                     Application.Current.Dispatcher.Invoke(() => MainViewModel.Instance.SceneGameObjects[index] = new() { RenderLayer = lgo.RenderLayer, GameObject = newInstance });
                 }
             }
-            Managers.Logger.LogInfo($"Project updated at script {scriptName}");
+            Logger.LogInfo($"Project updated at script {scriptName}");
         }
 
         return newProject;
@@ -109,7 +112,7 @@ public class ScriptCompilationSystem
         }
         catch (Exception)
         {
-            Managers.Logger.LogError($"Unable to add script with path: {scriptPath}");
+            Logger.LogError($"Unable to add script with path: {scriptPath}");
             throw;
         }
     }
@@ -147,16 +150,97 @@ public class ScriptCompilationSystem
         _fileWatcher.StopWatching();
     }
 
+    public bool WaitForAssemblyLoaded(int timeoutMs = 30000)
+    {
+        if (IsAssemblyLoaded)
+            return true;
+
+        var waitHandle = new ManualResetEventSlim(false);
+
+        EventHandler? handler = null;
+        handler = (sender, e) =>
+        {
+            AssemblyInitialized -= handler;
+            waitHandle.Set();
+        };
+
+        AssemblyInitialized += handler;
+
+        // Double-check in case assembly loaded while setting up handler
+        if (IsAssemblyLoaded)
+        {
+            AssemblyInitialized -= handler;
+            return true;
+        }
+
+        bool result = waitHandle.Wait(timeoutMs);
+
+        if (!result)
+        {
+            AssemblyInitialized -= handler; // Clean up if timeout
+        }
+
+        return result;
+    }
+    public async Task<bool> WaitForAssemblyLoadedAsync(int timeoutMs = 30000)
+    {
+        if (IsAssemblyLoaded)
+            return true;
+
+        Logger.LogInfo("Waiting for assembly to be loaded...");
+
+        var tcs = new TaskCompletionSource<bool>();
+        var cts = new CancellationTokenSource(timeoutMs);
+
+        void handler(object? sender, EventArgs e)
+        {
+            AssemblyInitialized -= handler;
+            tcs.TrySetResult(true);
+        }
+
+        // Set up cancellation
+        cts.Token.Register(() =>
+        {
+            AssemblyInitialized -= handler;
+            tcs.TrySetCanceled();
+        });
+
+        AssemblyInitialized += handler;
+
+        // Double-check in case assembly loaded while setting up handler
+        if (IsAssemblyLoaded)
+        {
+            AssemblyInitialized -= handler;
+            cts.Dispose();
+            Logger.LogInfo("Assembly was already loaded");
+            return true;
+        }
+
+        try
+        {
+            bool result = await tcs.Task;
+            Logger.LogInfo("Assembly loaded successfully");
+            cts.Dispose();
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            Logger.LogError($"Timeout waiting for assembly to be loaded after {timeoutMs}ms");
+            cts.Dispose();
+            return false;
+        }
+    }
+
     private void UpdateProjectFile()
     {
         Solution solution = _project.Solution;
         if (_workspace.TryApplyChanges(solution))
         {
-            Managers.Logger.LogInfo("Project updated successfully.");
+            Logger.LogInfo("Project updated successfully.");
         }
         else
         {
-            Managers.Logger.LogError("Failed to update project.");
+            Logger.LogError("Failed to update project.");
         }
     }
 

@@ -26,6 +26,8 @@ public partial class MainViewModel : ViewModelBase
     private readonly EditorActionHistory _editorActionHistory;
     private ScriptCompilationSystem _scriptCompilationSystem;
 
+    public ScriptCompilationSystem ScriptCompilationSystem => _scriptCompilationSystem;
+
     private ICommand? _saveCommand;
     public ICommand SaveCommand => _saveCommand ??= new ActionCommand(SaveScene);
 
@@ -259,6 +261,29 @@ public partial class MainViewModel : ViewModelBase
         });
     }
 
+    public void LoadSceneByName(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName))
+        {
+            Logger.LogWarning("Scene passed was empty");
+            return;
+        }
+        string[] scenesInProject = Directory.GetFiles(MainWindow.AssetsPath, "*.scene", SearchOption.AllDirectories);
+        string? pathToScene = scenesInProject
+            .Where(scenePath => Path.GetFileNameWithoutExtension(scenePath) == sceneName)
+            .FirstOrDefault();
+        if (pathToScene != null)
+        {
+            LoadScene(pathToScene);
+        }
+        else
+        {
+            Logger.LogWarning($"Last scene loaded: {sceneName} was not found in the Assets directory {MainWindow.AssetsPath}");
+        }
+        // should really transition to using GUIDs
+        Properties.Settings.Default.LastOpenedSceneName = sceneName;
+    }
+
     public void LoadScene(string filePath)
     {
         ModifySceneObjectsListWrapper(() =>
@@ -277,6 +302,8 @@ public partial class MainViewModel : ViewModelBase
                 Logger.LogError($"An Exception Occurred while loading scene {Path.GetFileNameWithoutExtension(filePath)}, Exception: {ex}");
             }
         });
+
+        Properties.Settings.Default.LastOpenedSceneName = Path.GetFileNameWithoutExtension(filePath);
     }
     private static readonly JsonSerializerOptions sceneSaveJsonSerializerOptions = new()
     {

@@ -34,5 +34,17 @@ namespace NEngineEditor.Properties {
                 this["BaseFilePath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastOpenedSceneName {
+            get {
+                return ((string)(this["LastOpenedSceneName"]));
+            }
+            set {
+                this["LastOpenedSceneName"] = value;
+            }
+        }
     }
 }
