@@ -30,6 +30,8 @@ public class InspectorViewModel : ViewModelBase
 
     public GameObject? SelectedGameObject => SelectedLayeredGameObject?.GameObject;
 
+    public string? GameObjectTypeName => $"{{ class: {SelectedGameObject?.GetType().Name} }}";
+
     public RenderLayer RenderLayer
     {
         get => SelectedLayeredGameObject?.RenderLayer ?? default(RenderLayer);
@@ -78,6 +80,8 @@ public class InspectorViewModel : ViewModelBase
         PublicMembers.Clear();
 
         if (SelectedGameObject == null) return;
+
+        OnPropertyChanged(nameof(GameObjectTypeName));
 
         Type? type = SelectedGameObject.GetType();
         HashSet<string> processedMembers = ["Name"];

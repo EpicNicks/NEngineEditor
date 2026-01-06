@@ -120,14 +120,17 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 if (GizmoIntersects(positionSelectButton, clickCastRect))
                 {
                     sevm.ActivatePositionGizmoSet.Execute(null);
+                    return;
                 }
                 else if (GizmoIntersects(rotationSelectButton, clickCastRect))
                 {
                     sevm.ActivateRotationGizmoSet.Execute(null);
+                    return;
                 }
                 else if (GizmoIntersects(scaleSelectButton, clickCastRect))
                 {
                     sevm.ActivateScaleGizmoSet.Execute(null);
+                    return;
                 }
 
                 SceneEditViewModel.PositionableTransform originalTransform = new(p);
@@ -135,30 +138,37 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                 if (GizmoIntersects(xPositionGizmo, clickCastRect))
                 {
                     sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.X_POS, originalTransform);
+                    return;
                 }
                 else if (GizmoIntersects(yPositionGizmo, clickCastRect))
                 {
                     sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.Y_POS, originalTransform);
+                    return;
                 }
                 else if (GizmoIntersects(xyPositionGizmo, clickCastRect))
                 {
                     sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.XY_POS, originalTransform);
+                    return;
                 }
                 else if (GizmoIntersects(xScaleGizmo, clickCastRect))
                 {
                     sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.X_SCALE, originalTransform);
+                    return;
                 }
                 else if (GizmoIntersects(yScaleGizmo, clickCastRect))
                 {
                     sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.Y_SCALE, originalTransform);
+                    return;
                 }
                 else if (GizmoIntersects(xyScaleGizmo, clickCastRect))
                 {
                     sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.XY_SCALE, originalTransform);
+                    return;
                 }
                 else if (GizmoIntersects(rotationGizmo, clickCastRect))
                 {
                     sevm.CurrentSceneObjectDrag = new(new(e.X, e.Y), new(e.X, e.Y), SceneEditViewModel.DraggingGizmo.ROT, originalTransform);
+                    return;
                 }
             }
 
@@ -176,6 +186,10 @@ public partial class SceneEditViewUserControl : System.Windows.Controls.UserCont
                     MoveCameraToPositionable(selectedPositionable);
                     doubleClickProcessed = true;
                 }
+            }
+            else
+            {
+                MainViewModel.Instance.SelectedGameObject = null;
             }
         }
         else if (e.Button == Mouse.Button.Right)

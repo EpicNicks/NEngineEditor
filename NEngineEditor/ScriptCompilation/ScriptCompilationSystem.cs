@@ -31,6 +31,8 @@ public class ScriptCompilationSystem
     public ScriptCompilationSystem(string projectFilePath)
     {
         _projectFilePath = projectFilePath;
+        RestorePackages(projectFilePath);
+
         _workspace = MSBuildWorkspace.Create();
         _project = _workspace.OpenProjectAsync(projectFilePath).GetAwaiter().GetResult();
         _fileWatcher = new VSCompatibleFileWatcher(Path.GetDirectoryName(projectFilePath)!);
@@ -57,11 +59,15 @@ public class ScriptCompilationSystem
         AssemblyInitialized?.Invoke(null, EventArgs.Empty);
     }
 
-    public Project UpdateScript(string scriptPath)
+    public void UpdateScript(string scriptPath)
     {
         string scriptContent = File.ReadAllText(scriptPath);
         string scriptName = Path.GetFileName(scriptPath);
-        Document? document = _project.Documents.FirstOrDefault(d => d.Name == scriptName) ?? throw new ArgumentException($"Document '{scriptName}' not found in the project.");
+        Document? document = _project.Documents.FirstOrDefault(d => d.Name == scriptName);
+        if (document is null)
+        {
+            return;
+        }
         SourceText newText = SourceText.From(scriptContent);
         Document newDocument = document.WithText(newText);
         Project newProject = newDocument.Project;
@@ -78,10 +84,15 @@ public class ScriptCompilationSystem
                     .ToList();
             if (originalLgos.Count == 0)
             {
-                return newProject;
+                return;
             }
             string typeName = originalLgos[0].lgo.GameObject.GetType().FullName ?? throw new InvalidOperationException("FullName of the type being updated was null");
-            _hotReloadableAssemblyManager.UpdateAssemblyAsync(this).Wait();
+            bool success = _hotReloadableAssemblyManager.UpdateAssemblyAsync(this).Result;
+            if (!success)
+            {
+                Logger.LogWarning($"Failed to update assembly after modifying {scriptName}");
+                return;
+            }
             foreach (var (lgo, index) in originalLgos)
             {
                 GameObject? newInstance = CreateInstance<GameObject>(typeName);
@@ -94,7 +105,7 @@ public class ScriptCompilationSystem
             Logger.LogInfo($"Project updated at script {scriptName}");
         }
 
-        return newProject;
+        return;
     }
 
     public Project AddScript(string scriptPath)
@@ -133,11 +144,6 @@ public class ScriptCompilationSystem
         // File.Delete(scriptPath);
 
         UpdateProjectFile();
-    }
-
-    public async Task<Compilation?> GetCompilationAsync()
-    {
-        return await _project.GetCompilationAsync();
     }
 
     public void StartWatching()
@@ -286,5 +292,88 @@ public class ScriptCompilationSystem
 
         // Default to a common framework version if not found
         return "net8.0";
+    }
+
+    public async Task<Compilation?> GetCompilationAsync(bool excludeErrorFiles = false)
+    {
+        var compilation = await _project.GetCompilationAsync();
+
+        if (!excludeErrorFiles || compilation == null)
+        {
+            return compilation;
+        }
+
+        var diagnostics = compilation.GetDiagnostics();
+        var errorDiagnostics = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
+
+        if (errorDiagnostics.Count == 0)
+        {
+            return compilation;
+        }
+
+        var errorsByFile = errorDiagnostics
+            .Where(d => d.Location.SourceTree?.FilePath != null)
+            .GroupBy(d => d.Location.SourceTree!.FilePath)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var filesWithErrors = errorsByFile.Keys.ToHashSet();
+
+        foreach (var kvp in errorsByFile)
+        {
+            string fileName = Path.GetFileName(kvp.Key);
+            Logger.LogError($"Script '{fileName}' has {kvp.Value.Count} compilation error(s):");
+
+            foreach (var diagnostic in kvp.Value)
+            {
+                var lineSpan = diagnostic.Location.GetLineSpan();
+                int line = lineSpan.StartLinePosition.Line + 1; // Line numbers are 0-indexed
+                int column = lineSpan.StartLinePosition.Character + 1;
+
+                Logger.LogError($"  Line {line}, Column {column}: {diagnostic.Id} - {diagnostic.GetMessage()}");
+            }
+        }
+
+        // Remove syntax trees for files with errors
+        var treesToKeep = compilation.SyntaxTrees
+            .Where(tree => !filesWithErrors.Contains(tree.FilePath))
+            .ToList();
+
+        if (treesToKeep.Count == 0)
+        {
+            Logger.LogError("All scripts have errors, cannot create assembly");
+            return null;
+        }
+
+        Logger.LogWarning($"Excluding {filesWithErrors.Count} script(s) with errors, compiling {treesToKeep.Count} valid script(s)");
+
+        return compilation.RemoveAllSyntaxTrees().AddSyntaxTrees(treesToKeep);
+    }
+
+    private void RestorePackages(string projectFilePath)
+    {
+        var process = new System.Diagnostics.Process
+        {
+            StartInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = $"restore \"{projectFilePath}\"",
+                WorkingDirectory = Path.GetDirectoryName(projectFilePath),
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            }
+        };
+
+        Logger.LogInfo("Running dotnet restore on the project");
+
+        process.Start();
+        process.WaitForExit();
+
+        if (process.ExitCode != 0)
+        {
+            string error = process.StandardError.ReadToEnd();
+            Logger.LogError($"NuGet restore failed: {error}");
+        }
     }
 }

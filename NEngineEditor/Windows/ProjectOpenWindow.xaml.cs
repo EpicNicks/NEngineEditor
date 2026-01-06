@@ -156,6 +156,7 @@ public partial class ProjectOpenWindow : Window
                         File.WriteAllTextAsync(Path.Combine(projectPath, "NEngineProject.json"), JsonSerializer.Serialize(projectData, NEW_PROJECT_JSON_OPTIONS)),
                         File.WriteAllTextAsync(Path.Combine(assetsPath, "ProjectConfig.json"), JsonSerializer.Serialize(projectConfig, NEW_PROJECT_JSON_OPTIONS)),
                         File.WriteAllTextAsync(Path.Combine(mainFolderPath, "Project.cs"), Properties.Resources.ProjectProgram),
+                        File.WriteAllTextAsync(Path.Combine(projectPath, "global.json"), Properties.Resources.GlobalJson_Template),
                         // TODO: consider writing the shared json data definitions to the mainFolderPath to avoid defining it twice
                         //  drawback to this: the namespace the file will be pulling from won't exist while editing it in this project
                     ];

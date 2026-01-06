@@ -24,7 +24,7 @@ namespace NEngineEditor.ViewModel;
 public partial class MainViewModel : ViewModelBase
 {
     private readonly EditorActionHistory _editorActionHistory;
-    private ScriptCompilationSystem _scriptCompilationSystem;
+    private readonly ScriptCompilationSystem _scriptCompilationSystem;
 
     public ScriptCompilationSystem ScriptCompilationSystem => _scriptCompilationSystem;
 

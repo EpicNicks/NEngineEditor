@@ -143,6 +143,20 @@ namespace NEngineEditor.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {
+        ///  &quot;sdk&quot;: {
+        ///    &quot;version&quot;: &quot;8.0.0&quot;,
+        ///    &quot;rollForward&quot;: &quot;latestMajor&quot;
+        ///  }
+        ///}.
+        /// </summary>
+        internal static string GlobalJson_Template {
+            get {
+                return ResourceManager.GetString("GlobalJson_Template", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to using System.Collections.Generic;
         ///
         ///using SFML.System;

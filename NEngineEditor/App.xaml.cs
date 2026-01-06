@@ -1,4 +1,5 @@
-﻿using NEngineEditor.Managers;
+﻿using Microsoft.Build.Locator;
+using NEngineEditor.Managers;
 using NEngineEditor.Windows;
 using System.Windows;
 
@@ -8,6 +9,11 @@ namespace NEngineEditor;
 /// </summary>
 public partial class App : Application
 {
+    static App()
+    {
+        MSBuildLocator.RegisterDefaults();
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);

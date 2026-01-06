@@ -53,56 +53,98 @@ public class HotReloadableAssemblyManager
         await UpdateAssemblyAsync(compilationSystem);
     }
 
-    public async Task UpdateAssemblyAsync(ScriptCompilationSystem compilationSystem)
+    public async Task<bool> UpdateAssemblyAsync(ScriptCompilationSystem compilationSystem)
     {
-        var compilation = await compilationSystem.GetCompilationAsync();
-        if (compilation is null)
+        try
         {
-            return;
+            var compilation = await compilationSystem.GetCompilationAsync();
+            if (compilation is null)
+            {
+                return false;
+            }
+
+            using var peStream = new MemoryStream();
+            using var pdbStream = new MemoryStream();
+
+            var emitResult = compilation.Emit(peStream, pdbStream);
+
+            if (!emitResult.Success)
+            {
+                // Log errors but keep the old assembly working
+                var errors = emitResult.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error);
+                foreach (var error in errors)
+                {
+                    Managers.Logger.LogError($"Compilation error in {error.Location.SourceTree?.FilePath}: {error.GetMessage()}");
+                }
+                return false;
+            }
+
+            // Only update if compilation succeeded
+            peStream.Seek(0, SeekOrigin.Begin);
+            pdbStream.Seek(0, SeekOrigin.Begin);
+
+            var oldLoadContext = _loadContext;
+            _loadContext = new AssemblyLoadContext("UpdateableScriptContext", isCollectible: true);
+            _loadContext.Resolving += OnResolving;
+
+            _currentAssembly = _loadContext.LoadFromStream(peStream, pdbStream);
+
+            oldLoadContext.Unload();
+
+            AssemblyUpdated?.Invoke(this, EventArgs.Empty);
+            _instanceTracker.Clear();
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            Managers.Logger.LogInfo("Assembly updated successfully");
+            return true;
         }
-        using var peStream = new MemoryStream();
-        using var pdbStream = new MemoryStream();
-
-        var emitResult = compilation.Emit(peStream, pdbStream);
-
-        if (!emitResult.Success)
+        catch (Exception ex)
         {
-            Managers.Logger.LogError("Compilation failed: ", string.Join(", ", emitResult.Diagnostics));
-            return;
+            Managers.Logger.LogError($"Failed to update assembly: {ex.Message}", ex.ToString());
+            return false; // Old assembly remains loaded
         }
-
-        peStream.Seek(0, SeekOrigin.Begin);
-        pdbStream.Seek(0, SeekOrigin.Begin);
-
-        var oldLoadContext = _loadContext;
-        _loadContext = new AssemblyLoadContext("UpdateableScriptContext", isCollectible: true);
-        _loadContext.Resolving += OnResolving;
-
-        _currentAssembly = _loadContext.LoadFromStream(peStream, pdbStream);
-
-        oldLoadContext.Unload();
-
-        AssemblyUpdated?.Invoke(this, EventArgs.Empty);
-
-        // Clear the instance tracker as all old instances are now invalid
-        _instanceTracker.Clear();
-
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
     }
 
     public T? CreateInstance<T>(string fullyQualifiedTypeName) where T : class
     {
-        if (_currentAssembly == null)
+        try
         {
-            throw new InvalidOperationException("No assembly has been loaded yet.");
-        }
+            if (_currentAssembly == null)
+            {
+                Managers.Logger.LogError("No assembly has been loaded yet.");
+                return null;
+            }
 
-        Type? type = _currentAssembly.GetType(fullyQualifiedTypeName)
-            ?? throw new ArgumentException($"Type {fullyQualifiedTypeName} not found in the current assembly.");
-        var instance = Activator.CreateInstance(type) as T;
-        _instanceTracker[fullyQualifiedTypeName] = new WeakReference(instance);
-        return instance;
+            Type? type = _currentAssembly.GetType(fullyQualifiedTypeName);
+            if (type == null)
+            {
+                Managers.Logger.LogError($"Type {fullyQualifiedTypeName} not found in the current assembly.");
+                return null;
+            }
+
+            var instance = Activator.CreateInstance(type) as T;
+
+            if (instance != null)
+            {
+                _instanceTracker[fullyQualifiedTypeName] = new WeakReference(instance);
+            }
+
+            return instance;
+        }
+        catch (TargetInvocationException ex)
+        {
+            // Constructor threw an exception
+            Managers.Logger.LogError($"Failed to create instance of {fullyQualifiedTypeName}: Constructor threw an exception", ex.InnerException?.ToString() ?? ex.ToString());
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // Catch all other exceptions (NullReferenceException, TypeLoadException, etc.)
+            Managers.Logger.LogError($"Failed to create instance of {fullyQualifiedTypeName}: {ex.Message}", ex.ToString());
+            return null;
+        }
     }
 
     public IEnumerable<string> GetAvailableTypeNames()

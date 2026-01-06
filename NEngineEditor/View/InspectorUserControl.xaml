@@ -30,6 +30,14 @@
                 <TextBox Text="{Binding SelectedGameObject.Name, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,0,0,10"/>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBox Text="{Binding GameObjectTypeName, Mode=OneWay}" 
+                        d:Text="{}{ class: ClassName }"
+                        IsReadOnly="True"
+                        BorderThickness="0"
+                        Background="Transparent"
+                        FontWeight="SemiBold" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                     <TextBlock Text="Render Layer:" Width="100"/>
                     <ComboBox ItemsSource="{Binding Source={StaticResource RenderLayerEnum}}"
                               SelectedItem="{Binding RenderLayer, Mode=TwoWay}"
